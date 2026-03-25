@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Environments
+.venv/
+.env
+
+# Data artifacts
+data/raw/*
+!data/raw/.gitkeep
+
+# Notebook checkpoints
+.ipynb_checkpoints/
