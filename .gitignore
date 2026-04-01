@@ -6,10 +6,18 @@ __pycache__/
 # Environments
 .venv/
 .env
+.codex
 
 # Data artifacts
 data/raw/*
 !data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/geojson/*
+!data/geojson/.gitkeep
 
 # Notebook checkpoints
 .ipynb_checkpoints/
+
+# Windows metadata sidecars
+*:Zone.Identifier
