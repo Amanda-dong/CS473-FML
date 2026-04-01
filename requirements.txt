@@ -8,7 +8,6 @@ fastapi==0.115.8
 uvicorn==0.34.0
 streamlit==1.42.2
 praw==7.8.1
-pytrends==4.9.2
 transformers==4.48.2
 matplotlib==3.10.0
 seaborn==0.13.2
