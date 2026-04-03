@@ -1,4 +1,6 @@
-"""Streamlit entrypoint for the placeholder frontend."""
+"""Streamlit entrypoint for the NYC Restaurant Intelligence Platform frontend."""
+
+from __future__ import annotations
 
 import streamlit as st
 
@@ -13,16 +15,51 @@ from frontend.pages.methodology import render_methodology_page
 def main() -> None:
     """Render the top-level application shell."""
 
-    st.set_page_config(page_title="NYC Healthy Food Locator", layout="wide")
-    st.title("NYC Healthy Food Locator")
-    st.write("Prototype scaffold for healthy-food white-space recommendations.")
+    st.set_page_config(
+        page_title="NYC Restaurant Intelligence Platform",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+
+    # ---- Sidebar ----
+    with st.sidebar:
+        st.title("NYC Restaurant Intelligence")
+        st.caption("Healthy-food white-space recommender")
+        st.divider()
+
+        request_payload = render_input_form()
+        st.divider()
+        scenario = render_scenario_panel()
+        st.divider()
+        render_data_freshness("Data refreshed nightly from NYC Open Data and Yelp Fusion.")
+
+    # ---- Main area ----
+    st.title("NYC Restaurant Intelligence Platform")
+    st.markdown(
+        "Identify high-potential locations for healthy-food concepts across NYC "
+        "micro-zones using survival modeling, NLP demand signals, and gap scoring."
+    )
 
     render_dashboard_page()
-    request_payload = render_input_form()
-    scenario = render_scenario_panel()
-    render_results_panel(request_payload | scenario)
-    render_data_freshness("No live refresh timestamps are wired yet.")
-    with st.expander("Methodology"):
+
+    with st.spinner("Fetching recommendations..."):
+        render_results_panel(request_payload | scenario)
+
+    with st.expander("About This Tool", expanded=False):
+        st.markdown(
+            """
+**NYC Restaurant Intelligence Platform** combines:
+- NYC DCA license events and PLUTO rent data
+- Yelp review text labeled with Gemini weak supervision
+- Cox proportional-hazards survival modeling
+- Healthy-food gap scoring (CMF opening score)
+
+Results surface the top micro-zones where a given healthy-food concept
+has unmet demand and viable merchant economics.
+"""
+        )
+
+    with st.expander("Methodology", expanded=False):
         render_methodology_page()
 
 

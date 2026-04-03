@@ -37,6 +37,41 @@ Reference geometry such as NTA boundaries and Community District boundaries is t
 
 The platform now uses three coordinated modeling components plus a front-loaded data audit.
 
+### Feature Families and Schema Governance
+
+The project now treats the feature schema as a first-class artifact instead of
+something that gets improvised late in the pipeline.
+
+Canonical identifiers:
+
+- `nta_id`: source-level neighborhood key
+- `zone_id`: final recommendation geography after aggregation to micro-zones
+- `restaurant_id`: business-history key
+- `review_id`: review-label key
+- `time_key`: canonical derived year field for model tables
+
+Current implemented zone-year matrix columns are documented in `docs/DataDictionary.md`
+and currently include:
+
+- `zone_id`
+- `time_key`
+- `license_velocity`
+- `net_opens`
+- `net_closes`
+- `healthy_review_share`
+- `social_buzz`
+- `population`
+- `median_income`
+- `rent_burden`
+- `inspection_grade_avg`
+- `restaurant_count`
+- `rent_pressure`
+- `mean_assessed_value`
+
+The exact model input and output contracts are documented in `docs/ModelInterfaces.md`.
+Those two files should be treated as the detailed reference when the proposal text
+is too high-level for implementation work.
+
 ### 1. Neighborhood Phase Discovery
 
 We will no longer assume that NYC neighborhoods come with clean pre-labeled gentrification phases. Instead, we will construct neighborhood-year feature vectors and use unsupervised learning to discover phase structure directly from the data.
