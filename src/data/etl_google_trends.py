@@ -20,3 +20,9 @@ DATASET_SPEC = DatasetSpec(
 
 def run_placeholder_etl():
     return build_empty_frame(DATASET_SPEC)
+
+
+def run_etl(limit: int = 0):  # noqa: ARG001
+    """Return an empty frame so deprecated Google Trends never breaks ETL orchestration."""
+
+    return run_placeholder_etl()

@@ -10,5 +10,5 @@ class RecommendationRequest(BaseModel):
     price_tier: str = Field(default="mid")
     borough: str | None = None
     risk_tolerance: str = Field(default="balanced")
-    zone_type: str = Field(default="campus_walkshed")
+    zone_type: str = Field(default="")
     limit: int = Field(default=5, ge=1, le=20)

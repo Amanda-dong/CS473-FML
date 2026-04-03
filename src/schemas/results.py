@@ -17,6 +17,17 @@ class ZoneRecommendation(BaseModel):
     positives: list[str] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
     freshness_note: str = Field(default="No source refresh recorded yet.")
+    feature_contributions: dict[str, float] = Field(default_factory=dict)
+    survival_risk: float = Field(default=0.0)
+    model_version: str = Field(default="heuristic")
+    scoring_path: str = Field(
+        default="heuristic",
+        description="Which scoring method produced this result: 'learned', 'heuristic', 'heuristic_fallback'",
+    )
+    label_quality: float = Field(
+        default=1.0,
+        description="Fraction of ground truth components available for this zone (0-1)",
+    )
 
 
 class RecommendationResponse(BaseModel):
