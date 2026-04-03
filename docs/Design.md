@@ -81,6 +81,16 @@ Join strategy:
 - Aggregate Reddit or 311 features first at Community District level, then map to NTAs through a documented crosswalk or area-based aggregation
 - Treat any source without trustworthy historical depth as a static covariate instead of pretending it is a full time series
 
+### 3.1 Exact Schema References
+
+The project now has two implementation-level companion docs:
+
+- `docs/DataDictionary.md`: exact raw and derived dataset schemas, phase-by-phase column usage, and current implementation status
+- `docs/ModelInterfaces.md`: exact model inputs, outputs, diagnostics, runtime behavior, and algorithm rationale
+
+Those two files should be treated as the schema and model source of truth when the
+team needs exact column names instead of high-level design prose.
+
 ## 4. Core Modeling Plan
 
 ### 4.1 Phase Discovery
@@ -206,7 +216,17 @@ The project should evaluate each modeling layer with the right metric instead of
 
 ## 9. Stub Code Status
 
-The repository is still a scaffold. Most Python modules currently contain placeholders only. That is acceptable at this stage, but the implementation order should follow the revised design above:
+The repository is no longer just a bare scaffold. The current state is:
+
+- ETL schemas are defined for every planned source
+- real fetch/transform paths exist for `permits`, `licenses`, `inspections`, `pluto`, `reddit`, and `complaints_311`
+- local-file loaders exist for `acs` and `yelp`
+- `airbnb`, `citibike`, and `boundaries` still need real loaders
+- the zone-year feature builder is implemented and currently wires in `licenses`, `pluto`, `yelp`, `reddit`, `acs`, and `inspections`
+- survival, clustering, NLP aggregation, explainability, scoring, ranking, API, and Streamlit layers all have working code paths
+- some documented sources are still only partially connected to downstream features, especially `permits`, `citibike`, `airbnb`, `311`, and the boundary geometry layer
+
+The implementation order should still follow the revised design above:
 
 1. data audit and source viability
 2. canonical neighborhood feature matrix
