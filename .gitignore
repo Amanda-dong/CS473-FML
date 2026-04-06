@@ -20,6 +20,7 @@ data/raw/*
 !data/raw/census_download_log.txt
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/phase1_neighborhood_finding.csv
 data/geojson/*
 !data/geojson/.gitkeep
 
