@@ -1,0 +1,29 @@
+name: Renovate
+
+# Self-hosted Renovate — no GitHub App needed; runs with GITHUB_TOKEN.
+# Limitation: PRs opened by GITHUB_TOKEN don't auto-trigger CI workflows.
+# Workaround: push an empty commit to the Renovate branch, or trigger CI manually.
+on:
+  schedule:
+    - cron: "0 9 * * 1"   # Monday 9am UTC
+  workflow_dispatch:        # allow manual trigger from Actions UI
+
+permissions:
+  contents: write        # create/update dependency branches
+  pull-requests: write   # open PRs
+  issues: write          # track issues in Renovate's dashboard
+
+jobs:
+  renovate:
+    name: Renovate dependency updates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: renovatebot/github-action@v40
+        with:
+          token: ${{ github.token }}
+        env:
+          LOG_LEVEL: info
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          # Renovate respects .github/renovate.json automatically

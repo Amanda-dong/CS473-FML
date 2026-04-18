@@ -1,0 +1,46 @@
+name: Stale Issues & PRs
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # runs daily at midnight UTC
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+jobs:
+  stale:
+    name: Mark & Close Stale
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # ── Issues ──────────────────────────────────────────────────────────
+          days-before-stale: 30
+          days-before-close: 7
+          stale-issue-label: "stale"
+          stale-issue-message: >
+            This issue has had no activity for 30 days and has been marked stale.
+            It will be closed in 7 days unless there is new activity.
+            Remove the `stale` label or comment to keep it open.
+          close-issue-message: >
+            Closed automatically after 37 days of inactivity.
+            Re-open if the issue is still relevant.
+          exempt-issue-labels: "pinned,security,bug,in-progress"
+
+          # ── PRs ─────────────────────────────────────────────────────────────
+          # PRs get a tighter window — stale PRs accumulate merge conflicts fast
+          days-before-pr-stale: 14
+          days-before-pr-close: 7
+          stale-pr-label: "stale"
+          stale-pr-message: >
+            This PR has had no activity for 14 days and has been marked stale.
+            It will be closed in 7 days. Push a commit or comment to keep it open.
+          close-pr-message: >
+            Closed automatically after 21 days of inactivity.
+            Re-open and rebase if you want to continue this work.
+          exempt-pr-labels: "pinned,security,do-not-merge"
+
+          operations-per-run: 30   # GitHub API rate-limit guard
+          remove-stale-when-updated: true

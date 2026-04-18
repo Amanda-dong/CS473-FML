@@ -1,0 +1,11 @@
+# pip updates are handled by renovate.yml (self-hosted GitHub Action).
+# This file only covers GitHub Actions versions as a lightweight fallback.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "github-actions"

@@ -1,0 +1,15 @@
+extends:
+  - "@commitlint/config-conventional"
+rules:
+  type-enum:
+    - 2
+    - always
+    - [feat, fix, chore, refactor, test, docs, perf, ci, build, revert]
+  subject-case:
+    - 1  # warn only — not a hard fail
+    - never
+    - [upper-case, pascal-case, start-case]
+  header-max-length:
+    - 2
+    - always
+    - 100

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "America/New_York",
+  "schedule": ["after 9am and before 5pm on monday"],
+  "labels": ["dependencies"],
+  "semanticCommits": "enabled",
+  "prConcurrentLimit": 5,
+  "prCreation": "immediate",
+  "rebaseWhen": "conflicted",
+  "packageRules": [
+    {
+      "description": "Auto-merge non-breaking patch updates for dev/test tooling only",
+      "matchPackageNames": ["pytest", "pytest-asyncio", "pytest-cov", "ruff"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Group ML stack — one PR for all updates; never auto-merge (API churn risk)",
+      "matchPackageNames": [
+        "scikit-learn", "xgboost", "lifelines", "shap", "lightgbm"
+      ],
+      "groupName": "ML stack",
+      "automerge": false
+    },
+    {
+      "description": "Group NLP / LLM stack — one PR; never auto-merge",
+      "matchPackageNames": [
+        "transformers", "sentence-transformers", "google-genai"
+      ],
+      "groupName": "NLP / LLM stack",
+      "automerge": false
+    },
+    {
+      "description": "Group API stack",
+      "matchPackageNames": ["fastapi", "uvicorn", "pydantic", "httpx"],
+      "groupName": "API stack"
+    },
+    {
+      "description": "Group geo stack",
+      "matchPackageNames": ["geopandas", "shapely", "pyproj"],
+      "groupName": "Geo stack"
+    },
+    {
+      "description": "Group core data stack",
+      "matchPackageNames": ["pandas", "numpy", "pyarrow", "scipy"],
+      "groupName": "Data stack"
+    },
+    {
+      "description": "Major bumps always require manual review — label them clearly",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-update"],
+      "prPriority": -1
+    },
+    {
+      "description": "GitHub Actions: auto-merge patch updates; group minor",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "groupName": "GitHub Actions (patch)"
+    }
+  ]
+}
