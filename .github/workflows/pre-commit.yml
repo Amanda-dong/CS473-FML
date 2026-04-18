@@ -20,7 +20,7 @@ jobs:
     name: Run pre-commit hooks (auto-fix)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Check out the actual branch head so auto-fixes can be pushed back
           ref: ${{ github.head_ref || github.ref_name }}
