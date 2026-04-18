@@ -1,0 +1,45 @@
+# Run `pre-commit autoupdate` periodically to bump hook revs.
+repos:
+  # ── File hygiene ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main]
+      - id: check-added-large-files
+        # 10 MB cap on new files. Model artifacts in data/ are exempt — use Git LFS for those.
+        args: [--maxkb=10240]
+        exclude: ^data/
+
+  # ── Ruff: lint + format ───────────────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.4
+    hooks:
+      - id: ruff
+        # Auto-fix then fail if any changes were made — forces devs to stage the fix
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # ── Bandit: static security analysis ─────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        args: ["-r", "src", "-ll", "-ii"]
+        pass_filenames: false  # scan the whole src tree, not just staged files
+
+  # ── YAML schema validation ─────────────────────────────────────────────────────
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.0
+    hooks:
+      - id: yamllint
+        args: [-d, "{extends: relaxed, rules: {line-length: {max: 120}}}"]
