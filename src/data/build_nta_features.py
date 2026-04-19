@@ -17,6 +17,12 @@ CENSUS_PATH = RAW_DIR / "census_nta.csv"
 CITIBIKE_GLOB = "citibike_202603/*.csv"
 
 
+def load_manhattan_ntas() -> gpd.GeoDataFrame:
+    """Public entry: Manhattan NTA polygons with ACS ``nta`` codes (for spatial joins)."""
+
+    return _load_manhattan_ntas()
+
+
 def _load_manhattan_ntas() -> gpd.GeoDataFrame:
     new_nta = gpd.read_file(NTA_GEOJSON_PATH)
     new_nta["boroname"] = new_nta["boroname"].astype(str)
@@ -177,7 +183,7 @@ def write_output(frame: pd.DataFrame, output_path: Path) -> None:
 
 
 def main() -> None:
-    nta_gdf = _load_manhattan_ntas()
+    nta_gdf = load_manhattan_ntas()
 
     yelp_features = build_yelp_features(nta_gdf)
     write_output(yelp_features, PROCESSED_DIR / "yelp_nta_features.csv")

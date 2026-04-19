@@ -8,7 +8,8 @@ __pycache__/
 .env
 .codex
 
-# Data artifacts
+# Data artifacts — ignore bulk paths; un-ignore only files we want versioned.
+# Add new tracked data with: !data/<path-to-file>
 data/raw/*
 !data/raw/.gitkeep
 !data/raw/202603-citibike-tripdata.zip
@@ -20,9 +21,18 @@ data/raw/*
 !data/raw/Econ_1923_NTA.xlsx
 !data/raw/census_nta.csv
 !data/raw/census_download_log.txt
+!data/raw/nta.geojson
+!data/raw/nta2020_nyc.geojson
+!data/raw/nta_manhattan_2010.geojson
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/phase1_neighborhood_finding.csv
+!data/processed/yelp_reviews_with_zones.csv
+!data/processed/yelp_business_manhattan_zones.csv
+!data/processed/yelp_nta_features.csv
+!data/processed/hygiene_nta_features.csv
+!data/processed/census_nta_features.csv
+!data/processed/citibike_nta_features.csv
 data/geojson/*
 !data/geojson/.gitkeep
 

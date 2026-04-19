@@ -46,6 +46,33 @@ for _zone, _ntas in ZONE_TO_NTA.items():
     for _nta in _ntas:
         NTA_TO_ZONES.setdefault(_nta, []).append(_zone)
 
+# When one ACS NTA code maps to multiple micro-zones, pick a single primary for point-level assignment.
+# (Aggregations that split one NTA across zones still use aggregate_nta_to_zone.)
+NTA_PRIMARY_ZONE: dict[str, str] = {
+    "BK09": "bk-tandon",
+    "BK33": "bk-fort-greene",
+    "MN17": "mn-midtown-e",
+}
+
+
+def resolve_nta_to_zone_id(nta: str | None) -> str | None:
+    """Map an ACS NTA code (e.g. ``MN22``) to one micro-zone ``zone_id``.
+
+    Returns ``None`` if the NTA is not part of :data:`ZONE_TO_NTA` (e.g. a
+    Manhattan block outside the modeled micro-zone list).
+    """
+    if nta is None or (isinstance(nta, float) and pd.isna(nta)):
+        return None
+    code = str(nta).strip().upper()
+    if not code:
+        return None
+    zones = NTA_TO_ZONES.get(code)
+    if not zones:
+        return None
+    if len(zones) == 1:
+        return zones[0]
+    return NTA_PRIMARY_ZONE.get(code, sorted(zones)[0])
+
 
 def aggregate_nta_to_zone(
     nta_df: pd.DataFrame,
