@@ -16,6 +16,7 @@ data/raw/*
 !data/raw/yelp_business.csv
 !data/raw/yelp_business_2026-04-06.csv
 !data/raw/yelp_reviews_fusion.csv
+!data/raw/yelp_reviews_fusion_2022_2026.csv
 !data/raw/Econ_1923_NTA.xlsx
 !data/raw/census_nta.csv
 !data/raw/census_download_log.txt
