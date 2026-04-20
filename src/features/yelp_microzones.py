@@ -1,4 +1,4 @@
-"""Assign Yelp businesses to micro-zones (Manhattan-first, NTA → zone_id)."""
+"""Assign Yelp businesses to micro-zones (NYC NTA → zone_id)."""
 
 from __future__ import annotations
 
@@ -31,9 +31,9 @@ def spatial_join_to_nta(
     return joined
 
 
-def assign_manhattan_business_zones(
+def assign_yelp_business_zones(
     yelp_business: pd.DataFrame,
-    manhattan_nta_gdf: gpd.GeoDataFrame,
+    nta_gdf: gpd.GeoDataFrame,
     *,
     id_col: str = "id",
     lat_col: str = "latitude",
@@ -45,14 +45,14 @@ def assign_manhattan_business_zones(
     ----------
     yelp_business:
         Raw Yelp business export (must include ``id``, lat/lon).
-    manhattan_nta_gdf:
-        Output of :func:`src.data.build_nta_features.load_manhattan_ntas` —
-        Manhattan NTA polygons with ``nta`` column (ACS-style codes).
+    nta_gdf:
+        NYC NTA polygons with ``nta`` column (ACS-style codes), e.g.
+        :func:`src.data.nta_layers.load_nyc_ntas_for_zones`.
 
     Returns
     -------
     DataFrame with columns including ``restaurant_id``, ``nta``, ``zone_id``,
-    ``in_manhattan_nta``, ``in_modeled_microzone``.
+    ``in_nyc_nta``, ``in_modeled_microzone``.
     """
     if id_col not in yelp_business.columns:
         raise ValueError(f"Missing column {id_col!r}")
@@ -64,7 +64,7 @@ def assign_manhattan_business_zones(
         base,
         lat_col=lat_col,
         lng_col=lng_col,
-        nta_gdf=manhattan_nta_gdf,
+        nta_gdf=nta_gdf,
         how="left",
     )
 
@@ -73,7 +73,7 @@ def assign_manhattan_business_zones(
     else:
         out = joined
 
-    out["in_manhattan_nta"] = out["nta"].notna() & (out["nta"].astype(str).str.strip() != "")
+    out["in_nyc_nta"] = out["nta"].notna() & (out["nta"].astype(str).str.strip() != "")
     out["zone_id"] = out["nta"].map(lambda x: resolve_nta_to_zone_id(x) if pd.notna(x) else None)
     out["in_modeled_microzone"] = out["zone_id"].notna()
 
@@ -83,7 +83,7 @@ def assign_manhattan_business_zones(
         lng_col,
         "nta",
         "zone_id",
-        "in_manhattan_nta",
+        "in_nyc_nta",
         "in_modeled_microzone",
     ]
     present = [c for c in keep if c in out.columns]
