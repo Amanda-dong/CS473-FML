@@ -23,12 +23,11 @@ data/raw/*
 !data/raw/census_download_log.txt
 !data/raw/nta.geojson
 !data/raw/nta2020_nyc.geojson
-!data/raw/nta_manhattan_2010.geojson
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/phase1_neighborhood_finding.csv
 !data/processed/yelp_reviews_with_zones.csv
-!data/processed/yelp_business_manhattan_zones.csv
+!data/processed/yelp_business_zones.csv
 !data/processed/yelp_nta_features.csv
 !data/processed/hygiene_nta_features.csv
 !data/processed/census_nta_features.csv

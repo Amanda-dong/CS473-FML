@@ -59,7 +59,7 @@ def resolve_nta_to_zone_id(nta: str | None) -> str | None:
     """Map an ACS NTA code (e.g. ``MN22``) to one micro-zone ``zone_id``.
 
     Returns ``None`` if the NTA is not part of :data:`ZONE_TO_NTA` (e.g. a
-    Manhattan block outside the modeled micro-zone list).
+    NYC block outside the modeled micro-zone list).
     """
     if nta is None or (isinstance(nta, float) and pd.isna(nta)):
         return None

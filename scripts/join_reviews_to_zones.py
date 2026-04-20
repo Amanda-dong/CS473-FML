@@ -1,17 +1,17 @@
-"""Join Yelp Fusion reviews with ``yelp_business_manhattan_zones`` for zone_id + time_key.
+"""Join Yelp Fusion reviews with ``yelp_business_zones`` for zone_id + time_key.
 
 Adds:
 
 - ``time_key``: calendar year from ``review_date`` (int).
 - ``review_id``: stable SHA-256 hex id from (restaurant_id, review_date, review_text).
-- ``nta``, ``zone_id``, ``in_manhattan_nta``, ``in_modeled_microzone`` from the zones table.
+- ``nta``, ``zone_id``, ``in_nyc_nta``, ``in_modeled_microzone`` from the zones table.
 
 Usage (from repo root)::
 
     python scripts/join_reviews_to_zones.py
 
     python scripts/join_reviews_to_zones.py --reviews data/raw/yelp_reviews_fusion_2022_2026.csv \\
-        --zones data/processed/yelp_business_manhattan_zones.csv \\
+        --zones data/processed/yelp_business_zones.csv \\
         --output data/processed/yelp_reviews_with_zones.csv
 """
 
@@ -28,7 +28,7 @@ if str(REPO) not in sys.path:
 
 RAW = REPO / "data" / "raw"
 PROC = REPO / "data" / "processed"
-DEFAULT_ZONES = PROC / "yelp_business_manhattan_zones.csv"
+DEFAULT_ZONES = PROC / "yelp_business_zones.csv"
 DEFAULT_OUTPUT = PROC / "yelp_reviews_with_zones.csv"
 
 
@@ -47,7 +47,7 @@ def _stable_review_id(restaurant_id: str, review_date: str, review_text: str) ->
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--reviews", type=Path, default=None, help="Yelp Fusion reviews CSV.")
-    p.add_argument("--zones", type=Path, default=DEFAULT_ZONES, help="Output of assign_yelp_business_zones_manhattan.")
+    p.add_argument("--zones", type=Path, default=DEFAULT_ZONES, help="Output of assign_yelp_business_zones.")
     p.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     return p.parse_args()
 
@@ -80,7 +80,7 @@ def main() -> int:
     rev["restaurant_id"] = rev["restaurant_id"].astype(str).str.strip()
     zones["restaurant_id"] = zones["restaurant_id"].astype(str).str.strip()
 
-    zone_cols = [c for c in ("nta", "zone_id", "in_manhattan_nta", "in_modeled_microzone") if c in zones.columns]
+    zone_cols = [c for c in ("nta", "zone_id", "in_nyc_nta", "in_modeled_microzone") if c in zones.columns]
     z = zones[["restaurant_id", *zone_cols]].drop_duplicates(subset=["restaurant_id"])
 
     out = rev.merge(z, on="restaurant_id", how="left")
@@ -103,7 +103,7 @@ def main() -> int:
         "time_key",
         "zone_id",
         "nta",
-        "in_manhattan_nta",
+        "in_nyc_nta",
         "in_modeled_microzone",
         "rating",
         "review_text",

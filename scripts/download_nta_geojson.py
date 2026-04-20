@@ -5,14 +5,14 @@ Writes:
 - ``data/raw/nta2020_nyc.geojson`` — 2020 NTAs (all boroughs), from ArcGIS
   ``NYC_Neighborhood_Tabulation_Areas_2020`` (fields normalized to lowercase).
 
-- ``data/raw/nta_manhattan_2010.geojson`` — **2010** NTAs **Manhattan only**,
-  from ``NYC_2010_NTA``. Uses ``NTACode`` (e.g. MN22) which matches
+- ``data/raw/nta_nyc_2010.geojson`` — **2010** NTAs **all five boroughs**,
+  from ``NYC_2010_NTA``. Uses ``NTACode`` (e.g. MN22, BK09) which matches
   ``zone_crosswalk.ZONE_TO_NTA``.
 
 The legacy ``build_nta_features.load_manhattan_ntas()`` still expects
 ``nta.geojson`` + the ACS GDB crosswalk. For **Yelp → zone_id** without the GDB,
-use ``load_manhattan_ntas_for_zones()`` in ``src.data.nta_layers`` (reads
-``nta_manhattan_2010.geojson``).
+use ``load_nyc_ntas_for_zones()`` in ``src.data.nta_layers`` (reads
+``nta_nyc_2010.geojson``).
 
 Usage::
 
@@ -34,11 +34,11 @@ URL_2020 = (
     "NYC_Neighborhood_Tabulation_Areas_2020/FeatureServer/0/query"
     "?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500"
 )
-URL_2010_MN = (
+URL_2010_NYC = (
     "https://services5.arcgis.com/GfwWNkhOj9bNBqoJ/arcgis/rest/services/"
     "NYC_2010_NTA/FeatureServer/0/query"
-    "?where=BoroName%3D%27Manhattan%27&outFields=*&outSR=4326&f=geojson"
-    "&resultRecordCount=500"
+    "?where=1%3D1&outFields=*&outSR=4326&f=geojson"
+    "&resultRecordCount=5000"
 )
 
 
@@ -78,9 +78,9 @@ def main() -> int:
     p2020.write_text(json.dumps(d2020), encoding="utf-8")
     print(f"[write] {p2020} ({len(d2020.get('features', []))} features)")
 
-    print("[fetch] 2010 NTAs (Manhattan only)...")
-    d2010 = _normalize_2010(_fetch_json(URL_2010_MN))
-    p2010 = RAW / "nta_manhattan_2010.geojson"
+    print("[fetch] 2010 NTAs (all NYC)...")
+    d2010 = _normalize_2010(_fetch_json(URL_2010_NYC))
+    p2010 = RAW / "nta_nyc_2010.geojson"
     p2010.write_text(json.dumps(d2010), encoding="utf-8")
     print(f"[write] {p2010} ({len(d2010.get('features', []))} features)")
 
@@ -91,7 +91,7 @@ def main() -> int:
 
     print(
         "\nNote: build_nta_features.load_manhattan_ntas() still needs the ACS GDB "
-        "under data/raw/acs_nta_2014_2018/ unless you use nta_layers.load_manhattan_ntas_for_zones()."
+        "under data/raw/acs_nta_2014_2018/ unless you use nta_layers.load_nyc_ntas_for_zones()."
     )
     return 0
 
