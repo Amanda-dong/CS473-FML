@@ -30,8 +30,6 @@ jobs:
           enable-caching: true
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - run: uv pip install --system pre-commit
-
       - name: Cache pre-commit environments
         uses: actions/cache@v4
         with:
@@ -42,7 +40,7 @@ jobs:
 
       - name: Run all pre-commit hooks
         id: hooks
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: uvx pre-commit run --all-files --show-diff-on-failure
         continue-on-error: true
 
       - name: Commit and push auto-fixes
