@@ -74,9 +74,7 @@ def assign_yelp_business_zones(
         out = joined
 
     out["in_nyc_nta"] = out["nta"].notna() & (out["nta"].astype(str).str.strip() != "")
-    out["zone_id"] = out["nta"].map(
-        lambda x: resolve_nta_to_zone_id(x) if pd.notna(x) else None
-    )
+    out["zone_id"] = out["nta"].map(lambda x: resolve_nta_to_zone_id(x) if pd.notna(x) else None)
     out["in_modeled_microzone"] = out["zone_id"].notna()
 
     keep = [
@@ -91,7 +89,5 @@ def assign_yelp_business_zones(
     present = [c for c in keep if c in out.columns]
     result = out[present].reset_index(drop=True)
     if "restaurant_id" in result.columns and result["restaurant_id"].duplicated().any():
-        result = result.drop_duplicates(
-            subset=["restaurant_id"], keep="first"
-        ).reset_index(drop=True)
+        result = result.drop_duplicates(subset=["restaurant_id"], keep="first").reset_index(drop=True)
     return result

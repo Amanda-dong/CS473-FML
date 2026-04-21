@@ -50,11 +50,7 @@ class TrajectoryClusteringModel:
         k = self.n_clusters
         if k is None:
             k = self._auto_select_k(scaled)
-            logger.info(
-                "Auto-selected k=%d via %s",
-                k,
-                "BIC" if self.algorithm == "gmm" else "silhouette",
-            )
+            logger.info("Auto-selected k=%d via %s", k, "BIC" if self.algorithm == "gmm" else "silhouette")
 
         if self.algorithm == "gmm":
             self.model_ = GaussianMixture(
@@ -71,11 +67,7 @@ class TrajectoryClusteringModel:
             self.model_.fit(scaled)
 
         # Store diagnostics
-        labels = (
-            self.model_.predict(scaled)
-            if self.algorithm == "gmm"
-            else self.model_.labels_
-        )
+        labels = self.model_.predict(scaled) if self.algorithm == "gmm" else self.model_.labels_
         n_unique = len(set(labels))
         if 1 < n_unique < len(scaled):
             self.diagnostics_["silhouette"] = float(silhouette_score(scaled, labels))
@@ -140,11 +132,11 @@ class TrajectoryClusteringModel:
         labeled = feature_matrix.copy()
         labeled["trajectory_cluster"] = self.predict(feature_matrix)
         numeric_cols = labeled.select_dtypes(include=["number"]).columns.tolist()
-        return labeled.groupby("trajectory_cluster")[numeric_cols].mean(
-            numeric_only=True
-        )
+        return labeled.groupby("trajectory_cluster")[numeric_cols].mean(numeric_only=True)
 
-    def cluster_stability(self, scaled_data: np.ndarray, n_runs: int = 10) -> float:
+    def cluster_stability(
+        self, scaled_data: np.ndarray, n_runs: int = 10
+    ) -> float:
         """Measure clustering stability via Adjusted Rand Index across runs.
 
         Fits the model ``n_runs`` times with different seeds and computes
@@ -178,11 +170,7 @@ class TrajectoryClusteringModel:
         Returns DataFrame with columns: k, silhouette, inertia (or bic/aic for GMM).
         """
         numeric = self._select_numeric_features(feature_matrix)
-        scaled = (
-            self.scaler_.fit_transform(numeric)
-            if self.scaler_
-            else StandardScaler().fit_transform(numeric)
-        )
+        scaled = self.scaler_.fit_transform(numeric) if self.scaler_ else StandardScaler().fit_transform(numeric)
 
         if k_range is None:
             max_k = min(8, len(scaled) - 1)

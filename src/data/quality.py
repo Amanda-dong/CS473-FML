@@ -70,9 +70,7 @@ def prepare_embedding_corpus(
         if not dedupe_columns:
             dedupe_columns = [text_col]
     else:
-        dedupe_columns = [
-            column for column in dedupe_columns if column in frame.columns
-        ]
+        dedupe_columns = [column for column in dedupe_columns if column in frame.columns]
         if not dedupe_columns:
             dedupe_columns = [text_col]
 
@@ -109,11 +107,7 @@ def prepare_training_frame(
     if "label_quality" in frame.columns:
         frame = frame[frame["label_quality"].fillna(0.0) >= min_label_quality].copy()
 
-    reserved = set(present_key_columns) | {
-        target_col,
-        "label_quality",
-        "missingness_fraction",
-    }
+    reserved = set(present_key_columns) | {target_col, "label_quality", "missingness_fraction"}
     non_numeric = [
         column
         for column in frame.columns

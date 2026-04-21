@@ -72,9 +72,7 @@ def _cross_validate_cindex(
     c_indices = []
     for i in range(n_folds):
         test_idx = indices[i * fold_size : (i + 1) * fold_size]
-        train_idx = np.concatenate(
-            [indices[: i * fold_size], indices[(i + 1) * fold_size :]]
-        )
+        train_idx = np.concatenate([indices[:i * fold_size], indices[(i + 1) * fold_size:]])
         train_df = history.iloc[train_idx]
         test_df = history.iloc[test_idx]
 
@@ -135,11 +133,7 @@ def train_and_evaluate() -> None:
     if not rsf.uses_heuristic_:
         cv_mean_rsf, cv_std_rsf = _cross_validate_cindex(history, "rsf")
         print(f"  C-index (5-fold CV): {cv_mean_rsf:.4f} ± {cv_std_rsf:.4f}")
-        results["rsf"] = {
-            "c_index": c_rsf,
-            "cv_mean": cv_mean_rsf,
-            "cv_std": cv_std_rsf,
-        }
+        results["rsf"] = {"c_index": c_rsf, "cv_mean": cv_mean_rsf, "cv_std": cv_std_rsf}
     else:
         results["rsf"] = {"c_index": c_rsf}
 
@@ -176,9 +170,7 @@ def train_and_evaluate() -> None:
             if feature_cols:
                 zone_mean = zone_data[feature_cols].mean().to_frame().T
                 risk = best_model.predict_risk(zone_mean).values[0]
-                zone_rows.append(
-                    {"zone_id": zid, "survival_score": round(1.0 - risk, 4)}
-                )
+                zone_rows.append({"zone_id": zid, "survival_score": round(1.0 - risk, 4)})
         if zone_rows:
             zone_scores = pd.DataFrame(zone_rows)
             out_path = DATA_DIR / "zone_survival_scores.parquet"

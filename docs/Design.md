@@ -1,7 +1,7 @@
 # NYC Restaurant Intelligence Platform - Design Document
 
-Updated: April 1, 2026
-Team: Catherine · Harsh · Tony · Siqi · Amanda
+Updated: April 1, 2026  
+Team: Catherine · Harsh · Tony · Siqi · Amanda  
 Repo: github.com/Amanda-dong/CS473-FML
 
 ## 1. Repository Structure

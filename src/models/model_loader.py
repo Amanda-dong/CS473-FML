@@ -19,9 +19,7 @@ def _candidate_paths(path_or_paths: str | Path | Iterable[str | Path]) -> list[P
     return [Path(path) for path in path_or_paths]
 
 
-def _first_existing_path(
-    path_or_paths: str | Path | Iterable[str | Path],
-) -> Path | None:
+def _first_existing_path(path_or_paths: str | Path | Iterable[str | Path]) -> Path | None:
     """Return the first existing path from a candidate list."""
 
     for candidate in _candidate_paths(path_or_paths):
@@ -88,11 +86,7 @@ def load_scoring_model(path: str | Path | Iterable[str | Path]):
         p = _first_existing_path(path)
         if p is not None:
             model = joblib.load(p)
-            if isinstance(model, dict) and {
-                "model",
-                "feature_names",
-                "params",
-            }.issubset(model):
+            if isinstance(model, dict) and {"model", "feature_names", "params"}.issubset(model):
                 hydrated = LearnedScoringModel(params=model["params"])
                 hydrated.model = model["model"]
                 hydrated.feature_names = list(model["feature_names"])
@@ -129,12 +123,7 @@ def load_feature_matrix(path: str | Path | Iterable[str | Path]):
         p = _first_existing_path(path)
         if p is not None:
             df = pd.read_parquet(p)
-            logger.info(
-                "Feature matrix loaded from %s: %d rows x %d cols",
-                p,
-                len(df),
-                len(df.columns),
-            )
+            logger.info("Feature matrix loaded from %s: %d rows x %d cols", p, len(df), len(df.columns))
             return df
     except Exception as e:
         logger.warning("Could not load feature matrix: %s", e)

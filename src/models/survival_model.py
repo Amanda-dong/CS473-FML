@@ -49,17 +49,12 @@ class SurvivalModelBundle:
     def fit(self, restaurant_history: pd.DataFrame) -> "SurvivalModelBundle":
         self.feature_columns_ = self._select_numeric_features(restaurant_history)
         required = {self.duration_col, self.event_col}
-        if (
-            not required.issubset(restaurant_history.columns)
-            or not self.feature_columns_
-        ):
+        if not required.issubset(restaurant_history.columns) or not self.feature_columns_:
             self.uses_heuristic_ = True
             self.fitted_ = True
             return self
 
-        model_frame = restaurant_history[
-            [self.duration_col, self.event_col, *self.feature_columns_]
-        ].copy()
+        model_frame = restaurant_history[[self.duration_col, self.event_col, *self.feature_columns_]].copy()
         model_frame = model_frame.fillna(0.0)
 
         if self.baseline == "rsf":
@@ -78,18 +73,14 @@ class SurvivalModelBundle:
 
     def _fit_cox(self, model_frame: pd.DataFrame) -> None:
         self.cox_model_ = CoxPHFitter()
-        self.cox_model_.fit(
-            model_frame, duration_col=self.duration_col, event_col=self.event_col
-        )
+        self.cox_model_.fit(model_frame, duration_col=self.duration_col, event_col=self.event_col)
 
     def _fit_rsf(self, model_frame: pd.DataFrame) -> None:
         y = np.array(
-            list(
-                zip(
-                    model_frame[self.event_col].astype(bool),
-                    model_frame[self.duration_col].astype(float),
-                )
-            ),
+            list(zip(
+                model_frame[self.event_col].astype(bool),
+                model_frame[self.duration_col].astype(float),
+            )),
             dtype=[("event", bool), ("duration", float)],
         )
         X = model_frame[self.feature_columns_].values
@@ -99,52 +90,34 @@ class SurvivalModelBundle:
     def predict_risk(self, candidate_frame: pd.DataFrame) -> pd.Series:
         if not self.fitted_:
             raise RuntimeError("Call fit() before predict_risk().")
-        if self.uses_heuristic_ or (
-            self.cox_model_ is None and self.rsf_model_ is None
-        ):
+        if self.uses_heuristic_ or (self.cox_model_ is None and self.rsf_model_ is None):
             rent_pressure = (
                 candidate_frame["rent_pressure"]
                 if "rent_pressure" in candidate_frame
-                else pd.Series(
-                    [0.0] * len(candidate_frame), index=candidate_frame.index
-                )
+                else pd.Series([0.0] * len(candidate_frame), index=candidate_frame.index)
             )
             competition = (
                 candidate_frame["competition_score"]
                 if "competition_score" in candidate_frame
-                else pd.Series(
-                    [0.0] * len(candidate_frame), index=candidate_frame.index
-                )
+                else pd.Series([0.0] * len(candidate_frame), index=candidate_frame.index)
             )
             risk = (rent_pressure.astype(float) + competition.astype(float)) / 2.0
             return risk.clip(lower=0.0, upper=1.0).rename("closure_risk")
 
         if self.rsf_model_ is not None:
-            X = (
-                candidate_frame.reindex(columns=self.feature_columns_, fill_value=0.0)
-                .fillna(0.0)
-                .values
-            )
+            X = candidate_frame.reindex(columns=self.feature_columns_, fill_value=0.0).fillna(0.0).values
             chf = self.rsf_model_.predict_cumulative_hazard_function(X)  # type: ignore[union-attr]
             # Use final cumulative hazard as risk proxy
             risk_vals = np.array([fn.y[-1] for fn in chf])
-            risk_series = pd.Series(
-                risk_vals, index=candidate_frame.index, name="closure_risk"
-            )
+            risk_series = pd.Series(risk_vals, index=candidate_frame.index, name="closure_risk")
             max_val = float(risk_series.max())
             if max_val:
                 risk_series = risk_series / max_val
             return risk_series.clip(0.0, 1.0)
 
-        score_frame = candidate_frame.reindex(
-            columns=self.feature_columns_, fill_value=0.0
-        ).fillna(0.0)
+        score_frame = candidate_frame.reindex(columns=self.feature_columns_, fill_value=0.0).fillna(0.0)
         partial_hazard = self.cox_model_.predict_partial_hazard(score_frame)  # type: ignore[union-attr]
-        normalized = (
-            partial_hazard / partial_hazard.max()
-            if float(partial_hazard.max())
-            else partial_hazard
-        )
+        normalized = partial_hazard / partial_hazard.max() if float(partial_hazard.max()) else partial_hazard
         return normalized.rename("closure_risk")
 
     def predict_median_survival(self, candidate_frame: pd.DataFrame) -> pd.Series:
@@ -155,19 +128,13 @@ class SurvivalModelBundle:
         if not self.fitted_:
             raise RuntimeError("Call fit() before predict_median_survival().")
 
-        if self.uses_heuristic_ or (
-            self.cox_model_ is None and self.rsf_model_ is None
-        ):
+        if self.uses_heuristic_ or (self.cox_model_ is None and self.rsf_model_ is None):
             risk = self.predict_risk(candidate_frame)
             # Heuristic: invert risk → map [0,1] risk to [2000, 30] days
             return ((1.0 - risk) * 1970 + 30).rename("open_days")
 
         if self.rsf_model_ is not None:
-            X = (
-                candidate_frame.reindex(columns=self.feature_columns_, fill_value=0.0)
-                .fillna(0.0)
-                .values
-            )
+            X = candidate_frame.reindex(columns=self.feature_columns_, fill_value=0.0).fillna(0.0).values
             surv_funcs = self.rsf_model_.predict_survival_function(X)  # type: ignore[union-attr]
             medians = []
             for fn in surv_funcs:
@@ -176,9 +143,7 @@ class SurvivalModelBundle:
                 medians.append(float(below[0]) if len(below) > 0 else float(fn.x[-1]))
             return pd.Series(medians, index=candidate_frame.index, name="open_days")
 
-        score_frame = candidate_frame.reindex(
-            columns=self.feature_columns_, fill_value=0.0
-        ).fillna(0.0)
+        score_frame = candidate_frame.reindex(columns=self.feature_columns_, fill_value=0.0).fillna(0.0)
         median_survival = self.cox_model_.predict_median(score_frame)  # type: ignore[union-attr]
         return median_survival.rename("open_days")
 
@@ -224,7 +189,6 @@ class SurvivalModelBundle:
         # Kaplan-Meier estimator for censoring distribution (IPCW)
         try:
             from lifelines import KaplanMeierFitter
-
             kmf_censor = KaplanMeierFitter()
             # Fit on censoring times: event=1 means censored (flip events)
             kmf_censor.fit(durations, event_observed=1 - events)
@@ -241,12 +205,10 @@ class SurvivalModelBundle:
                 ).fillna(0.0)
                 surv_fn = self.cox_model_.predict_survival_function(score_frame)
                 # Evaluate at time t; use nearest available time if t not in index
-                surv_pred = np.array(
-                    [
-                        float(sf.asof(t)) if t <= sf.index.max() else float(sf.iloc[-1])
-                        for _, sf in surv_fn.items()
-                    ]
-                )
+                surv_pred = np.array([
+                    float(sf.asof(t)) if t <= sf.index.max() else float(sf.iloc[-1])
+                    for _, sf in surv_fn.items()
+                ])
             else:
                 # Exponential approximation (acknowledged limitation)
                 surv_pred = np.exp(-risk * (t / 365.0))
@@ -257,9 +219,7 @@ class SurvivalModelBundle:
             # Exclude: censored before t (outcome unknown)
             informative = (durations >= t) | (events == 1)
             if informative.sum() == 0:
-                rows.append(
-                    {"time": float(t), "brier_score": np.nan, "n_informative": 0}
-                )
+                rows.append({"time": float(t), "brier_score": np.nan, "n_informative": 0})
                 continue
 
             observed = (durations > t).astype(float)
@@ -267,31 +227,25 @@ class SurvivalModelBundle:
             if has_ipcw:
                 # IPCW weights: 1 / G(min(T_i, t)) where G is censoring survival
                 eval_times = np.minimum(durations, float(t))
-                weights = np.array(
-                    [
-                        1.0 / max(float(kmf_censor.predict(et)), 0.01)
-                        for et in eval_times
-                    ]
-                )
+                weights = np.array([
+                    1.0 / max(float(kmf_censor.predict(et)), 0.01)
+                    for et in eval_times
+                ])
                 weights = weights[informative]
-                bs = float(
-                    np.average(
-                        (surv_pred[informative] - observed[informative]) ** 2,
-                        weights=weights,
-                    )
-                )
+                bs = float(np.average(
+                    (surv_pred[informative] - observed[informative]) ** 2,
+                    weights=weights,
+                ))
             else:
-                bs = float(
-                    np.mean((surv_pred[informative] - observed[informative]) ** 2)
-                )
+                bs = float(np.mean(
+                    (surv_pred[informative] - observed[informative]) ** 2
+                ))
 
-            rows.append(
-                {
-                    "time": float(t),
-                    "brier_score": bs,
-                    "n_informative": int(informative.sum()),
-                }
-            )
+            rows.append({
+                "time": float(t),
+                "brier_score": bs,
+                "n_informative": int(informative.sum()),
+            })
 
         return pd.DataFrame(rows)
 
@@ -320,14 +274,10 @@ class SurvivalModelBundle:
                 columns=self.feature_columns_, fill_value=0.0
             ).fillna(0.0)
             surv_fn = self.cox_model_.predict_survival_function(score_frame)
-            pred_surv = np.array(
-                [
-                    float(sf.asof(horizon_days))
-                    if horizon_days <= sf.index.max()
-                    else float(sf.iloc[-1])
-                    for _, sf in surv_fn.items()
-                ]
-            )
+            pred_surv = np.array([
+                float(sf.asof(horizon_days)) if horizon_days <= sf.index.max() else float(sf.iloc[-1])
+                for _, sf in surv_fn.items()
+            ])
         else:
             pred_surv = np.exp(-risk * (horizon_days / 365.0))
 
@@ -337,9 +287,7 @@ class SurvivalModelBundle:
         # Exclude: censored before horizon (outcome unknown)
         informative = (events == 1) | (durations >= horizon_days)
         if informative.sum() < 2:
-            return pd.DataFrame(
-                columns=["predicted_survival", "actual_survival", "count", "bin_error"]
-            )
+            return pd.DataFrame(columns=["predicted_survival", "actual_survival", "count", "bin_error"])
 
         pred_surv = pred_surv[informative]
         actual = (durations[informative] > horizon_days).astype(float)
@@ -355,14 +303,12 @@ class SurvivalModelBundle:
                 continue
             mean_pred = float(np.mean(pred_surv[mask]))
             mean_actual = float(np.mean(actual[mask]))
-            rows.append(
-                {
-                    "predicted_survival": mean_pred,
-                    "actual_survival": mean_actual,
-                    "count": float(count),
-                    "bin_error": abs(mean_pred - mean_actual),
-                }
-            )
+            rows.append({
+                "predicted_survival": mean_pred,
+                "actual_survival": mean_actual,
+                "count": float(count),
+                "bin_error": abs(mean_pred - mean_actual),
+            })
 
         return pd.DataFrame(rows)
 
@@ -380,10 +326,7 @@ class SurvivalModelBundle:
                 show_plots=False,
                 p_value_threshold=0.05,
             )
-            return {
-                "ph_test_results": str(results),
-                "passed": results is None or len(results) == 0,
-            }
+            return {"ph_test_results": str(results), "passed": results is None or len(results) == 0}
         except Exception as e:
             return {"error": f"PH test failed: {e}"}
 
@@ -421,30 +364,20 @@ def build_real_restaurant_history(
     """
     licenses = licenses_df.copy()
     if "restaurant_id" in licenses.columns:
-        licenses["_inspection_restaurant_id"] = licenses["restaurant_id"].replace(
-            {"UNKNOWN": pd.NA, "": pd.NA}
-        )
+        licenses["_inspection_restaurant_id"] = licenses["restaurant_id"].replace({"UNKNOWN": pd.NA, "": pd.NA})
     else:
-        licenses["_inspection_restaurant_id"] = pd.Series(
-            pd.NA, index=licenses.index, dtype="object"
-        )
+        licenses["_inspection_restaurant_id"] = pd.Series(pd.NA, index=licenses.index, dtype="object")
     if licenses["_inspection_restaurant_id"].notna().any():
         licenses["_entity_id"] = licenses["_inspection_restaurant_id"].astype("string")
     elif "business_unique_id" in licenses.columns:
-        licenses["_entity_id"] = (
-            licenses["business_unique_id"]
-            .replace({"UNKNOWN": pd.NA, "": pd.NA})
-            .astype("string")
-        )
+        licenses["_entity_id"] = licenses["business_unique_id"].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
     else:
         licenses["_entity_id"] = pd.Series(pd.NA, index=licenses.index, dtype="string")
 
     # Handle both ETL column names (event_date) and legacy (status_date)
     date_col = "event_date" if "event_date" in licenses.columns else "status_date"
     licenses["_date"] = pd.to_datetime(licenses[date_col])
-    licenses = licenses.dropna(subset=["_entity_id", "_date"]).sort_values(
-        ["_entity_id", "_date"]
-    )
+    licenses = licenses.dropna(subset=["_entity_id", "_date"]).sort_values(["_entity_id", "_date"])
 
     # Handle both nta_id (ETL output) and zone_id (legacy)
     zone_col = "nta_id" if "nta_id" in licenses.columns else "zone_id"
@@ -483,16 +416,14 @@ def build_real_restaurant_history(
         end = last_row["_date"] if event_observed else cutoff
         duration_days = max((end - start).days, 1)
 
-        records.append(
-            {
-                "restaurant_id": rid,
-                "_inspection_restaurant_id": first_row.get("_inspection_restaurant_id"),
-                "zone_id": zone_id,
-                "cuisine_type": cuisine,
-                "duration_days": duration_days,
-                "event_observed": event_observed,
-            }
-        )
+        records.append({
+            "restaurant_id": rid,
+            "_inspection_restaurant_id": first_row.get("_inspection_restaurant_id"),
+            "zone_id": zone_id,
+            "cuisine_type": cuisine,
+            "duration_days": duration_days,
+            "event_observed": event_observed,
+        })
 
     result = pd.DataFrame(records)
     if result.empty:
@@ -514,23 +445,15 @@ def build_real_restaurant_history(
             right_index=True,
             how="left",
         )
-        result["inspection_grade_numeric"] = result["inspection_grade_numeric"].fillna(
-            2.0
-        )
+        result["inspection_grade_numeric"] = result["inspection_grade_numeric"].fillna(2.0)
     else:
         result["inspection_grade_numeric"] = 2.0
 
     # Join zone features
     if zone_features is not None and "zone_id" in result.columns:
-        zone_cols = [
-            c
-            for c in ["rent_pressure", "competition_score", "transit_access"]
-            if c in zone_features.columns
-        ]
+        zone_cols = [c for c in ["rent_pressure", "competition_score", "transit_access"] if c in zone_features.columns]
         if zone_cols and "zone_id" in zone_features.columns:
-            result = result.merge(
-                zone_features[["zone_id", *zone_cols]], on="zone_id", how="left"
-            )
+            result = result.merge(zone_features[["zone_id", *zone_cols]], on="zone_id", how="left")
             for c in zone_cols:
                 result[c] = result[c].fillna(0.5)
     for c in ["rent_pressure", "competition_score", "transit_access"]:

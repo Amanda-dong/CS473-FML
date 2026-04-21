@@ -69,11 +69,7 @@ def main() -> int:
 
     n = len(out)
     m = int(out["in_nyc_nta"].sum()) if "in_nyc_nta" in out.columns else 0
-    z = (
-        int(out["in_modeled_microzone"].sum())
-        if "in_modeled_microzone" in out.columns
-        else 0
-    )
+    z = int(out["in_modeled_microzone"].sum()) if "in_modeled_microzone" in out.columns else 0
     print(f"[write] {args.output}")
     print(f"[stats] businesses={n} in_nyc_nta={m} in_modeled_microzone={z}")
     return 0

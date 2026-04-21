@@ -1,7 +1,7 @@
 # NYC Restaurant Intelligence Platform - Task Division
 
-Updated: April 1, 2026
-Spring 2026 · 8 weeks compressed into 4 sprint blocks
+Updated: April 1, 2026  
+Spring 2026 · 8 weeks compressed into 4 sprint blocks  
 Team: Catherine · Harsh · Tony · Siqi · Amanda
 
 ## Sprint 1: Source Audit, Setup, and Feasibility Lock

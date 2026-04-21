@@ -31,21 +31,9 @@ def run_placeholder_etl() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 _NTA_NAMES = [
-    "Brooklyn",
-    "Manhattan",
-    "Queens",
-    "Bronx",
-    "Harlem",
-    "Astoria",
-    "Flushing",
-    "Williamsburg",
-    "Bushwick",
-    "Flatbush",
-    "Greenpoint",
-    "Sunset Park",
-    "Jackson Heights",
-    "Bay Ridge",
-    "Ridgewood",
+    "Brooklyn", "Manhattan", "Queens", "Bronx", "Harlem",
+    "Astoria", "Flushing", "Williamsburg", "Bushwick", "Flatbush",
+    "Greenpoint", "Sunset Park", "Jackson Heights", "Bay Ridge", "Ridgewood",
 ]
 
 _SUBREDDITS = ["nyc", "AskNYC"]
@@ -82,17 +70,13 @@ def fetch() -> pd.DataFrame:
             if created < cutoff:
                 continue
             text = f"{post.title} {post.selftext}"
-            rows.append(
-                {
-                    "month": created.strftime("%Y-%m"),
-                    "community_district": _extract_community_district(text),
-                    "mention_text": post.title[:200],
-                    "subreddit": sub_name,
-                }
-            )
-    return (
-        pd.DataFrame(rows) if rows else pd.DataFrame(columns=list(DATASET_SPEC.columns))
-    )
+            rows.append({
+                "month": created.strftime("%Y-%m"),
+                "community_district": _extract_community_district(text),
+                "mention_text": post.title[:200],
+                "subreddit": sub_name,
+            })
+    return pd.DataFrame(rows) if rows else pd.DataFrame(columns=list(DATASET_SPEC.columns))
 
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:

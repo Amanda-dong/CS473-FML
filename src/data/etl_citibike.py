@@ -26,7 +26,6 @@ def run_placeholder_etl() -> pd.DataFrame:
 
 # ---------------------------------------------------------------------------
 
-
 def run_etl(limit: int = 50000) -> pd.DataFrame:  # noqa: ARG001
     """Load real Citi Bike data. Raises — requires S3 trip data download."""
     raise RuntimeError(

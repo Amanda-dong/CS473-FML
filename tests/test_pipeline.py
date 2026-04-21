@@ -73,9 +73,7 @@ def test_processed_preflight_passes_with_minimal_artifacts(
     assert report.passed
 
 
-def test_processed_preflight_handles_bad_survival_artifacts_without_raising(
-    tmp_path,
-) -> None:
+def test_processed_preflight_handles_bad_survival_artifacts_without_raising(tmp_path) -> None:
     pd.DataFrame(
         {
             "zone_id": ["bk-tandon"],
@@ -85,12 +83,8 @@ def test_processed_preflight_handles_bad_survival_artifacts_without_raising(
             "label_quality": [1.0],
         }
     ).to_parquet(tmp_path / "feature_matrix.parquet", index=False)
-    pd.DataFrame({"restaurant_id": ["r1"]}).to_parquet(
-        tmp_path / "licenses.parquet", index=False
-    )
-    pd.DataFrame(
-        {"review_text": ["healthy lunch"], "restaurant_id": ["r1"]}
-    ).to_parquet(
+    pd.DataFrame({"restaurant_id": ["r1"]}).to_parquet(tmp_path / "licenses.parquet", index=False)
+    pd.DataFrame({"review_text": ["healthy lunch"], "restaurant_id": ["r1"]}).to_parquet(
         tmp_path / "yelp.parquet",
         index=False,
     )
@@ -105,7 +99,5 @@ def test_processed_preflight_handles_bad_survival_artifacts_without_raising(
     )
 
     assert not report.passed
-    survival_check = next(
-        check for check in report.checks if check.name == "survival_training"
-    )
+    survival_check = next(check for check in report.checks if check.name == "survival_training")
     assert not survival_check.passed

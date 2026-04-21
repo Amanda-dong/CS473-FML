@@ -42,9 +42,7 @@ def build_blocked_splits(
     for split_end in range(min_train_periods, len(periods) - test_size + 1):
         train_periods = tuple(periods[:split_end])
         test_periods = tuple(periods[split_end : split_end + test_size])
-        splits.append(
-            TemporalSplit(train_periods=train_periods, test_periods=test_periods)
-        )
+        splits.append(TemporalSplit(train_periods=train_periods, test_periods=test_periods))
     return splits
 
 
@@ -77,9 +75,7 @@ def evaluate_top_k(recommended: list[str], observed: list[str], k: int = 5) -> f
 # ---------------------------------------------------------------------------
 
 
-def ndcg_at_k(
-    predicted_scores: np.ndarray, true_relevance: np.ndarray, k: int
-) -> float:
+def ndcg_at_k(predicted_scores: np.ndarray, true_relevance: np.ndarray, k: int) -> float:
     """Normalized Discounted Cumulative Gain at k.
 
     Uses the standard formula:
@@ -95,7 +91,8 @@ def ndcg_at_k(
     order = np.argsort(-predicted_scores)[:k]
     # DCG: sum of true_relevance[order[i]] / log2(i + 2) for i in 0..k-1
     dcg = sum(
-        true_relevance[order[i]] / np.log2(i + 2) for i in range(min(k, len(order)))
+        true_relevance[order[i]] / np.log2(i + 2)
+        for i in range(min(k, len(order)))
     )
     # IDCG: same with ideal ordering (sort true_relevance descending)
     ideal_order = np.argsort(-true_relevance)[:k]
@@ -205,9 +202,7 @@ def bootstrap_metric(
     }
 
 
-def mean_average_precision(
-    predicted_ranking: list[str], true_top_zones: set[str]
-) -> float:
+def mean_average_precision(predicted_ranking: list[str], true_top_zones: set[str]) -> float:
     """MAP: average precision across ranked positions."""
     if not true_top_zones:
         return 0.0
@@ -232,11 +227,7 @@ def calibration_analysis(
     df["bin"] = pd.qcut(df["predicted"], q=n_bins, duplicates="drop")
     result = (
         df.groupby("bin", observed=True)
-        .agg(
-            mean_predicted=("predicted", "mean"),
-            mean_actual=("actual", "mean"),
-            count=("actual", "size"),
-        )
+        .agg(mean_predicted=("predicted", "mean"), mean_actual=("actual", "mean"), count=("actual", "size"))
         .reset_index()
     )
     result.rename(columns={"bin": "bin_label"}, inplace=True)
@@ -290,23 +281,11 @@ def run_temporal_backtest(
         train_years = years[:idx]
 
         drop_cols = [c for c in [year_col, "zone_id"] if c in feature_matrix.columns]
-        train_X = feature_matrix[feature_matrix[year_col].isin(train_years)].drop(
-            columns=drop_cols
-        )
-        train_y = (
-            ground_truth.loc[train_X.index, target_col]
-            if target_col in ground_truth.columns
-            else ground_truth.iloc[train_X.index.to_list(), -1]
-        )
+        train_X = feature_matrix[feature_matrix[year_col].isin(train_years)].drop(columns=drop_cols)
+        train_y = ground_truth.loc[train_X.index, target_col] if target_col in ground_truth.columns else ground_truth.iloc[train_X.index.to_list(), -1]
 
-        test_X = feature_matrix[feature_matrix[year_col] == test_year].drop(
-            columns=drop_cols
-        )
-        test_y = (
-            ground_truth.loc[test_X.index, target_col]
-            if target_col in ground_truth.columns
-            else ground_truth.iloc[test_X.index.to_list(), -1]
-        )
+        test_X = feature_matrix[feature_matrix[year_col] == test_year].drop(columns=drop_cols)
+        test_y = ground_truth.loc[test_X.index, target_col] if target_col in ground_truth.columns else ground_truth.iloc[test_X.index.to_list(), -1]
 
         if len(train_X) == 0 or len(test_X) == 0:
             continue
@@ -324,10 +303,8 @@ def run_temporal_backtest(
         # Bootstrap CI for NDCG@5
         n5_ci = bootstrap_metric(
             lambda p, t: ndcg_at_k(p, t, 5),
-            pred_arr,
-            true_arr,
-            n_bootstrap=500,
-            ci=0.95,
+            pred_arr, true_arr,
+            n_bootstrap=500, ci=0.95,
         )
 
         # For MAP and precision, define "true top" as top-5 by actual outcome
@@ -355,24 +332,20 @@ def run_temporal_backtest(
             pred_norm = (pred_norm - pred_norm.min()) / p_range
         if t_range > 0:
             true_norm = (true_norm - true_norm.min()) / t_range
-        ece = expected_calibration_error(
-            pred_norm, true_norm, n_bins=min(10, len(pred_arr))
-        )
+        ece = expected_calibration_error(pred_norm, true_norm, n_bins=min(10, len(pred_arr)))
 
-        records.append(
-            {
-                "year": test_year,
-                "n_train": len(train_X),
-                "n_test": len(test_X),
-                "ndcg_5": n5,
-                "ndcg_5_ci_lower": n5_ci["ci_lower"],
-                "ndcg_5_ci_upper": n5_ci["ci_upper"],
-                "ndcg_10": n10,
-                "precision_5": p5,
-                "map_score": map_s,
-                "cal_error": cal_err,
-                "ece": ece,
-            }
-        )
+        records.append({
+            "year": test_year,
+            "n_train": len(train_X),
+            "n_test": len(test_X),
+            "ndcg_5": n5,
+            "ndcg_5_ci_lower": n5_ci["ci_lower"],
+            "ndcg_5_ci_upper": n5_ci["ci_upper"],
+            "ndcg_10": n10,
+            "precision_5": p5,
+            "map_score": map_s,
+            "cal_error": cal_err,
+            "ece": ece,
+        })
 
     return pd.DataFrame(records)

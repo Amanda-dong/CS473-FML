@@ -23,16 +23,10 @@ except ImportError:
     HAS_JOBLIB = False
 
 
-def rank_zones(
-    scored_rows: Iterable[dict[str, float | str]],
-) -> list[dict[str, float | str]]:
+def rank_zones(scored_rows: Iterable[dict[str, float | str]]) -> list[dict[str, float | str]]:
     """Sort scored rows by descending opportunity score."""
 
-    return sorted(
-        scored_rows,
-        key=lambda row: float(row.get("opportunity_score", 0.0)),
-        reverse=True,
-    )
+    return sorted(scored_rows, key=lambda row: float(row.get("opportunity_score", 0.0)), reverse=True)
 
 
 # ---------------------------------------------------------------------------
@@ -76,14 +70,7 @@ class LearnedRanker:
         if not HAS_JOBLIB:
             raise ImportError("joblib is required for save()")
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(
-            {
-                "model": self.model,
-                "feature_names": self.feature_names,
-                "params": self.params,
-            },
-            path,
-        )
+        joblib.dump({"model": self.model, "feature_names": self.feature_names, "params": self.params}, path)
 
     @classmethod
     def load(cls, path: str) -> "LearnedRanker":

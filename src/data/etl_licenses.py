@@ -17,14 +17,7 @@ DATASET_SPEC = DatasetSpec(
     spatial_unit="restaurant",
     time_grain="year",
     description="Official business-license activity for openings, renewals, and closures.",
-    columns=(
-        "event_date",
-        "restaurant_id",
-        "business_unique_id",
-        "license_status",
-        "nta_id",
-        "category",
-    ),
+    columns=("event_date", "restaurant_id", "business_unique_id", "license_status", "nta_id", "category"),
 )
 
 
@@ -63,13 +56,11 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
-    df = df.rename(
-        columns={
-            "license_creation_date": "event_date",
-            "nta": "nta_id",
-            "business_category": "category",
-        }
-    )
+    df = df.rename(columns={
+        "license_creation_date": "event_date",
+        "nta": "nta_id",
+        "business_category": "category",
+    })
     if "business_unique_id" not in df.columns:
         df["business_unique_id"] = pd.NA
     if "restaurant_id" not in df.columns:

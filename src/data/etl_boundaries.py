@@ -26,7 +26,6 @@ def run_placeholder_etl() -> pd.DataFrame:
 
 # ---------------------------------------------------------------------------
 
-
 def run_etl(limit: int = 50000) -> pd.DataFrame:  # noqa: ARG001
     """Load real NTA boundary data. Raises — requires NYC GeoJSON download."""
     raise RuntimeError(
