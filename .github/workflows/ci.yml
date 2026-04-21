@@ -23,8 +23,9 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uvx ruff format --check src tests
-      - run: uvx ruff check src tests
+      - run: uv pip install --system ruff
+      - run: ruff format --check src tests
+      - run: ruff check src tests
 
   test:
     name: Tests & Coverage
@@ -45,10 +46,9 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uv venv --python ${{ env.PYTHON_VERSION }}
-      - run: uv pip install -r requirements.txt pytest-cov
+      - run: uv pip install --system -r requirements.txt pytest-cov
       - run: |
-          uv run python -m pytest -v --tb=short \
+          python -m pytest -v --tb=short \
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
@@ -57,7 +57,7 @@ jobs:
         if: always()
         run: |
           echo "## Test Coverage" >> "$GITHUB_STEP_SUMMARY"
-          uv run python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || \
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || \
             echo "*(coverage data unavailable)*" >> "$GITHUB_STEP_SUMMARY"
       - name: Coverage diff comment on PR
         if: always()
@@ -79,8 +79,9 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uvx bandit -r src -ll -ii -f txt
-      - run: uvx pip-audit -r requirements.txt --progress-spinner=off --strict
+      - run: uv pip install --system bandit pip-audit
+      - run: bandit -r src -ll -ii -f txt
+      - run: pip-audit -r requirements.txt --progress-spinner=off --strict
 
   dependency-review:
     name: Dependency Review
