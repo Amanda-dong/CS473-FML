@@ -56,7 +56,11 @@ def build_feature_matrix(feature_tables: dict[str, pd.DataFrame]) -> pd.DataFram
 
     merged = tables[0].copy()
     for frame in tables[1:]:
-        join_keys = [column for column in ("zone_id", "time_key") if column in merged.columns and column in frame.columns]
+        join_keys = [
+            column
+            for column in ("zone_id", "time_key")
+            if column in merged.columns and column in frame.columns
+        ]
         merged = merged.merge(frame, how="outer", on=join_keys)
     return merged
 
@@ -99,7 +103,9 @@ def build_zone_year_matrix(
     feature_tables: dict[str, pd.DataFrame] = {}
     inspections_df = etl_outputs.get("inspections", pd.DataFrame())
 
-    def _agg_to_zone(nta_df: pd.DataFrame, agg_rules: dict[str, str] | None = None) -> pd.DataFrame:
+    def _agg_to_zone(
+        nta_df: pd.DataFrame, agg_rules: dict[str, str] | None = None
+    ) -> pd.DataFrame:
         """Aggregate NTA-level feature table to micro-zone level via crosswalk.
 
         Feature builders output zone_id = NTA code. This converts them to
@@ -117,9 +123,14 @@ def build_zone_year_matrix(
     if not licenses_df.empty:
         lv = build_license_velocity_features(licenses_df)
         if not lv.empty:
-            lv_zone = _agg_to_zone(lv, agg_rules={
-                "license_velocity": "sum", "net_opens": "sum", "net_closes": "sum",
-            })
+            lv_zone = _agg_to_zone(
+                lv,
+                agg_rules={
+                    "license_velocity": "sum",
+                    "net_opens": "sum",
+                    "net_closes": "sum",
+                },
+            )
             if not lv_zone.empty:
                 feature_tables["license_velocity"] = lv_zone
 
@@ -131,9 +142,13 @@ def build_zone_year_matrix(
     if not pluto_df.empty:
         rt = build_rent_trajectory_features(pluto_df)
         if not rt.empty:
-            rt_zone = _agg_to_zone(rt, agg_rules={
-                "rent_pressure": "mean", "mean_assessed_value": "mean",
-            })
+            rt_zone = _agg_to_zone(
+                rt,
+                agg_rules={
+                    "rent_pressure": "mean",
+                    "mean_assessed_value": "mean",
+                },
+            )
             if not rt_zone.empty:
                 rent_static = rt_zone
 
@@ -141,7 +156,9 @@ def build_zone_year_matrix(
     yelp_df = etl_outputs.get("yelp", pd.DataFrame())
     reddit_df = etl_outputs.get("reddit", pd.DataFrame())
     review_locations = _build_restaurant_zone_lookup(inspections_df)
-    review_frame = _prepare_review_signals(yelp_df, restaurant_locations=review_locations)
+    review_frame = _prepare_review_signals(
+        yelp_df, restaurant_locations=review_locations
+    )
     social_frame = _prepare_social_signals(reddit_df)
     if not review_frame.empty or not social_frame.empty:
         ds = build_demand_features(review_frame, social_frame)
@@ -156,7 +173,11 @@ def build_zone_year_matrix(
         acs_zone = aggregate_nta_to_zone(
             acs_df,
             zone_col="nta_id",
-            agg_rules={"population": "sum", "median_income": "mean", "rent_burden": "mean"},
+            agg_rules={
+                "population": "sum",
+                "median_income": "mean",
+                "rent_burden": "mean",
+            },
         )
         if not acs_zone.empty:
             feature_tables["acs"] = acs_zone
@@ -164,16 +185,19 @@ def build_zone_year_matrix(
     # --- Inspections: grade distribution per zone ---
     if not inspections_df.empty and "grade" in inspections_df.columns:
         insp = inspections_df.copy()
-        insp["inspection_date"] = pd.to_datetime(insp["inspection_date"], errors="coerce")
+        insp["inspection_date"] = pd.to_datetime(
+            insp["inspection_date"], errors="coerce"
+        )
         insp = insp.dropna(subset=["inspection_date", "nta_id"])
         insp["time_key"] = insp["inspection_date"].dt.year.astype(int)
         insp["is_a"] = (insp["grade"] == "A").astype(int)
-        grade_agg = (
-            insp.groupby(["nta_id", "time_key"], as_index=False)
-            .agg(inspection_grade_avg=("is_a", "mean"), restaurant_count=("restaurant_id", "nunique"))
+        grade_agg = insp.groupby(["nta_id", "time_key"], as_index=False).agg(
+            inspection_grade_avg=("is_a", "mean"),
+            restaurant_count=("restaurant_id", "nunique"),
         )
         grade_zone = aggregate_nta_to_zone(
-            grade_agg, zone_col="nta_id",
+            grade_agg,
+            zone_col="nta_id",
             agg_rules={"inspection_grade_avg": "mean", "restaurant_count": "sum"},
         )
         if not grade_zone.empty:
@@ -201,20 +225,32 @@ def _build_restaurant_zone_lookup(location_df: pd.DataFrame) -> pd.DataFrame:
     if (
         location_df.empty
         or "restaurant_id" not in location_df.columns
-        or ("nta_id" not in location_df.columns and "zone_id" not in location_df.columns)
+        or (
+            "nta_id" not in location_df.columns and "zone_id" not in location_df.columns
+        )
     ):
         return pd.DataFrame(columns=["restaurant_id", "zone_id"])
 
     zone_col = "nta_id" if "nta_id" in location_df.columns else "zone_id"
     subset = location_df.copy()
     if "inspection_date" in subset.columns:
-        subset["inspection_date"] = pd.to_datetime(subset["inspection_date"], errors="coerce")
+        subset["inspection_date"] = pd.to_datetime(
+            subset["inspection_date"], errors="coerce"
+        )
         subset = subset.sort_values("inspection_date", ascending=False)
-    subset["restaurant_id"] = subset["restaurant_id"].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
-    subset[zone_col] = subset[zone_col].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
+    subset["restaurant_id"] = (
+        subset["restaurant_id"].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
+    )
+    subset[zone_col] = (
+        subset[zone_col].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
+    )
     subset = subset.dropna(subset=["restaurant_id", zone_col])
     subset = subset.rename(columns={zone_col: "zone_id"})
-    return subset[["restaurant_id", "zone_id"]].drop_duplicates(subset=["restaurant_id"]).reset_index(drop=True)
+    return (
+        subset[["restaurant_id", "zone_id"]]
+        .drop_duplicates(subset=["restaurant_id"])
+        .reset_index(drop=True)
+    )
 
 
 def _prepare_review_signals(
@@ -237,7 +273,9 @@ def _prepare_review_signals(
         and not restaurant_locations.empty
         and "restaurant_id" in df.columns
     ):
-        df["restaurant_id"] = df["restaurant_id"].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
+        df["restaurant_id"] = (
+            df["restaurant_id"].replace({"UNKNOWN": pd.NA, "": pd.NA}).astype("string")
+        )
         df = df.merge(restaurant_locations, on="restaurant_id", how="left")
 
     # If there's no zone_id or nta_id, we can't group spatially
@@ -250,13 +288,21 @@ def _prepare_review_signals(
         r"|\bgrain[\s_-]?bowl\b|\bsmoothie\b|\bgluten[\s_-]?free\b"
         r"|\bvegetarian\b|\bnutritious\b|\bplant[\s_-]?based\b"
     )
-    df["_healthy"] = df["review_text"].fillna("").str.lower().str.contains(_healthy_kw, regex=True, na=False).astype(int)
+    df["_healthy"] = (
+        df["review_text"]
+        .fillna("")
+        .str.lower()
+        .str.contains(_healthy_kw, regex=True, na=False)
+        .astype(int)
+    )
 
     grouped = df.groupby([id_col, "time_key"], as_index=False).agg(
         total=("_healthy", "count"),
         healthy_count=("_healthy", "sum"),
     )
-    grouped["healthy_review_share"] = (grouped["healthy_count"] / grouped["total"].clip(lower=1)).clip(0, 1)
+    grouped["healthy_review_share"] = (
+        grouped["healthy_count"] / grouped["total"].clip(lower=1)
+    ).clip(0, 1)
     grouped = grouped.rename(columns={id_col: "zone_id"})
     return grouped[["zone_id", "time_key", "healthy_review_share"]]
 

@@ -17,8 +17,15 @@ DATASET_SPEC = DatasetSpec(
     spatial_unit="restaurant",
     time_grain="year",
     description="Restaurant inspection grades, closures, and critical violations.",
-    columns=("inspection_date", "restaurant_id", "grade", "critical_flag", "nta_id",
-             "cuisine_type", "zipcode"),
+    columns=(
+        "inspection_date",
+        "restaurant_id",
+        "grade",
+        "critical_flag",
+        "nta_id",
+        "cuisine_type",
+        "zipcode",
+    ),
 )
 
 
@@ -45,12 +52,16 @@ def _get_zip_to_nta() -> dict[str, str]:
         return _ZIP_TO_NTA
 
     try:
-        url = f"https://data.cityofnewyork.us/resource/w7w3-xahh.json"
-        resp = requests.get(url, params={
-            "$limit": 50000,
-            "$select": "nta,address_zip",
-            "$where": "nta IS NOT NULL",
-        }, timeout=30)
+        url = "https://data.cityofnewyork.us/resource/w7w3-xahh.json"
+        resp = requests.get(
+            url,
+            params={
+                "$limit": 50000,
+                "$select": "nta,address_zip",
+                "$where": "nta IS NOT NULL",
+            },
+            timeout=30,
+        )
         resp.raise_for_status()
         df = pd.DataFrame(resp.json())
         # Most common NTA per zipcode
@@ -82,10 +93,12 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
-    df = df.rename(columns={
-        "camis": "restaurant_id",
-        "boro": "_boro",
-    })
+    df = df.rename(
+        columns={
+            "camis": "restaurant_id",
+            "boro": "_boro",
+        }
+    )
     df["inspection_date"] = pd.to_datetime(df["inspection_date"], errors="coerce")
 
     # Map zipcode → NTA using the licenses-derived crosswalk
@@ -97,9 +110,16 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
 
     # Fallback for unmapped zips: use boro prefix + "01"
     _boro_prefix = {
-        "manhattan": "MN", "bronx": "BX", "brooklyn": "BK",
-        "queens": "QN", "staten island": "SI",
-        "1": "MN", "2": "BX", "3": "BK", "4": "QN", "5": "SI",
+        "manhattan": "MN",
+        "bronx": "BX",
+        "brooklyn": "BK",
+        "queens": "QN",
+        "staten island": "SI",
+        "1": "MN",
+        "2": "BX",
+        "3": "BK",
+        "4": "QN",
+        "5": "SI",
     }
     unmapped = df["nta_id"].isna()
     if unmapped.any():
@@ -116,7 +136,9 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df["grade"] = df["grade"].fillna("N")
     df["critical_flag"] = df["critical_flag"].fillna("Not Applicable")
     df["restaurant_id"] = df["restaurant_id"].fillna("UNKNOWN")
-    df["cuisine_type"] = df.get("cuisine_description", pd.Series(dtype=str)).fillna("Unknown")
+    df["cuisine_type"] = df.get("cuisine_description", pd.Series(dtype=str)).fillna(
+        "Unknown"
+    )
     if "zipcode" not in df.columns:
         df["zipcode"] = ""
     return df[list(DATASET_SPEC.columns)].reset_index(drop=True)
