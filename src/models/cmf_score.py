@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -38,23 +38,21 @@ class ScoreComponents:
     """
 
     # Demand-side signals
-    healthy_gap_score: float  # under-supply of the concept relative to demand
-    subtype_gap_score: float  # cuisine-specific gap within the broader category
-    demand_signal_score: float = 0.5  # foot-traffic / daytime footfall proxy
-    review_demand_score: float = 0.0  # healthy-demand share from review NLP
+    healthy_gap_score: float       # under-supply of the concept relative to demand
+    subtype_gap_score: float       # cuisine-specific gap within the broader category
+    demand_signal_score: float = 0.5   # foot-traffic / daytime footfall proxy
+    review_demand_score: float = 0.0   # healthy-demand share from review NLP
 
     # Supply-side / viability signals
     merchant_viability_score: float = 0.5  # survival model output
-    license_velocity_score: float = 0.0  # net new licenses (positive = growing area)
+    license_velocity_score: float = 0.0    # net new licenses (positive = growing area)
 
     # Cost / risk signals
-    competition_penalty: float = 0.0  # direct-competitor density
-    rent_pressure_penalty: float = 0.0  # rent as fraction of max assessed value
+    competition_penalty: float = 0.0   # direct-competitor density
+    rent_pressure_penalty: float = 0.0 # rent as fraction of max assessed value
 
     # Context signals
-    transit_access_score: float = (
-        0.5  # proximity to transit (walk-shed / transit catchment)
-    )
+    transit_access_score: float = 0.5  # proximity to transit (walk-shed / transit catchment)
     income_alignment_score: float = 0.5  # median income vs price tier alignment
 
 
@@ -77,23 +75,21 @@ def compute_opening_score(components: ScoreComponents) -> float:
     - rent_pressure_penalty (0.04): penalise high-rent zones (moderate weight — offset by high demand)
     """
     score = (
-        components.demand_signal_score * 0.20
+        components.demand_signal_score     * 0.20
         + components.merchant_viability_score * 0.18
-        + components.subtype_gap_score * 0.16
-        + components.healthy_gap_score * 0.12
+        + components.subtype_gap_score      * 0.16
+        + components.healthy_gap_score      * 0.12
         + components.license_velocity_score * 0.10
-        + components.review_demand_score * 0.08
-        + components.transit_access_score * 0.07
+        + components.review_demand_score    * 0.08
+        + components.transit_access_score   * 0.07
         + components.income_alignment_score * 0.05
-        - components.competition_penalty * 0.08
-        - components.rent_pressure_penalty * 0.04
+        - components.competition_penalty    * 0.08
+        - components.rent_pressure_penalty  * 0.04
     )
     return round(float(score), 4)
 
 
-def score_zone_for_concept(
-    zone_features: dict, concept_subtype: str
-) -> ScoreComponents:  # noqa: ARG001
+def score_zone_for_concept(zone_features: dict, concept_subtype: str) -> ScoreComponents:  # noqa: ARG001
     """Build ScoreComponents from a rich zone feature dict.
 
     Accepts any cuisine concept — concept_subtype is used for future
@@ -105,16 +101,13 @@ def score_zone_for_concept(
         transit_access, income_alignment
     """
     demand = float(zone_features.get("quick_lunch_demand", 0.5))
-    gap = float(
-        zone_features.get("healthy_gap_score", zone_features.get("subtype_gap", 0.5))
-    )
+    gap = float(zone_features.get("healthy_gap_score", zone_features.get("subtype_gap", 0.5)))
     subtype_gap = float(zone_features.get("subtype_gap", 0.5))
     review_share = float(zone_features.get("healthy_review_share", 0.0))
     survival = float(zone_features.get("survival_score", 0.5))
     vel_raw = float(zone_features.get("license_velocity", 0.0))
     # Normalise license velocity: sigmoid(vel) maps (−∞,+∞) → (0,1)
     import math
-
     vel_norm = 1.0 / (1.0 + math.exp(-vel_raw)) if vel_raw != 0.0 else 0.5
     competition = float(zone_features.get("competition_score", 0.0))
     rent = float(zone_features.get("rent_pressure", 0.0))
@@ -200,7 +193,6 @@ class LearnedScoringModel:
 
         preds_all = []
         import xgboost as _xgb
-
         dmat = _xgb.DMatrix(X, feature_names=self.feature_names)
         for _ in range(n_bootstrap):
             # Sample ~80% of trees
@@ -235,14 +227,7 @@ class LearnedScoringModel:
         if not HAS_JOBLIB:
             raise ImportError("joblib is required for save()")
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(
-            {
-                "model": self.model,
-                "feature_names": self.feature_names,
-                "params": self.params,
-            },
-            path,
-        )
+        joblib.dump({"model": self.model, "feature_names": self.feature_names, "params": self.params}, path)
 
     @classmethod
     def load(cls, path: str) -> "LearnedScoringModel":

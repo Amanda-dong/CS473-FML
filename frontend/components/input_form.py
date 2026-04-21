@@ -9,13 +9,7 @@ def render_input_form() -> dict[str, str | int]:
     """Render zone/borough filters and return user selections."""
     zone_type = st.selectbox(
         "Zone type (optional filter)",
-        [
-            "All",
-            "campus_walkshed",
-            "lunch_corridor",
-            "transit_catchment",
-            "business_district",
-        ],
+        ["All", "campus_walkshed", "lunch_corridor", "transit_catchment", "business_district"],
     )
     borough = st.selectbox(
         "Borough (optional filter)",

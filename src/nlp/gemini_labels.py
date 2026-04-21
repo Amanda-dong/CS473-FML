@@ -43,10 +43,8 @@ def _build_batch_prompt(
     subtype_list = ", ".join(subtype_candidates)
     lines = ["Label each review for healthy-food demand and concept subtype."]
     lines.append(f"Allowed subtypes: {subtype_list}.")
-    lines.append(
-        "Return a JSON array with one object per review, each having keys: "
-        "sentiment, concept_subtype, confidence, rationale."
-    )
+    lines.append("Return a JSON array with one object per review, each having keys: "
+                  "sentiment, concept_subtype, confidence, rationale.")
     lines.append("")
     for i, text in enumerate(review_texts):
         lines.append(f"Review {i}: {text}")
@@ -59,6 +57,7 @@ def _cache_key(review_text: str, subtype_candidates: tuple[str, ...]) -> str:
     normalized_subtypes = "|".join(subtype_candidates)
     payload = f"{normalized_subtypes}\n{normalized_text}".encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
 
 
 def _load_cache() -> dict[str, GeminiReviewLabel] | None:
@@ -78,11 +77,8 @@ def _load_cache() -> dict[str, GeminiReviewLabel] | None:
                 rationale=str(rat),
             )
             for rid, sent, sub, conf, rat in zip(
-                df["review_id"],
-                df["sentiment"],
-                df["concept_subtype"],
-                df["confidence"],
-                df["rationale"],
+                df["review_id"], df["sentiment"], df["concept_subtype"],
+                df["confidence"], df["rationale"],
             )
         }
         return cache
@@ -188,10 +184,7 @@ def label_reviews_with_gemini(
                         review_id=review_id,
                         sentiment=str(data.get("sentiment", "neutral")),
                         concept_subtype=str(
-                            data.get(
-                                "concept_subtype",
-                                subtypes[0] if subtypes else "unknown",
-                            )
+                            data.get("concept_subtype", subtypes[0] if subtypes else "unknown")
                         ),
                         confidence=float(data.get("confidence", 0.85)),
                         rationale=str(data.get("rationale", "")),

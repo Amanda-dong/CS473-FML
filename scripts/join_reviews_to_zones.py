@@ -46,15 +46,8 @@ def _stable_review_id(restaurant_id: str, review_date: str, review_text: str) ->
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument(
-        "--reviews", type=Path, default=None, help="Yelp Fusion reviews CSV."
-    )
-    p.add_argument(
-        "--zones",
-        type=Path,
-        default=DEFAULT_ZONES,
-        help="Output of assign_yelp_business_zones.",
-    )
+    p.add_argument("--reviews", type=Path, default=None, help="Yelp Fusion reviews CSV.")
+    p.add_argument("--zones", type=Path, default=DEFAULT_ZONES, help="Output of assign_yelp_business_zones.")
     p.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     return p.parse_args()
 
@@ -76,10 +69,7 @@ def main() -> int:
     if "restaurant_id" not in rev.columns and "business_id" in rev.columns:
         rev["restaurant_id"] = rev["business_id"]
     if "restaurant_id" not in rev.columns:
-        print(
-            "error: need restaurant_id or business_id column in reviews CSV",
-            file=sys.stderr,
-        )
+        print("error: need restaurant_id or business_id column in reviews CSV", file=sys.stderr)
         return 1
 
     zones = pd.read_csv(args.zones)
@@ -90,11 +80,7 @@ def main() -> int:
     rev["restaurant_id"] = rev["restaurant_id"].astype(str).str.strip()
     zones["restaurant_id"] = zones["restaurant_id"].astype(str).str.strip()
 
-    zone_cols = [
-        c
-        for c in ("nta", "zone_id", "in_nyc_nta", "in_modeled_microzone")
-        if c in zones.columns
-    ]
+    zone_cols = [c for c in ("nta", "zone_id", "in_nyc_nta", "in_modeled_microzone") if c in zones.columns]
     z = zones[["restaurant_id", *zone_cols]].drop_duplicates(subset=["restaurant_id"])
 
     out = rev.merge(z, on="restaurant_id", how="left")

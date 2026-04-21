@@ -37,9 +37,7 @@ class RecommendationResponse(BaseModel):
     recommendations: list[ZoneRecommendation] = Field(default_factory=list)
 
 
-def build_placeholder_response(
-    concept_subtype: str, limit: int = 5
-) -> RecommendationResponse:
+def build_placeholder_response(concept_subtype: str, limit: int = 5) -> RecommendationResponse:
     """Build deterministic placeholder cards for the frontend team."""
 
     recommendations = [

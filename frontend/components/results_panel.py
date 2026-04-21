@@ -17,9 +17,7 @@ def render_results_panel(user_state: dict[str, str]) -> None:
     Falls back to build_placeholder_response() on connection failure.
     """
 
-    concept_subtype = canonical_subtype(
-        user_state.get("concept_subtype", "healthy_indian")
-    )
+    concept_subtype = canonical_subtype(user_state.get("concept_subtype", "healthy_indian"))
     limit = int(user_state.get("limit", 5))
     using_placeholder = False
 
@@ -31,9 +29,7 @@ def render_results_panel(user_state: dict[str, str]) -> None:
         payload = {k: v for k, v in user_state.items() if v is not None}
         payload.setdefault("concept_subtype", concept_subtype)
         payload.setdefault("limit", limit)
-        resp = httpx.post(
-            "http://localhost:8000/predict/cmf", json=payload, timeout=3.0
-        )
+        resp = httpx.post("http://localhost:8000/predict/cmf", json=payload, timeout=3.0)
         resp.raise_for_status()
         recommendations = resp.json().get("recommendations", [])
     except Exception:
@@ -54,9 +50,7 @@ def render_results_panel(user_state: dict[str, str]) -> None:
             recommendations = [card.model_dump() for card in response.recommendations]
         except Exception:
             using_placeholder = True
-            response = build_placeholder_response(
-                concept_subtype=concept_subtype, limit=limit
-            )
+            response = build_placeholder_response(concept_subtype=concept_subtype, limit=limit)
             recommendations = [card.model_dump() for card in response.recommendations]
 
     if using_placeholder:

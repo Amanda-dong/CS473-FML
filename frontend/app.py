@@ -39,9 +39,7 @@ def main() -> None:
         st.divider()
         scenario = render_scenario_panel()
         st.divider()
-        render_data_freshness(
-            "Data refreshed nightly from NYC Open Data and Yelp Fusion."
-        )
+        render_data_freshness("Data refreshed nightly from NYC Open Data and Yelp Fusion.")
 
     # ---- Main area ----
     st.title("NYC Restaurant Intelligence Platform")

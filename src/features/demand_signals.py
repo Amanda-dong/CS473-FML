@@ -4,12 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-_OUTPUT_COLUMNS: list[str] = [
-    "zone_id",
-    "time_key",
-    "healthy_review_share",
-    "social_buzz",
-]
+_OUTPUT_COLUMNS: list[str] = ["zone_id", "time_key", "healthy_review_share", "social_buzz"]
 
 
 def build_demand_features(
@@ -37,15 +32,10 @@ def build_demand_features(
     social_frame = social_signals.copy()
 
     # Normalize column names
-    if (
-        "mention_count" in social_frame.columns
-        and "social_buzz" not in social_frame.columns
-    ):
+    if "mention_count" in social_frame.columns and "social_buzz" not in social_frame.columns:
         social_frame = social_frame.rename(columns={"mention_count": "social_buzz"})
 
-    merged = pd.merge(
-        review_frame, social_frame, how="outer", on=["zone_id", "time_key"]
-    )
+    merged = pd.merge(review_frame, social_frame, how="outer", on=["zone_id", "time_key"])
 
     if "healthy_review_share" not in merged.columns:
         merged["healthy_review_share"] = 0.0
@@ -53,9 +43,7 @@ def build_demand_features(
         merged["social_buzz"] = 0.0
 
     merged["healthy_review_share"] = (
-        pd.to_numeric(merged["healthy_review_share"], errors="coerce")
-        .fillna(0.0)
-        .clip(0.0, 1.0)
+        pd.to_numeric(merged["healthy_review_share"], errors="coerce").fillna(0.0).clip(0.0, 1.0)
     )
     merged["social_buzz"] = (
         pd.to_numeric(merged["social_buzz"], errors="coerce").fillna(0.0).clip(0.0, 1.0)
@@ -64,9 +52,7 @@ def build_demand_features(
     return merged
 
 
-def compute_healthy_review_share(
-    yelp_df: pd.DataFrame, taxonomy_keywords: list[str]
-) -> float:
+def compute_healthy_review_share(yelp_df: pd.DataFrame, taxonomy_keywords: list[str]) -> float:
     """Compute the fraction of reviews that mention any healthy keyword.
 
     Parameters

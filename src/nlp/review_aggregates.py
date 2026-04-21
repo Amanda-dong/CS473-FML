@@ -79,9 +79,7 @@ def aggregate_review_labels(
 
         if include_sentiment_dist:
             for sent in ("positive", "neutral", "negative"):
-                result_dict[f"frac_{sent}"] = (grp["sentiment"] == sent).sum() / max(
-                    total, 1
-                )
+                result_dict[f"frac_{sent}"] = (grp["sentiment"] == sent).sum() / max(total, 1)
 
         return pd.Series(result_dict)
 
@@ -90,11 +88,7 @@ def aggregate_review_labels(
     )
 
     # Merge topic distribution if provided
-    if (
-        topic_distribution is not None
-        and not topic_distribution.empty
-        and "zone_id" in topic_distribution.columns
-    ):
+    if topic_distribution is not None and not topic_distribution.empty and "zone_id" in topic_distribution.columns:
         result = result.merge(topic_distribution, on="zone_id", how="left")
 
     return result
@@ -130,9 +124,7 @@ def aggregate_nlp_features(
     topic_dist = topic_distribution_per_zone(reviews_df, embeddings, cluster_labels)
 
     # Embedding features (diversity, PCA)
-    emb_features = compute_zone_embedding_features(
-        reviews_df, embeddings, cluster_labels
-    )
+    emb_features = compute_zone_embedding_features(reviews_df, embeddings, cluster_labels)
 
     # Sentiment distribution from gemini labels
     sentiment_agg = aggregate_review_labels(
@@ -145,7 +137,9 @@ def aggregate_nlp_features(
     if not emb_features.empty and "zone_id" in emb_features.columns:
         # Only keep diversity score from embedding features (topic shares already in topic_dist)
         emb_cols = ["zone_id", "embedding_diversity"]
-        emb_subset = emb_features[[c for c in emb_cols if c in emb_features.columns]]
+        emb_subset = emb_features[
+            [c for c in emb_cols if c in emb_features.columns]
+        ]
         if not emb_subset.empty:
             sentiment_agg = sentiment_agg.merge(emb_subset, on="zone_id", how="left")
 

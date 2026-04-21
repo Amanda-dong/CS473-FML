@@ -34,12 +34,7 @@ DEFAULT_OUTPUT = RAW / "yelp_reviews_fusion_2022_2026.csv"
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument(
-        "--input",
-        type=Path,
-        default=DEFAULT_INPUT,
-        help="Full API review CSV (all years).",
-    )
+    p.add_argument("--input", type=Path, default=DEFAULT_INPUT, help="Full API review CSV (all years).")
     p.add_argument(
         "--output",
         type=Path,

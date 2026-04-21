@@ -17,12 +17,8 @@ from src.nlp.white_space import compute_subtype_gap
 
 # ── subtype classifier ────────────────────────────────────────────────────────
 
-
 def test_subtype_classifier_recognizes_indian_gap() -> None:
-    assert (
-        classify_subtype("Looking for a healthy Indian lunch bowl option")
-        == "healthy_indian"
-    )
+    assert classify_subtype("Looking for a healthy Indian lunch bowl option") == "healthy_indian"
 
 
 def test_subtype_classifier_recognizes_ramen() -> None:
@@ -53,7 +49,6 @@ def test_batch_classify_returns_correct_length() -> None:
 
 # ── white space ───────────────────────────────────────────────────────────────
 
-
 def test_subtype_gap_is_non_negative() -> None:
     assert compute_subtype_gap(0.2, 0.5) == 0.0
 
@@ -69,10 +64,7 @@ def test_subtype_gap_exact_balance() -> None:
 
 # ── review aggregation ────────────────────────────────────────────────────────
 
-
-def test_review_aggregates_returns_expected_columns(
-    sample_review_labels: pd.DataFrame,
-) -> None:
+def test_review_aggregates_returns_expected_columns(sample_review_labels: pd.DataFrame) -> None:
     from src.nlp.review_aggregates import aggregate_review_labels
 
     result = aggregate_review_labels(sample_review_labels)
@@ -85,13 +77,7 @@ def test_review_aggregates_empty_input() -> None:
     from src.nlp.review_aggregates import aggregate_review_labels
 
     result = aggregate_review_labels(pd.DataFrame())
-    assert list(result.columns) == [
-        "zone_id",
-        "time_key",
-        "healthy_review_share",
-        "subtype_gap",
-        "dominant_subtype",
-    ]
+    assert list(result.columns) == ["zone_id", "time_key", "healthy_review_share", "subtype_gap", "dominant_subtype"]
 
 
 def test_review_aggregates_share_bounded(sample_review_labels: pd.DataFrame) -> None:
@@ -103,7 +89,6 @@ def test_review_aggregates_share_bounded(sample_review_labels: pd.DataFrame) -> 
 
 
 # ── gemini labels ─────────────────────────────────────────────────────────────
-
 
 def test_gemini_label_prompt_contains_subtype() -> None:
     from src.nlp.gemini_labels import build_label_prompt
@@ -129,37 +114,19 @@ def test_label_reviews_requires_api_key() -> None:
         label_reviews_with_gemini(reviews, ("salad_bowls", "mexican"), api_key=None)
 
 
-def test_gemini_cache_keys_by_review_content(
-    monkeypatch: pytest.MonkeyPatch, tmp_path
-) -> None:
+def test_gemini_cache_keys_by_review_content(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     from src.nlp import gemini_labels
 
     class FakeModels:
         def __init__(self) -> None:
             self.calls = 0
 
-        def generate_content(
-            self, *, model: str, contents: str, config: dict
-        ) -> object:  # noqa: ARG002
+        def generate_content(self, *, model: str, contents: str, config: dict) -> object:  # noqa: ARG002
             self.calls += 1
             if "fresh salad" in contents:
-                payload = [
-                    {
-                        "sentiment": "positive",
-                        "concept_subtype": "salad_bowls",
-                        "confidence": 0.9,
-                        "rationale": "fresh",
-                    }
-                ]
+                payload = [{"sentiment": "positive", "concept_subtype": "salad_bowls", "confidence": 0.9, "rationale": "fresh"}]
             else:
-                payload = [
-                    {
-                        "sentiment": "negative",
-                        "concept_subtype": "salad_bowls",
-                        "confidence": 0.9,
-                        "rationale": "greasy",
-                    }
-                ]
+                payload = [{"sentiment": "negative", "concept_subtype": "salad_bowls", "confidence": 0.9, "rationale": "greasy"}]
             return type("Resp", (), {"text": json.dumps(payload)})()
 
     fake_models = FakeModels()
@@ -175,16 +142,10 @@ def test_gemini_cache_keys_by_review_content(
 
     monkeypatch.setitem(sys.modules, "google", google_module)
     monkeypatch.setitem(sys.modules, "google.genai", genai_module)
-    monkeypatch.setattr(
-        gemini_labels, "_CACHE_PATH", tmp_path / "gemini_labels.parquet"
-    )
+    monkeypatch.setattr(gemini_labels, "_CACHE_PATH", tmp_path / "gemini_labels.parquet")
 
-    first = gemini_labels.label_reviews_with_gemini(
-        ["fresh salad"], ("salad_bowls",), api_key="test-key"
-    )
-    second = gemini_labels.label_reviews_with_gemini(
-        ["greasy burger"], ("salad_bowls",), api_key="test-key"
-    )
+    first = gemini_labels.label_reviews_with_gemini(["fresh salad"], ("salad_bowls",), api_key="test-key")
+    second = gemini_labels.label_reviews_with_gemini(["greasy burger"], ("salad_bowls",), api_key="test-key")
 
     assert first[0].sentiment == "positive"
     assert second[0].sentiment == "negative"
@@ -193,13 +154,10 @@ def test_gemini_cache_keys_by_review_content(
 
 # ── neighborhood mentions ─────────────────────────────────────────────────────
 
-
 def test_extract_location_mentions_finds_match() -> None:
     from src.nlp.neighborhood_mentions import extract_location_mentions
 
-    matches = extract_location_mentions(
-        "Great food near NYU Tandon campus", ("NYU Tandon", "Midtown")
-    )
+    matches = extract_location_mentions("Great food near NYU Tandon campus", ("NYU Tandon", "Midtown"))
     assert "NYU Tandon" in matches
 
 
@@ -213,12 +171,7 @@ def test_extract_location_mentions_empty() -> None:
 def test_prepare_embedding_corpus_drops_blank_and_duplicate_reviews() -> None:
     frame = pd.DataFrame(
         {
-            "review_text": [
-                " great salad bowl  ",
-                "",
-                "great salad bowl",
-                "fresh wraps nearby",
-            ],
+            "review_text": [" great salad bowl  ", "", "great salad bowl", "fresh wraps nearby"],
             "restaurant_id": ["r1", "r1", "r1", "r2"],
         }
     )
