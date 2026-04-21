@@ -25,6 +25,7 @@ def feature_ablation(
 
     Returns: group_name, ndcg_full, ndcg_ablated, ndcg_drop
     """
+
     def _avg_ndcg(X_sub: pd.DataFrame, y_s: pd.Series, splits_: list[tuple]) -> float:
         scores = []
         for train_idx, test_idx in splits_:
@@ -44,12 +45,14 @@ def feature_ablation(
             continue
         X_ablated = X.drop(columns=drop_cols)
         ablated_score = _avg_ndcg(X_ablated, y, splits)
-        records.append({
-            "group_name": group_name,
-            "ndcg_full": full_score,
-            "ndcg_ablated": ablated_score,
-            "ndcg_drop": full_score - ablated_score,
-        })
+        records.append(
+            {
+                "group_name": group_name,
+                "ndcg_full": full_score,
+                "ndcg_ablated": ablated_score,
+                "ndcg_drop": full_score - ablated_score,
+            }
+        )
 
     return pd.DataFrame(records)
 
@@ -69,13 +72,18 @@ def baseline_comparison(
 
     Returns: model_name, ndcg_5, ndcg_10, precision_5
     """
-    from src.models.cmf_score import ScoreComponents, compute_opening_score
 
     results: list[dict] = []
 
     for model_name, score_fn in [
-        ("learned", lambda X_tr, y_tr, X_te: _learned_predict(learned_model, X_tr, y_tr, X_te)),
-        ("random", lambda X_tr, y_tr, X_te: np.random.default_rng(42).random(len(X_te))),
+        (
+            "learned",
+            lambda X_tr, y_tr, X_te: _learned_predict(learned_model, X_tr, y_tr, X_te),
+        ),
+        (
+            "random",
+            lambda X_tr, y_tr, X_te: np.random.default_rng(42).random(len(X_te)),
+        ),
         ("popularity", lambda X_tr, y_tr, X_te: _popularity_scores(X_te)),
         ("heuristic", lambda X_tr, y_tr, X_te: _heuristic_scores(X_te)),
     ]:
@@ -95,12 +103,14 @@ def baseline_comparison(
             p5 = len(set(pred_ranking[:5]) & true_top) / 5
             p5_list.append(p5)
 
-        results.append({
-            "model_name": model_name,
-            "ndcg_5": float(np.mean(ndcg5_list)) if ndcg5_list else 0.0,
-            "ndcg_10": float(np.mean(ndcg10_list)) if ndcg10_list else 0.0,
-            "precision_5": float(np.mean(p5_list)) if p5_list else 0.0,
-        })
+        results.append(
+            {
+                "model_name": model_name,
+                "ndcg_5": float(np.mean(ndcg5_list)) if ndcg5_list else 0.0,
+                "ndcg_10": float(np.mean(ndcg10_list)) if ndcg10_list else 0.0,
+                "precision_5": float(np.mean(p5_list)) if p5_list else 0.0,
+            }
+        )
 
     return pd.DataFrame(results)
 
@@ -108,6 +118,7 @@ def baseline_comparison(
 def _learned_predict(model, X_train, y_train, X_test):
     """Fit and predict with the learned model."""
     import copy
+
     m = copy.deepcopy(model)
     m.fit(X_train, y_train)
     return m.predict(X_test)
@@ -162,11 +173,13 @@ def permutation_importance(
             X_perm[col] = rng.permutation(X_perm[col].values)
             perm_score = metric_fn(y_test, model.predict(X_perm))
             drops.append(baseline_score - perm_score)
-        records.append({
-            "feature": col,
-            "importance_mean": float(np.mean(drops)),
-            "importance_std": float(np.std(drops)),
-        })
+        records.append(
+            {
+                "feature": col,
+                "importance_mean": float(np.mean(drops)),
+                "importance_std": float(np.std(drops)),
+            }
+        )
 
     result = pd.DataFrame(records).sort_values("importance_mean", ascending=False)
     return result.reset_index(drop=True)
@@ -179,13 +192,17 @@ def _heuristic_scores(X: pd.DataFrame) -> np.ndarray:
     scores = []
     for _, row in X.iterrows():
         components = ScoreComponents(
-            demand_signal_score=row.get("quick_lunch_demand", row.get("demand_signal", 0.5)),
+            demand_signal_score=row.get(
+                "quick_lunch_demand", row.get("demand_signal", 0.5)
+            ),
             subtype_gap_score=row.get("subtype_gap", 0.5),
             merchant_viability_score=row.get("survival_score", 0.5),
             rent_pressure_penalty=row.get("rent_pressure", 0.3),
             competition_penalty=row.get("competition_score", 0.3),
             review_demand_score=row.get("healthy_review_share", 0.3),
-            license_velocity_score=row.get("license_velocity", row.get("license_vel", 0.5)),
+            license_velocity_score=row.get(
+                "license_velocity", row.get("license_vel", 0.5)
+            ),
             transit_access_score=row.get("transit_access", 0.5),
             income_alignment_score=row.get("income_alignment", 0.5),
             healthy_gap_score=row.get("healthy_gap_score", 0.3),

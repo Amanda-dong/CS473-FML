@@ -10,6 +10,7 @@ from src.api.main import app
 
 # ── basic route checks ────────────────────────────────────────────────────────
 
+
 def test_api_title() -> None:
     assert app.title == "NYC Restaurant Intelligence Platform API"
 
@@ -28,11 +29,14 @@ def test_api_has_routes() -> None:
 
 # ── async integration tests (httpx ASGI) ─────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_health_check() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
@@ -42,7 +46,9 @@ async def test_health_check() -> None:
 async def test_datasets_endpoint_returns_list() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.get("/datasets")
     assert resp.status_code == 200
     data = resp.json()
@@ -55,7 +61,9 @@ async def test_datasets_endpoint_returns_list() -> None:
 async def test_predict_cmf_healthy_indian() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.post(
             "/predict/cmf",
             json={"concept_subtype": "healthy_indian", "limit": 3},
@@ -71,7 +79,9 @@ async def test_predict_cmf_ramen() -> None:
     """CMF endpoint must handle non-healthy cuisine types."""
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.post(
             "/predict/cmf",
             json={"concept_subtype": "ramen", "limit": 2},
@@ -87,7 +97,9 @@ async def test_predict_cmf_custom_cuisine() -> None:
     """Free-text custom cuisine should not raise an error."""
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.post(
             "/predict/cmf",
             json={"concept_subtype": "Peruvian Ceviche", "limit": 2},
@@ -99,22 +111,30 @@ async def test_predict_cmf_custom_cuisine() -> None:
 async def test_predict_cmf_returns_sorted_scores() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.post(
             "/predict/cmf",
             json={"concept_subtype": "mediterranean_bowls", "limit": 5},
         )
     recs = resp.json()["recommendations"]
     scores = [r["opportunity_score"] for r in recs]
-    assert scores == sorted(scores, reverse=True), "Recommendations must be sorted by score"
+    assert scores == sorted(scores, reverse=True), (
+        "Recommendations must be sorted by score"
+    )
 
 
 @pytest.mark.asyncio
 async def test_predict_cmf_confidence_buckets() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/predict/cmf", json={"concept_subtype": "salad_bowls", "limit": 5})
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.post(
+            "/predict/cmf", json={"concept_subtype": "salad_bowls", "limit": 5}
+        )
     recs = resp.json()["recommendations"]
     for r in recs:
         assert r["confidence_bucket"] in ("high", "medium", "low")
@@ -124,8 +144,12 @@ async def test_predict_cmf_confidence_buckets() -> None:
 async def test_predict_trajectory_returns_cluster() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/predict/trajectory", json={"concept_subtype": "korean"})
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.post(
+            "/predict/trajectory", json={"concept_subtype": "korean"}
+        )
     assert resp.status_code == 200
     data = resp.json()
     assert "trajectory_cluster" in data
@@ -136,10 +160,16 @@ async def test_predict_trajectory_returns_cluster() -> None:
 async def test_predict_cmf_borough_filter() -> None:
     from httpx import ASGITransport, AsyncClient
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         resp = await client.post(
             "/predict/cmf",
-            json={"concept_subtype": "vegan_grab_and_go", "borough": "Brooklyn", "limit": 3},
+            json={
+                "concept_subtype": "vegan_grab_and_go",
+                "borough": "Brooklyn",
+                "limit": 3,
+            },
         )
     assert resp.status_code == 200
 

@@ -47,14 +47,18 @@ def test_prepare_training_frame_deduplicates_and_filters_low_quality() -> None:
         }
     )
 
-    cleaned, report = prepare_training_frame(frame, target_col="target", min_label_quality=0.5)
+    cleaned, report = prepare_training_frame(
+        frame, target_col="target", min_label_quality=0.5
+    )
 
     assert len(cleaned) == 1
     assert cleaned.loc[0, "feature_a"] == pytest.approx(2.0)
     assert report.dropped_rows == 2
 
 
-def test_etl_runner_skips_optional_sources_without_config(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_runner_skips_optional_sources_without_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class FakeYelpModule:
         def run_etl(self, limit: int = 0) -> pd.DataFrame:  # noqa: ARG002
             raise RuntimeError("YELP_DATA_PATH env var required")

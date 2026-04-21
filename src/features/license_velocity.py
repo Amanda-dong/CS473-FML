@@ -6,7 +6,13 @@ import pandas as pd
 
 _OPEN_STATUSES: frozenset[str] = frozenset({"Active", "Issued"})
 _CLOSE_STATUSES: frozenset[str] = frozenset({"Inactive", "Revoked", "Expired"})
-_OUTPUT_COLUMNS: list[str] = ["zone_id", "time_key", "license_velocity", "net_opens", "net_closes"]
+_OUTPUT_COLUMNS: list[str] = [
+    "zone_id",
+    "time_key",
+    "license_velocity",
+    "net_opens",
+    "net_closes",
+]
 
 
 def build_license_velocity_features(license_events: pd.DataFrame) -> pd.DataFrame:

@@ -24,7 +24,9 @@ BUSINESS_PATH = REPO_ROOT / "data" / "raw" / "yelp_business.csv"
 _MAP_KEY = "reviews_zone_map_plotly"
 
 
-def _restaurant_id_from_plotly_state(plotly_state, fig, map_plot: pd.DataFrame) -> str | None:
+def _restaurant_id_from_plotly_state(
+    plotly_state, fig, map_plot: pd.DataFrame
+) -> str | None:
     """Read selected point from st.plotly_chart(on_select=...) return value."""
     if plotly_state is None:
         return None
@@ -51,7 +53,12 @@ def _restaurant_id_from_plotly_state(plotly_state, fig, map_plot: pd.DataFrame) 
     # Fallback: pointIndex + curveNumber into fig.data[].customdata
     idx = p0.get("pointIndex")
     cnum = p0.get("curveNumber", 0)
-    if idx is not None and fig is not None and hasattr(fig, "data") and cnum < len(fig.data):
+    if (
+        idx is not None
+        and fig is not None
+        and hasattr(fig, "data")
+        and cnum < len(fig.data)
+    ):
         trace = fig.data[cnum]
         raw = getattr(trace, "customdata", None)
         if raw is not None and len(raw) > idx:
@@ -89,7 +96,9 @@ biz_full: pd.DataFrame | None = None
 if BUSINESS_PATH.is_file():
     biz_full = pd.read_csv(BUSINESS_PATH)
     biz_full["id"] = biz_full["id"].astype(str).str.strip()
-    biz_geo = biz_full[["id", "latitude", "longitude"]].rename(columns={"id": "restaurant_id"})
+    biz_geo = biz_full[["id", "latitude", "longitude"]].rename(
+        columns={"id": "restaurant_id"}
+    )
     df["restaurant_id"] = df["restaurant_id"].astype(str).str.strip()
     df = df.merge(biz_geo, on="restaurant_id", how="left")
 else:
@@ -212,11 +221,16 @@ if {"latitude", "longitude"}.issubset(df.columns):
     # ---- One restaurant: search name, map click, or dropdown ----
     st.subheader("Reviews for one restaurant")
     ids_ordered = (
-        map_plot.sort_values("n_reviews", ascending=False)["restaurant_id"].drop_duplicates().tolist()
+        map_plot.sort_values("n_reviews", ascending=False)["restaurant_id"]
+        .drop_duplicates()
+        .tolist()
     )
-    name_by_id = map_plot.drop_duplicates(subset=["restaurant_id"]).set_index("restaurant_id")[
-        "name"
-    ].fillna("").astype(str)
+    name_by_id = (
+        map_plot.drop_duplicates(subset=["restaurant_id"])
+        .set_index("restaurant_id")["name"]
+        .fillna("")
+        .astype(str)
+    )
 
     search_q = st.text_input(
         "Search restaurant name",
@@ -231,7 +245,9 @@ if {"latitude", "longitude"}.issubset(df.columns):
             if ql in name_by_id.get(rid, "").lower() or ql in str(rid).lower()
         ]
         if not ids_filtered:
-            st.warning("No restaurant names match that search. Clear the box to see all.")
+            st.warning(
+                "No restaurant names match that search. Clear the box to see all."
+            )
     else:
         ids_filtered = list(ids_ordered)
 
@@ -273,13 +289,23 @@ if {"latitude", "longitude"}.issubset(df.columns):
                 b = bmatch.iloc[0]
                 st.markdown(f"### {b.get('name', 'Unknown')}")
                 b1, b2, b3, b4, b5 = st.columns(5)
-                b1.metric("Yelp rating", f"{float(b['rating']):.1f}" if pd.notna(b.get("rating")) else "—")
-                b2.metric("Yelp review count", int(b["review_count"]) if pd.notna(b.get("review_count")) else "—")
+                b1.metric(
+                    "Yelp rating",
+                    f"{float(b['rating']):.1f}" if pd.notna(b.get("rating")) else "—",
+                )
+                b2.metric(
+                    "Yelp review count",
+                    int(b["review_count"]) if pd.notna(b.get("review_count")) else "—",
+                )
                 pr = b.get("price")
                 b3.metric("Price", str(pr) if pd.notna(pr) and str(pr).strip() else "—")
                 closed = bool(b.get("is_closed", False))
                 b4.metric("Status", "Closed" if closed else "Open")
-                n_fusion = int(map_plot.loc[map_plot["restaurant_id"] == chosen, "n_reviews"].iloc[0])
+                n_fusion = int(
+                    map_plot.loc[map_plot["restaurant_id"] == chosen, "n_reviews"].iloc[
+                        0
+                    ]
+                )
                 b5.metric("Rows in Fusion CSV", n_fusion)
                 st.write(
                     f"**Categories:** {b.get('categories', '—')}  \n"
@@ -296,14 +322,18 @@ if {"latitude", "longitude"}.issubset(df.columns):
 
         st.subheader("Reviews in this dataset")
         st.metric("Review rows (Fusion export)", len(sub))
-        rcols = [c for c in ("time_key", "rating", "zone_id", "nta") if c in sub.columns]
+        rcols = [
+            c for c in ("time_key", "rating", "zone_id", "nta") if c in sub.columns
+        ]
         st.dataframe(
             sub[rcols + ["review_text"]],
             use_container_width=True,
             height=min(640, 140 + 36 * min(len(sub), 18)),
         )
 else:
-    st.info("Add lat/lon by placing `yelp_business.csv` under `data/raw/` to enable the map.")
+    st.info(
+        "Add lat/lon by placing `yelp_business.csv` under `data/raw/` to enable the map."
+    )
 
 st.divider()
 

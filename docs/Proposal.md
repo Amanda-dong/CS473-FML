@@ -2,7 +2,7 @@
 
 ## NYC Restaurant Intelligence Platform
 
-Updated: April 1, 2026  
+Updated: April 1, 2026
 Team: Catherine · Harsh · Tony · Siqi · Amanda
 
 ## Problem

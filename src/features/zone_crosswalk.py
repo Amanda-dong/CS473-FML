@@ -7,37 +7,37 @@ import pandas as pd
 # Maps each of the 27 micro-zone IDs to 2020 NYC NTA codes.
 ZONE_TO_NTA: dict[str, list[str]] = {
     # Brooklyn
-    "bk-tandon":       ["BK09"],   # Downtown Brooklyn-DUMBO-Boerum Hill
-    "bk-downtownbk":   ["BK09"],   # Downtown Brooklyn-DUMBO-Boerum Hill
-    "bk-williamsburg": ["BK73"],   # Williamsburg
-    "bk-navy-yard":    ["BK09", "BK33"],  # Downtown BK + Vinegar Hill/Fort Greene adj.
-    "bk-fort-greene":  ["BK33"],   # Fort Greene
-    "bk-crown-hts":    ["BK69"],   # Crown Heights North
-    "bk-sunset-pk":    ["BK42"],   # Sunset Park
+    "bk-tandon": ["BK09"],  # Downtown Brooklyn-DUMBO-Boerum Hill
+    "bk-downtownbk": ["BK09"],  # Downtown Brooklyn-DUMBO-Boerum Hill
+    "bk-williamsburg": ["BK73"],  # Williamsburg
+    "bk-navy-yard": ["BK09", "BK33"],  # Downtown BK + Vinegar Hill/Fort Greene adj.
+    "bk-fort-greene": ["BK33"],  # Fort Greene
+    "bk-crown-hts": ["BK69"],  # Crown Heights North
+    "bk-sunset-pk": ["BK42"],  # Sunset Park
     # Manhattan
-    "mn-midtown-e":    ["MN17"],   # Midtown-Midtown South
-    "mn-fidi":         ["MN25"],   # Battery Park City-Lower Manhattan
-    "mn-columbia":     ["MN09"],   # Morningside Heights
-    "mn-nyu-wash-sq":  ["MN22"],   # Greenwich Village-SoHo
-    "mn-ues-hosp":     ["MN31"],   # Lenox Hill-Roosevelt Island
-    "mn-chelsea":      ["MN21"],   # Chelsea-Hudson Yards
-    "mn-harlem":       ["MN11"],   # Central Harlem
-    "mn-lic-adj":      ["MN17", "MN19"],  # Midtown East + Turtle Bay
+    "mn-midtown-e": ["MN17"],  # Midtown-Midtown South
+    "mn-fidi": ["MN25"],  # Battery Park City-Lower Manhattan
+    "mn-columbia": ["MN09"],  # Morningside Heights
+    "mn-nyu-wash-sq": ["MN22"],  # Greenwich Village-SoHo
+    "mn-ues-hosp": ["MN31"],  # Lenox Hill-Roosevelt Island
+    "mn-chelsea": ["MN21"],  # Chelsea-Hudson Yards
+    "mn-harlem": ["MN11"],  # Central Harlem
+    "mn-lic-adj": ["MN17", "MN19"],  # Midtown East + Turtle Bay
     # Queens
-    "qn-lic":          ["QN70"],   # Long Island City
-    "qn-astoria":      ["QN72"],   # Astoria
-    "qn-flushing":     ["QN48"],   # Flushing
-    "qn-jackson-hts":  ["QN57"],   # Jackson Heights
-    "qn-forest-hills": ["QN17"],   # Forest Hills
-    "qn-jamaica":      ["QN61"],   # Jamaica
+    "qn-lic": ["QN70"],  # Long Island City
+    "qn-astoria": ["QN72"],  # Astoria
+    "qn-flushing": ["QN48"],  # Flushing
+    "qn-jackson-hts": ["QN57"],  # Jackson Heights
+    "qn-forest-hills": ["QN17"],  # Forest Hills
+    "qn-jamaica": ["QN61"],  # Jamaica
     # Bronx
-    "bx-fordham":      ["BX06"],   # Fordham
-    "bx-mott-haven":   ["BX01"],   # Mott Haven-Port Morris
-    "bx-co-op-city":   ["BX44"],   # Co-op City
-    "bx-tremont":      ["BX09"],   # East Tremont
+    "bx-fordham": ["BX06"],  # Fordham
+    "bx-mott-haven": ["BX01"],  # Mott Haven-Port Morris
+    "bx-co-op-city": ["BX44"],  # Co-op City
+    "bx-tremont": ["BX09"],  # East Tremont
     # Staten Island
-    "si-st-george":    ["SI07"],   # St. George
-    "si-new-spring":   ["SI11"],   # New Springville-Bloomfield-Travis
+    "si-st-george": ["SI07"],  # St. George
+    "si-new-spring": ["SI11"],  # New Springville-Bloomfield-Travis
 }
 
 # Reverse lookup: NTA code -> list of zone IDs
@@ -116,7 +116,11 @@ def aggregate_nta_to_zone(
         return pd.DataFrame()
 
     # Determine groupby keys
-    time_col = "year" if "year" in merged.columns else ("time_key" if "time_key" in merged.columns else None)
+    time_col = (
+        "year"
+        if "year" in merged.columns
+        else ("time_key" if "time_key" in merged.columns else None)
+    )
     group_keys = ["zone_id"] + ([time_col] if time_col else [])
 
     # Build aggregation dict
@@ -148,7 +152,11 @@ def aggregate_nta_to_zone(
                     out[col] = float(grp[col].agg(func))
             return pd.Series(out)
 
-        result = merged.groupby(group_keys).apply(_weighted_agg, include_groups=False).reset_index()
+        result = (
+            merged.groupby(group_keys)
+            .apply(_weighted_agg, include_groups=False)
+            .reset_index()
+        )
     else:
         result = merged.groupby(group_keys, as_index=False).agg(default_agg)
     if time_col and time_col != "time_key":

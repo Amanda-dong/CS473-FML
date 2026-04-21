@@ -56,7 +56,15 @@ def sample_review_labels() -> pd.DataFrame:
         {
             "review_id": [str(i) for i in range(20)],
             "sentiment": (["positive", "neutral", "negative", "positive"] * 5),
-            "concept_subtype": (["healthy_indian", "salad_bowls", "mediterranean_bowls", "vegan_grab_and_go"] * 5),
+            "concept_subtype": (
+                [
+                    "healthy_indian",
+                    "salad_bowls",
+                    "mediterranean_bowls",
+                    "vegan_grab_and_go",
+                ]
+                * 5
+            ),
             "confidence": [0.9, 0.8, 0.7, 0.85] * 5,
             "zone_id": (["tandon-campus", "columbia-morn"] * 10),
             "time_key": ([2023] * 10 + [2024] * 10),

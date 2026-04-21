@@ -8,12 +8,13 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter
 
-from src.features.competition_score import compute_competition_score
-from src.features.healthy_gap import score_healthy_gap
-from src.features.merchant_viability import score_merchant_viability
-from src.models.cmf_score import ScoreComponents, compute_opening_score
+from src.models.cmf_score import compute_opening_score
 from src.models.explainability import top_positive_drivers, top_risks
-from src.models.model_loader import load_feature_matrix, load_scoring_model, load_survival_model
+from src.models.model_loader import (
+    load_feature_matrix,
+    load_scoring_model,
+    load_survival_model,
+)
 from src.models.ranking_model import rank_zones
 from src.models.trajectory_model import TrajectoryClusteringModel
 from src.schemas.requests import RecommendationRequest
@@ -49,89 +50,148 @@ else:
 # (zone_id, zone_type, label, borough_key)
 _NYC_ZONES: list[tuple[str, str, str, str]] = [
     # Brooklyn
-    ("bk-tandon",       "campus_walkshed",  "NYU Tandon / MetroTech",          "Brooklyn"),
-    ("bk-downtownbk",   "lunch_corridor",   "Downtown Brooklyn Lunch Corridor", "Brooklyn"),
-    ("bk-williamsburg", "transit_catchment","Williamsburg Transit Catchment",   "Brooklyn"),
-    ("bk-navy-yard",    "business_district","Brooklyn Navy Yard / Vinegar Hill","Brooklyn"),
-    ("bk-fort-greene",  "campus_walkshed",  "Fort Greene / Pratt Institute",    "Brooklyn"),
-    ("bk-crown-hts",    "transit_catchment","Crown Heights Transit Catchment",  "Brooklyn"),
-    ("bk-sunset-pk",    "lunch_corridor",   "Sunset Park Industrial Lunch Belt","Brooklyn"),
+    ("bk-tandon", "campus_walkshed", "NYU Tandon / MetroTech", "Brooklyn"),
+    ("bk-downtownbk", "lunch_corridor", "Downtown Brooklyn Lunch Corridor", "Brooklyn"),
+    (
+        "bk-williamsburg",
+        "transit_catchment",
+        "Williamsburg Transit Catchment",
+        "Brooklyn",
+    ),
+    (
+        "bk-navy-yard",
+        "business_district",
+        "Brooklyn Navy Yard / Vinegar Hill",
+        "Brooklyn",
+    ),
+    ("bk-fort-greene", "campus_walkshed", "Fort Greene / Pratt Institute", "Brooklyn"),
+    (
+        "bk-crown-hts",
+        "transit_catchment",
+        "Crown Heights Transit Catchment",
+        "Brooklyn",
+    ),
+    ("bk-sunset-pk", "lunch_corridor", "Sunset Park Industrial Lunch Belt", "Brooklyn"),
     # Manhattan
-    ("mn-midtown-e",    "lunch_corridor",   "Midtown East Lunch Corridor",      "Manhattan"),
-    ("mn-fidi",         "lunch_corridor",   "Financial District Lunch Belt",    "Manhattan"),
-    ("mn-columbia",     "campus_walkshed",  "Columbia / Morningside Heights",   "Manhattan"),
-    ("mn-nyu-wash-sq",  "campus_walkshed",  "NYU / Washington Square",          "Manhattan"),
-    ("mn-ues-hosp",     "campus_walkshed",  "Upper East Side / Hospital Row",   "Manhattan"),
-    ("mn-chelsea",      "business_district","Chelsea / Hudson Yards",           "Manhattan"),
-    ("mn-harlem",       "transit_catchment","Harlem Transit Catchment",         "Manhattan"),
-    ("mn-lic-adj",      "lunch_corridor",   "East Midtown / UN Campus",         "Manhattan"),
+    ("mn-midtown-e", "lunch_corridor", "Midtown East Lunch Corridor", "Manhattan"),
+    ("mn-fidi", "lunch_corridor", "Financial District Lunch Belt", "Manhattan"),
+    ("mn-columbia", "campus_walkshed", "Columbia / Morningside Heights", "Manhattan"),
+    ("mn-nyu-wash-sq", "campus_walkshed", "NYU / Washington Square", "Manhattan"),
+    ("mn-ues-hosp", "campus_walkshed", "Upper East Side / Hospital Row", "Manhattan"),
+    ("mn-chelsea", "business_district", "Chelsea / Hudson Yards", "Manhattan"),
+    ("mn-harlem", "transit_catchment", "Harlem Transit Catchment", "Manhattan"),
+    ("mn-lic-adj", "lunch_corridor", "East Midtown / UN Campus", "Manhattan"),
     # Queens
-    ("qn-lic",          "transit_catchment","Long Island City / Queens Plaza",  "Queens"),
-    ("qn-astoria",      "transit_catchment","Astoria Transit Catchment",        "Queens"),
-    ("qn-flushing",     "business_district","Flushing Business District",       "Queens"),
-    ("qn-jackson-hts",  "lunch_corridor",   "Jackson Heights Lunch Corridor",   "Queens"),
-    ("qn-forest-hills", "transit_catchment","Forest Hills Transit Catchment",   "Queens"),
-    ("qn-jamaica",      "business_district","Jamaica Business District",        "Queens"),
+    ("qn-lic", "transit_catchment", "Long Island City / Queens Plaza", "Queens"),
+    ("qn-astoria", "transit_catchment", "Astoria Transit Catchment", "Queens"),
+    ("qn-flushing", "business_district", "Flushing Business District", "Queens"),
+    ("qn-jackson-hts", "lunch_corridor", "Jackson Heights Lunch Corridor", "Queens"),
+    (
+        "qn-forest-hills",
+        "transit_catchment",
+        "Forest Hills Transit Catchment",
+        "Queens",
+    ),
+    ("qn-jamaica", "business_district", "Jamaica Business District", "Queens"),
     # Bronx
-    ("bx-fordham",      "campus_walkshed",  "Fordham / Bronx Campus Belt",      "Bronx"),
-    ("bx-mott-haven",   "transit_catchment","Mott Haven Transit Catchment",     "Bronx"),
-    ("bx-co-op-city",   "business_district","Co-op City Business District",     "Bronx"),
-    ("bx-tremont",      "lunch_corridor",   "East Tremont Lunch Corridor",      "Bronx"),
+    ("bx-fordham", "campus_walkshed", "Fordham / Bronx Campus Belt", "Bronx"),
+    ("bx-mott-haven", "transit_catchment", "Mott Haven Transit Catchment", "Bronx"),
+    ("bx-co-op-city", "business_district", "Co-op City Business District", "Bronx"),
+    ("bx-tremont", "lunch_corridor", "East Tremont Lunch Corridor", "Bronx"),
     # Staten Island
-    ("si-st-george",    "transit_catchment","St. George / Ferry Terminal",      "Staten Island"),
-    ("si-new-spring",   "lunch_corridor",   "New Springville Commercial Belt",  "Staten Island"),
+    (
+        "si-st-george",
+        "transit_catchment",
+        "St. George / Ferry Terminal",
+        "Staten Island",
+    ),
+    (
+        "si-new-spring",
+        "lunch_corridor",
+        "New Springville Commercial Belt",
+        "Staten Island",
+    ),
 ]
 
 # Feature seeds per zone.
 # Columns: demand, gap, survival, rent, competition, review_share, license_vel, transit, income_alignment
 # transit: subway/ferry access score [0,1]
 # income_alignment: how well median income aligns with mid-tier restaurant (0=poor, 1=ideal)
-_ZONE_SEEDS: dict[str, tuple[float, float, float, float, float, float, float, float, float]] = {
+_ZONE_SEEDS: dict[
+    str, tuple[float, float, float, float, float, float, float, float, float]
+] = {
     # zone_id:         demand  gap    surv   rent   comp   review  vel   transit  income
-    "bk-tandon":       (0.88, 0.72, 0.74, 0.33, 0.26, 0.42, 0.62, 0.85, 0.70),
-    "bk-downtownbk":   (0.80, 0.55, 0.62, 0.60, 0.58, 0.34, 0.38, 0.90, 0.65),
+    "bk-tandon": (0.88, 0.72, 0.74, 0.33, 0.26, 0.42, 0.62, 0.85, 0.70),
+    "bk-downtownbk": (0.80, 0.55, 0.62, 0.60, 0.58, 0.34, 0.38, 0.90, 0.65),
     "bk-williamsburg": (0.78, 0.48, 0.60, 0.66, 0.65, 0.38, 0.30, 0.82, 0.72),
-    "bk-navy-yard":    (0.74, 0.82, 0.80, 0.30, 0.20, 0.40, 0.90, 0.55, 0.60),
-    "bk-fort-greene":  (0.75, 0.65, 0.70, 0.48, 0.45, 0.35, 0.55, 0.80, 0.65),
-    "bk-crown-hts":    (0.68, 0.78, 0.72, 0.28, 0.24, 0.30, 0.70, 0.78, 0.55),
-    "bk-sunset-pk":    (0.72, 0.80, 0.75, 0.25, 0.22, 0.28, 0.75, 0.70, 0.50),
-    "mn-midtown-e":    (0.82, 0.52, 0.58, 0.74, 0.68, 0.33, 0.28, 0.96, 0.78),
-    "mn-fidi":         (0.78, 0.45, 0.55, 0.80, 0.72, 0.30, 0.22, 0.95, 0.82),
-    "mn-columbia":     (0.84, 0.70, 0.72, 0.46, 0.34, 0.46, 0.68, 0.88, 0.70),
-    "mn-nyu-wash-sq":  (0.82, 0.64, 0.66, 0.58, 0.55, 0.40, 0.48, 0.92, 0.74),
-    "mn-ues-hosp":     (0.76, 0.60, 0.68, 0.55, 0.44, 0.36, 0.50, 0.85, 0.80),
-    "mn-chelsea":      (0.74, 0.50, 0.58, 0.70, 0.64, 0.32, 0.32, 0.90, 0.82),
-    "mn-harlem":       (0.70, 0.75, 0.70, 0.32, 0.28, 0.32, 0.72, 0.88, 0.55),
-    "mn-lic-adj":      (0.76, 0.54, 0.60, 0.68, 0.60, 0.34, 0.36, 0.93, 0.80),
-    "qn-lic":          (0.70, 0.70, 0.68, 0.40, 0.36, 0.30, 0.58, 0.90, 0.64),
-    "qn-astoria":      (0.68, 0.78, 0.74, 0.28, 0.24, 0.34, 0.80, 0.82, 0.60),
-    "qn-flushing":     (0.76, 0.56, 0.70, 0.36, 0.50, 0.38, 0.60, 0.86, 0.62),
-    "qn-jackson-hts":  (0.72, 0.74, 0.72, 0.24, 0.30, 0.32, 0.72, 0.80, 0.52),
+    "bk-navy-yard": (0.74, 0.82, 0.80, 0.30, 0.20, 0.40, 0.90, 0.55, 0.60),
+    "bk-fort-greene": (0.75, 0.65, 0.70, 0.48, 0.45, 0.35, 0.55, 0.80, 0.65),
+    "bk-crown-hts": (0.68, 0.78, 0.72, 0.28, 0.24, 0.30, 0.70, 0.78, 0.55),
+    "bk-sunset-pk": (0.72, 0.80, 0.75, 0.25, 0.22, 0.28, 0.75, 0.70, 0.50),
+    "mn-midtown-e": (0.82, 0.52, 0.58, 0.74, 0.68, 0.33, 0.28, 0.96, 0.78),
+    "mn-fidi": (0.78, 0.45, 0.55, 0.80, 0.72, 0.30, 0.22, 0.95, 0.82),
+    "mn-columbia": (0.84, 0.70, 0.72, 0.46, 0.34, 0.46, 0.68, 0.88, 0.70),
+    "mn-nyu-wash-sq": (0.82, 0.64, 0.66, 0.58, 0.55, 0.40, 0.48, 0.92, 0.74),
+    "mn-ues-hosp": (0.76, 0.60, 0.68, 0.55, 0.44, 0.36, 0.50, 0.85, 0.80),
+    "mn-chelsea": (0.74, 0.50, 0.58, 0.70, 0.64, 0.32, 0.32, 0.90, 0.82),
+    "mn-harlem": (0.70, 0.75, 0.70, 0.32, 0.28, 0.32, 0.72, 0.88, 0.55),
+    "mn-lic-adj": (0.76, 0.54, 0.60, 0.68, 0.60, 0.34, 0.36, 0.93, 0.80),
+    "qn-lic": (0.70, 0.70, 0.68, 0.40, 0.36, 0.30, 0.58, 0.90, 0.64),
+    "qn-astoria": (0.68, 0.78, 0.74, 0.28, 0.24, 0.34, 0.80, 0.82, 0.60),
+    "qn-flushing": (0.76, 0.56, 0.70, 0.36, 0.50, 0.38, 0.60, 0.86, 0.62),
+    "qn-jackson-hts": (0.72, 0.74, 0.72, 0.24, 0.30, 0.32, 0.72, 0.80, 0.52),
     "qn-forest-hills": (0.65, 0.72, 0.70, 0.30, 0.26, 0.28, 0.65, 0.78, 0.65),
-    "qn-jamaica":      (0.66, 0.80, 0.68, 0.22, 0.22, 0.26, 0.78, 0.82, 0.50),
-    "bx-fordham":      (0.70, 0.85, 0.68, 0.20, 0.18, 0.28, 0.72, 0.80, 0.45),
-    "bx-mott-haven":   (0.65, 0.82, 0.65, 0.18, 0.16, 0.24, 0.68, 0.85, 0.42),
-    "bx-co-op-city":   (0.60, 0.76, 0.66, 0.16, 0.18, 0.22, 0.65, 0.60, 0.48),
-    "bx-tremont":      (0.62, 0.80, 0.64, 0.16, 0.14, 0.22, 0.70, 0.72, 0.44),
-    "si-st-george":    (0.62, 0.82, 0.72, 0.18, 0.16, 0.26, 0.76, 0.80, 0.55),
-    "si-new-spring":   (0.58, 0.78, 0.68, 0.15, 0.14, 0.22, 0.72, 0.45, 0.58),
+    "qn-jamaica": (0.66, 0.80, 0.68, 0.22, 0.22, 0.26, 0.78, 0.82, 0.50),
+    "bx-fordham": (0.70, 0.85, 0.68, 0.20, 0.18, 0.28, 0.72, 0.80, 0.45),
+    "bx-mott-haven": (0.65, 0.82, 0.65, 0.18, 0.16, 0.24, 0.68, 0.85, 0.42),
+    "bx-co-op-city": (0.60, 0.76, 0.66, 0.16, 0.18, 0.22, 0.65, 0.60, 0.48),
+    "bx-tremont": (0.62, 0.80, 0.64, 0.16, 0.14, 0.22, 0.70, 0.72, 0.44),
+    "si-st-george": (0.62, 0.82, 0.72, 0.18, 0.16, 0.26, 0.76, 0.80, 0.55),
+    "si-new-spring": (0.58, 0.78, 0.68, 0.15, 0.14, 0.22, 0.72, 0.45, 0.58),
 }
 
 # Cuisine-specific gap modifiers — how much each concept is under/over-supplied
 # per zone type.  Zero-centred; positive = more opportunity for this cuisine.
 _CUISINE_GAP_BIAS: dict[str, dict[str, float]] = {
-    "campus_walkshed":   {"healthy_indian": 0.12, "ramen": 0.08, "vegan_grab_and_go": 0.10,
-                          "mediterranean_bowls": 0.06, "korean": 0.08, "salad_bowls": 0.05,
-                          "smoothie_juice": 0.10, "protein_forward_lunch": 0.08},
-    "lunch_corridor":    {"burgers": -0.05, "pizza": -0.08, "american_comfort": -0.06,
-                          "mexican": 0.04, "thai": 0.06, "middle_eastern": 0.06,
-                          "healthy_indian": 0.08, "dim_sum": 0.04},
-    "transit_catchment": {"ramen": 0.10, "dim_sum": 0.06, "korean": 0.10,
-                          "caribbean": 0.08, "ethiopian": 0.10, "west_african": 0.10,
-                          "chinese": 0.04, "japanese": 0.06},
-    "business_district": {"salad_bowls": 0.04, "protein_forward_lunch": 0.06,
-                          "seafood": 0.04, "italian": 0.02, "burgers": -0.04,
-                          "bakery_cafe": 0.06, "smoothie_juice": 0.04},
+    "campus_walkshed": {
+        "healthy_indian": 0.12,
+        "ramen": 0.08,
+        "vegan_grab_and_go": 0.10,
+        "mediterranean_bowls": 0.06,
+        "korean": 0.08,
+        "salad_bowls": 0.05,
+        "smoothie_juice": 0.10,
+        "protein_forward_lunch": 0.08,
+    },
+    "lunch_corridor": {
+        "burgers": -0.05,
+        "pizza": -0.08,
+        "american_comfort": -0.06,
+        "mexican": 0.04,
+        "thai": 0.06,
+        "middle_eastern": 0.06,
+        "healthy_indian": 0.08,
+        "dim_sum": 0.04,
+    },
+    "transit_catchment": {
+        "ramen": 0.10,
+        "dim_sum": 0.06,
+        "korean": 0.10,
+        "caribbean": 0.08,
+        "ethiopian": 0.10,
+        "west_african": 0.10,
+        "chinese": 0.04,
+        "japanese": 0.06,
+    },
+    "business_district": {
+        "salad_bowls": 0.04,
+        "protein_forward_lunch": 0.06,
+        "seafood": 0.04,
+        "italian": 0.02,
+        "burgers": -0.04,
+        "bakery_cafe": 0.06,
+        "smoothie_juice": 0.04,
+    },
 }
 
 _RISK_ADJUST = {"conservative": -0.06, "balanced": 0.0, "aggressive": 0.06}
@@ -150,32 +210,36 @@ def _build_features(
     10 signals: demand, gap, survival, rent, competition, review share,
     license velocity, transit access, income alignment, plus derived fields.
     """
-    seed = _ZONE_SEEDS.get(zone_id, (0.65, 0.60, 0.65, 0.35, 0.35, 0.28, 0.50, 0.70, 0.60))
+    seed = _ZONE_SEEDS.get(
+        zone_id, (0.65, 0.60, 0.65, 0.35, 0.35, 0.28, 0.50, 0.70, 0.60)
+    )
     demand, gap, surv, rent, comp, review, vel, transit, income = seed
 
     cuisine_bias = _CUISINE_GAP_BIAS.get(zone_type, {}).get(concept_subtype, 0.0)
     risk_adj = _RISK_ADJUST.get(risk_tolerance, 0.0)
     # Price tier adjusts income alignment: premium needs high income, budget needs low
-    price_income_adj = {"budget": -0.10, "mid": 0.0, "premium": 0.12}.get(price_tier, 0.0)
+    price_income_adj = {"budget": -0.10, "mid": 0.0, "premium": 0.12}.get(
+        price_tier, 0.0
+    )
     price_surv_adj = _PRICE_ADJUST.get(price_tier, 0.0)
 
-    final_gap  = float(np.clip(gap + cuisine_bias, 0.0, 1.0))
+    final_gap = float(np.clip(gap + cuisine_bias, 0.0, 1.0))
     final_surv = float(np.clip(surv + risk_adj + price_surv_adj, 0.0, 1.0))
     # Income alignment: mid-tier fits most; adjust based on price tier
     final_income = float(np.clip(income + price_income_adj, 0.0, 1.0))
 
     return {
-        "quick_lunch_demand":   demand,
-        "subtype_gap":          final_gap,
-        "survival_score":       final_surv,
-        "rent_pressure":        rent,
-        "competition_score":    comp,
+        "quick_lunch_demand": demand,
+        "subtype_gap": final_gap,
+        "survival_score": final_surv,
+        "rent_pressure": rent,
+        "competition_score": comp,
         "healthy_review_share": review,
-        "license_velocity":     vel,
-        "transit_access":       transit,
-        "income_alignment":     final_income,
+        "license_velocity": vel,
+        "transit_access": transit,
+        "income_alignment": final_income,
         "healthy_supply_ratio": 1.0 - final_gap,
-        "healthy_gap_score":    max(0.0, final_gap * demand - comp * 0.3),
+        "healthy_gap_score": max(0.0, final_gap * demand - comp * 0.3),
     }
 
 
@@ -197,7 +261,9 @@ def _score_one(
 ) -> ZoneRecommendation:
     from src.models.cmf_score import score_zone_for_concept
 
-    feats = _build_features(zone_id, zone_type, concept_subtype, risk_tolerance, price_tier)
+    feats = _build_features(
+        zone_id, zone_type, concept_subtype, risk_tolerance, price_tier
+    )
     # Use the full 10-signal ScoreComponents
     components = score_zone_for_concept(feats, concept_subtype)
     opp_score = compute_opening_score(components)
@@ -322,11 +388,20 @@ async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
 
     # --- Learned model path ---
     if _SCORING_MODEL is not None and _FEATURE_MATRIX is not None:
-        logger.info("Using learned model path for %d candidates (concept=%s)", len(candidates), subtype)
+        logger.info(
+            "Using learned model path for %d candidates (concept=%s)",
+            len(candidates),
+            subtype,
+        )
         scored = []
         for zid, _ztype, zlabel, _boro in candidates:
             rec = _score_with_learned_model(
-                zid, zlabel, subtype, _FEATURE_MATRIX, _SCORING_MODEL, _SURVIVAL_MODEL,
+                zid,
+                zlabel,
+                subtype,
+                _FEATURE_MATRIX,
+                _SCORING_MODEL,
+                _SURVIVAL_MODEL,
             )
             if rec is not None:
                 scored.append(rec)
@@ -335,17 +410,33 @@ async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
         fallback_count = 0
         for zid, ztype, zlabel, _boro in candidates:
             if zid not in scored_ids:
-                rec = _score_one(zid, ztype, zlabel, subtype, request.risk_tolerance, request.price_tier)
+                rec = _score_one(
+                    zid,
+                    ztype,
+                    zlabel,
+                    subtype,
+                    request.risk_tolerance,
+                    request.price_tier,
+                )
                 rec.scoring_path = "heuristic_fallback"
                 scored.append(rec)
                 fallback_count += 1
         if fallback_count:
-            logger.warning("%d/%d zones used heuristic fallback (not in feature matrix)", fallback_count, len(candidates))
+            logger.warning(
+                "%d/%d zones used heuristic fallback (not in feature matrix)",
+                fallback_count,
+                len(candidates),
+            )
     else:
         # --- Heuristic fallback path (original) ---
-        logger.info("Using heuristic path for %d candidates (no learned model loaded)", len(candidates))
+        logger.info(
+            "Using heuristic path for %d candidates (no learned model loaded)",
+            len(candidates),
+        )
         scored = [
-            _score_one(zid, ztype, zlabel, subtype, request.risk_tolerance, request.price_tier)
+            _score_one(
+                zid, ztype, zlabel, subtype, request.risk_tolerance, request.price_tier
+            )
             for zid, ztype, zlabel, _boro in candidates
         ]
 
