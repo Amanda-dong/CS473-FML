@@ -6,7 +6,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.models.cmf_score import LearnedScoringModel, ScoreComponents, compute_opening_score, score_zone_for_concept
+from src.models.cmf_score import (
+    LearnedScoringModel,
+    ScoreComponents,
+    compute_opening_score,
+    score_zone_for_concept,
+)
 from src.models.model_loader import load_feature_matrix, load_scoring_model
 from src.models.ranking_model import rank_zones
 from src.models.trajectory_model import TrajectoryClusteringModel
@@ -18,6 +23,7 @@ class DummyPredictor:
 
 
 # ── opening score ─────────────────────────────────────────────────────────────
+
 
 def test_opening_score_is_numeric() -> None:
     score = compute_opening_score(
@@ -58,8 +64,12 @@ def test_score_zone_for_concept(sample_zone_features: dict[str, float]) -> None:
 
 # ── ranking ───────────────────────────────────────────────────────────────────
 
+
 def test_ranking_orders_descending() -> None:
-    rows = [{"zone_name": "A", "opportunity_score": 0.2}, {"zone_name": "B", "opportunity_score": 0.9}]
+    rows = [
+        {"zone_name": "A", "opportunity_score": 0.2},
+        {"zone_name": "B", "opportunity_score": 0.9},
+    ]
     ranked = rank_zones(rows)
     assert ranked[0]["zone_name"] == "B"
 
@@ -76,6 +86,7 @@ def test_ranking_empty() -> None:
 
 # ── trajectory clustering ─────────────────────────────────────────────────────
 
+
 def test_trajectory_model_predicts_after_fit() -> None:
     model = TrajectoryClusteringModel().fit(pd.DataFrame({"value": [1, 2, 3]}))
     assert len(model.predict(pd.DataFrame({"value": [1, 2]}))) == 2
@@ -83,7 +94,9 @@ def test_trajectory_model_predicts_after_fit() -> None:
 
 def test_trajectory_model_gmm() -> None:
     model = TrajectoryClusteringModel(algorithm="gmm", n_clusters=2)
-    data = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0], "b": [5.0, 4.0, 3.0, 2.0, 1.0]})
+    data = pd.DataFrame(
+        {"a": [1.0, 2.0, 3.0, 4.0, 5.0], "b": [5.0, 4.0, 3.0, 2.0, 1.0]}
+    )
     labels = model.fit_predict(data)
     assert len(labels) == 5
 
@@ -110,7 +123,10 @@ def test_trajectory_model_raises_before_fit() -> None:
 
 # ── survival model ────────────────────────────────────────────────────────────
 
-def test_survival_model_fits_on_test_data(sample_restaurant_history: pd.DataFrame) -> None:
+
+def test_survival_model_fits_on_test_data(
+    sample_restaurant_history: pd.DataFrame,
+) -> None:
     from src.models.survival_model import SurvivalModelBundle
 
     model = SurvivalModelBundle()
@@ -147,6 +163,7 @@ def test_survival_synthetic_builder_removed() -> None:
 
 
 # ── explainability ────────────────────────────────────────────────────────────
+
 
 def test_explainability_returns_strings(sample_zone_features: dict[str, float]) -> None:
     from src.models.explainability import top_positive_drivers, top_risks
@@ -197,7 +214,9 @@ def test_load_scoring_model_rehydrates_learned_wrapper(tmp_path) -> None:
     )
 
 
-def test_build_real_restaurant_history_uses_business_unique_id_without_inspection_join() -> None:
+def test_build_real_restaurant_history_uses_business_unique_id_without_inspection_join() -> (
+    None
+):
     from src.models.survival_model import build_real_restaurant_history
 
     licenses = pd.DataFrame(

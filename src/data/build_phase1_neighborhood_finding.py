@@ -29,11 +29,24 @@ def load_frame(path: Path) -> pd.DataFrame:
 
 
 def main() -> None:
-    census = load_frame(CENSUS_PATH)[["nta", "median_household_income", "population_16plus"]]
-    hygiene = load_frame(HYGIENE_PATH)[["nta", "inspection_count", "avg_score", "critical_violation_rate"]]
-    citibike = load_frame(CITIBIKE_PATH)[["nta", "trip_count", "unique_start_station_count"]]
+    census = load_frame(CENSUS_PATH)[
+        ["nta", "median_household_income", "population_16plus"]
+    ]
+    hygiene = load_frame(HYGIENE_PATH)[
+        ["nta", "inspection_count", "avg_score", "critical_violation_rate"]
+    ]
+    citibike = load_frame(CITIBIKE_PATH)[
+        ["nta", "trip_count", "unique_start_station_count"]
+    ]
     yelp = load_frame(YELP_PATH)[
-        ["nta", "restaurant_count", "halal_count", "halal_share", "avg_rating", "total_review_count"]
+        [
+            "nta",
+            "restaurant_count",
+            "halal_count",
+            "halal_share",
+            "avg_rating",
+            "total_review_count",
+        ]
     ]
 
     phase1 = census.merge(hygiene, on="nta", how="left")

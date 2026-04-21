@@ -9,7 +9,11 @@ import pandas as pd
 
 from src.config.constants import MODEL_DIR, PROCESSED_DIR
 from src.data.quality import prepare_training_frame
-from src.models.cmf_score import LearnedScoringModel, compute_opening_score, score_zone_for_concept
+from src.models.cmf_score import (
+    LearnedScoringModel,
+    compute_opening_score,
+    score_zone_for_concept,
+)
 from src.models.ranking_model import LearnedRanker
 
 DATA_DIR = Path(PROCESSED_DIR)
@@ -49,7 +53,11 @@ def temporal_split(
     Returns (X_train, y_train, X_val, y_val, X_test, y_test).
     Validation set is used for early stopping in XGBoost.
     """
-    time_col = "year" if "year" in X.columns else ("time_key" if "time_key" in X.columns else None)
+    time_col = (
+        "year"
+        if "year" in X.columns
+        else ("time_key" if "time_key" in X.columns else None)
+    )
     if time_col is not None:
         train_mask = X[time_col] < val_year
         val_mask = X[time_col] == val_year
@@ -66,7 +74,11 @@ def temporal_split(
         X_clean = X.drop(columns=drop_cols) if drop_cols else X
         n = len(X_clean)
         s1, s2 = int(n * 0.6), int(n * 0.8)
-        X_train, X_val, X_test = X_clean.iloc[:s1], X_clean.iloc[s1:s2], X_clean.iloc[s2:]
+        X_train, X_val, X_test = (
+            X_clean.iloc[:s1],
+            X_clean.iloc[s1:s2],
+            X_clean.iloc[s2:],
+        )
         y_train, y_val, y_test = y.iloc[:s1], y.iloc[s1:s2], y.iloc[s2:]
     return X_train, y_train, X_val, y_val, X_test, y_test
 
@@ -145,7 +157,9 @@ def train_and_evaluate() -> None:
     print(f"{'Metric':<15} {'Learned':>10} {'Ranker':>10} {'Heuristic':>10}")
     print(f"{'RMSE':<15} {rmse:>10.4f} {'N/A':>10} {heuristic_rmse:>10.4f}")
     print(f"{'NDCG@5':<15} {ndcg5:>10.4f} {rank_ndcg5:>10.4f} {heuristic_ndcg5:>10.4f}")
-    print(f"{'NDCG@10':<15} {ndcg10:>10.4f} {rank_ndcg10:>10.4f} {heuristic_ndcg10:>10.4f}")
+    print(
+        f"{'NDCG@10':<15} {ndcg10:>10.4f} {rank_ndcg10:>10.4f} {heuristic_ndcg10:>10.4f}"
+    )
 
 
 if __name__ == "__main__":

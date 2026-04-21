@@ -67,7 +67,9 @@ def _spatial_join_points(
         geometry=gpd.points_from_xy(usable[lng_col], usable[lat_col]),
         crs="EPSG:4326",
     )
-    return gpd.sjoin(point_gdf, nta_gdf[["nta", "geometry"]], how="inner", predicate="within")
+    return gpd.sjoin(
+        point_gdf, nta_gdf[["nta", "geometry"]], how="inner", predicate="within"
+    )
 
 
 def build_yelp_features(nta_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -75,13 +77,17 @@ def build_yelp_features(nta_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
     yelp["name"] = yelp["name"].fillna("")
     yelp["categories"] = yelp["categories"].fillna("")
     yelp["rating"] = pd.to_numeric(yelp["rating"], errors="coerce")
-    yelp["review_count"] = pd.to_numeric(yelp["review_count"], errors="coerce").fillna(0)
+    yelp["review_count"] = pd.to_numeric(yelp["review_count"], errors="coerce").fillna(
+        0
+    )
     yelp["is_halal"] = (
         yelp["name"].str.lower().str.contains("halal", na=False)
         | yelp["categories"].str.lower().str.contains("halal", na=False)
     ).astype(int)
 
-    joined = _spatial_join_points(yelp, lat_col="latitude", lng_col="longitude", nta_gdf=nta_gdf)
+    joined = _spatial_join_points(
+        yelp, lat_col="latitude", lng_col="longitude", nta_gdf=nta_gdf
+    )
     features = (
         joined.groupby("nta", as_index=False)
         .agg(
@@ -94,17 +100,30 @@ def build_yelp_features(nta_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
     features["halal_share"] = features["halal_count"] / features["restaurant_count"]
-    return features[["nta", "restaurant_count", "halal_count", "halal_share", "avg_rating", "total_review_count"]]
+    return features[
+        [
+            "nta",
+            "restaurant_count",
+            "halal_count",
+            "halal_share",
+            "avg_rating",
+            "total_review_count",
+        ]
+    ]
 
 
 def build_hygiene_features() -> pd.DataFrame:
     hygiene = pd.read_csv(HYGIENE_PATH)
-    hygiene["inspection_date"] = pd.to_datetime(hygiene["INSPECTION DATE"], errors="coerce")
+    hygiene["inspection_date"] = pd.to_datetime(
+        hygiene["INSPECTION DATE"], errors="coerce"
+    )
     hygiene = hygiene[hygiene["BORO"].fillna("").str.lower() == "manhattan"].copy()
     hygiene["nta"] = hygiene["NTA"].fillna("").astype(str).str.strip()
     hygiene = hygiene[hygiene["nta"] != ""].copy()
     hygiene["SCORE"] = pd.to_numeric(hygiene["SCORE"], errors="coerce")
-    hygiene["is_critical"] = hygiene["CRITICAL FLAG"].fillna("").str.lower().eq("critical").astype(int)
+    hygiene["is_critical"] = (
+        hygiene["CRITICAL FLAG"].fillna("").str.lower().eq("critical").astype(int)
+    )
 
     features = (
         hygiene.groupby("nta", as_index=False)
@@ -123,7 +142,9 @@ def build_census_features() -> pd.DataFrame:
     census = pd.read_csv(CENSUS_PATH)
     census = census[census["Borough"].fillna("").str.lower() == "manhattan"].copy()
     nta_crosswalk = _load_manhattan_ntas()[["nta2020", "nta"]].drop_duplicates()
-    census = census.merge(nta_crosswalk, left_on="GeoID", right_on="nta2020", how="left")
+    census = census.merge(
+        nta_crosswalk, left_on="GeoID", right_on="nta2020", how="left"
+    )
     census = census.dropna(subset=["nta"]).copy()
     features = census[["nta", "MdHHIncE", "Pop16plE"]].rename(
         columns={
@@ -149,7 +170,9 @@ def build_citibike_features(nta_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
 
     for csv_path in sorted(RAW_DIR.glob(CITIBIKE_GLOB)):
         for chunk in pd.read_csv(csv_path, chunksize=200_000, low_memory=False):
-            joined = _spatial_join_points(chunk, lat_col="start_lat", lng_col="start_lng", nta_gdf=nta_gdf)
+            joined = _spatial_join_points(
+                chunk, lat_col="start_lat", lng_col="start_lng", nta_gdf=nta_gdf
+            )
             if joined.empty:
                 continue
 

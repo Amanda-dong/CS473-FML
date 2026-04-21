@@ -31,6 +31,7 @@ def run_placeholder_etl() -> pd.DataFrame:
 
 _DATASET_ID = "ipu4-2q9a"
 
+
 def fetch(limit: int = 50000) -> pd.DataFrame:
     url = f"https://data.cityofnewyork.us/resource/{_DATASET_ID}.json"
     params = {
@@ -44,20 +45,21 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
-    df = df.rename(columns={
-        "issueddate": "permit_date",
-        "communityboard": "nta_id",
-        "permitsub": "permit_type",
-        "jobtype": "_jobtype",
-    })
+    df = df.rename(
+        columns={
+            "issueddate": "permit_date",
+            "communityboard": "nta_id",
+            "permitsub": "permit_type",
+            "jobtype": "_jobtype",
+        }
+    )
     df["permit_date"] = pd.to_datetime(df["permit_date"], errors="coerce")
     df = df.dropna(subset=["permit_date"])
     df["year"] = df["permit_date"].dt.year
     df["job_count"] = 1
-    agg = (
-        df.groupby(["nta_id", "year", "permit_type"], as_index=False)["job_count"]
-        .sum()
-    )
+    agg = df.groupby(["nta_id", "year", "permit_type"], as_index=False)[
+        "job_count"
+    ].sum()
     agg["permit_date"] = agg["year"].astype(str)
     return agg[list(DATASET_SPEC.columns)].reset_index(drop=True)
 
