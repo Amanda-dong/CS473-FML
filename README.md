@@ -176,9 +176,23 @@ Recommended local workflow uses `uv`.
 
 Note: API keys are not required for the current scaffold. Add secrets only once the Yelp or Reddit collection work is implemented.
 
+## Backend Quick Start
+
+1. Install dependencies:
+   - `python -m pip install -r requirements.txt`
+2. Start API server:
+   - `bash scripts/run_api.sh`
+3. In a separate terminal, run smoke checks:
+   - `python scripts/smoke_api.py`
+
+Backend API contract is documented in:
+
+- `docs/api_contract.md`
+
 ## Documentation Index
 
 - `docs/Proposal.md`
 - `docs/Design.md`
 - `docs/Sprints.md`
 - `docs/Research.md`
+- `docs/api_contract.md`

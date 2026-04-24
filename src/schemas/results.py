@@ -29,6 +29,8 @@ class ZoneRecommendation(BaseModel):
         description="Fraction of ground truth components available for this zone (0-1)",
     )
 
+    model_config = {"protected_namespaces": ()}
+
 
 class RecommendationResponse(BaseModel):
     """Response payload for recommendation endpoints."""

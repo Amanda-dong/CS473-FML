@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-from lifelines import CoxPHFitter
+
+try:
+    from lifelines import CoxPHFitter
+
+    HAS_LIFELINES = True
+except ImportError:
+    CoxPHFitter = Any  # type: ignore[assignment]
+    HAS_LIFELINES = False
 
 try:
     from sksurv.ensemble import RandomSurvivalForest  # type: ignore[import]
@@ -34,7 +41,7 @@ class SurvivalModelBundle:
     event_col: str = "event_observed"
     fitted_: bool = field(default=False, init=False)
     feature_columns_: list[str] = field(default_factory=list, init=False)
-    cox_model_: CoxPHFitter | None = field(default=None, init=False)
+    cox_model_: Any = field(default=None, init=False)
     rsf_model_: object | None = field(default=None, init=False)
     uses_heuristic_: bool = field(default=False, init=False)
 
@@ -65,13 +72,18 @@ class SurvivalModelBundle:
                 self._fit_cox(model_frame)
         elif self.baseline == "heuristic":
             self.uses_heuristic_ = True
-        else:
+        elif HAS_LIFELINES:
             self._fit_cox(model_frame)
+        else:
+            self.uses_heuristic_ = True
 
         self.fitted_ = True
         return self
 
     def _fit_cox(self, model_frame: pd.DataFrame) -> None:
+        if not HAS_LIFELINES:
+            self.uses_heuristic_ = True
+            return
         self.cox_model_ = CoxPHFitter()
         self.cox_model_.fit(model_frame, duration_col=self.duration_col, event_col=self.event_col)
 
