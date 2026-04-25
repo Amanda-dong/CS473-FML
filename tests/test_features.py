@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -182,3 +183,67 @@ def test_build_zone_year_matrix_enriches_yelp_reviews_from_inspections() -> None
 
     assert "healthy_review_share" in result.columns
     assert result["healthy_review_share"].notna().any()
+
+
+def test_normalize_feature_matrix_constant_column() -> None:
+    from src.features.feature_matrix import normalize_feature_matrix
+    df = pd.DataFrame({"x": [1.0, 1.0, 1.0]})
+    result = normalize_feature_matrix(df)
+    assert (result["x"] == 1.0).all()
+
+
+def test_prepare_social_signals_year_column() -> None:
+    from src.features.feature_matrix import _prepare_social_signals
+    df = pd.DataFrame({
+        "community_district": ["Brooklyn"],
+        "year": [2024],
+        "count": [10]
+    })
+    result = _prepare_social_signals(df)
+    assert not result.empty
+    assert result["time_key"].iloc[0] == 2024
+
+
+def test_prepare_social_signals_month_column() -> None:
+    from src.features.feature_matrix import _prepare_social_signals
+    df = pd.DataFrame({
+        "community_district": ["Brooklyn"],
+        "month": ["2024-05"],
+        "count": [10]
+    })
+    result = _prepare_social_signals(df)
+    assert not result.empty
+    assert result["time_key"].iloc[0] == 2024
+
+
+def test_build_zone_year_matrix_all_datasets() -> None:
+    from src.features.feature_matrix import build_zone_year_matrix
+    etl_outputs = {
+        "licenses": pd.DataFrame({
+            "nta_id": ["BK09"], "event_date": ["2024-01-01"], "license_status": ["Issued"]
+        }),
+        "pluto": pd.DataFrame({
+            "nta_id": ["BK09"], "assessed_value": [1000.0], "year": [2024], "commercial_sqft": [5000.0]
+        }),
+        "acs": pd.DataFrame({
+            "nta_id": ["BK09"], "population": [1000.0], "median_income": [50000.0], "rent_burden": [0.3]
+        }),
+        "inspections": pd.DataFrame({
+            "inspection_date": ["2024-01-01"], "nta_id": ["BK09"], "grade": ["A"], "restaurant_id": ["r1"]
+        }),
+        "permits": pd.DataFrame({
+            "permit_date": ["2024-01-01"], "nta_id": ["BK09"], "job_count": [5.0]
+        }),
+        "citibike": pd.DataFrame({
+            "nta_id": ["BK09"], "time_key": [2024], "trip_count": [100.0], "station_count": [5.0]
+        }),
+        "airbnb": pd.DataFrame({
+            "nta_id": ["BK09"], "listing_count": [10.0], "entire_home_ratio": [0.6]
+        })
+    }
+    result = build_zone_year_matrix(etl_outputs)
+    assert not result.empty
+    expected_cols = ["zone_id", "time_key", "license_velocity", "rent_pressure", "population", "inspection_grade_avg", "permit_velocity", "trip_count", "listing_count"]
+    for col in expected_cols:
+        assert col in result.columns, f"Column {col} missing from merged matrix"
+

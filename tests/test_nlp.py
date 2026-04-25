@@ -6,6 +6,7 @@ import json
 import sys
 from types import ModuleType
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -45,6 +46,30 @@ def test_batch_classify_returns_correct_length() -> None:
     results = batch_classify(texts)
     assert len(results) == 3
     assert isinstance(results[0], str)
+
+
+def test_classify_subtype_embedding_no_centroids() -> None:
+    from src.nlp.subtype_classifier import classify_subtype_embedding
+    assert classify_subtype_embedding("text", {}, lambda x: np.array([[1.0]])) == "unknown"
+
+
+def test_classify_subtype_embedding_zero_norm() -> None:
+    from src.nlp.subtype_classifier import classify_subtype_embedding
+    centroids = {"ramen": np.array([0.0, 0.0])}
+    assert classify_subtype_embedding("text", centroids, lambda x: np.array([[0.0, 0.0]])) == "unknown"
+
+
+def test_classify_subtype_embedding_matches_best() -> None:
+    from src.nlp.subtype_classifier import classify_subtype_embedding
+    centroids = {
+        "ramen": np.array([1.0, 0.0]),
+        "mexican": np.array([0.0, 1.0]),
+        "zero": np.array([0.0, 0.0])
+    }
+    def mock_embed(texts):
+        return np.array([[0.9, 0.1]])
+    
+    assert classify_subtype_embedding("text", centroids, mock_embed) == "ramen"
 
 
 # ── white space ───────────────────────────────────────────────────────────────

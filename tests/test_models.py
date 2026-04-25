@@ -215,3 +215,80 @@ def test_build_real_restaurant_history_uses_business_unique_id_without_inspectio
 
     assert history["restaurant_id"].tolist() == ["dca-1"]
     assert history["inspection_grade_numeric"].tolist() == [2.0]
+
+
+# ── learned ranker ────────────────────────────────────────────────────────────
+
+def test_learned_ranker_raises_before_fit() -> None:
+    from src.models.ranking_model import LearnedRanker
+    ranker = LearnedRanker()
+    with pytest.raises(RuntimeError, match=r"fit\(\) before predict\(\)"):
+        ranker.predict(pd.DataFrame({"x": [1]}))
+
+
+def test_learned_ranker_fit_predict(tmp_path) -> None:
+    from src.models.ranking_model import LearnedRanker, HAS_XGB, HAS_JOBLIB
+    if not HAS_XGB or not HAS_JOBLIB:
+        pytest.skip("xgboost and joblib required for LearnedRanker test")
+
+    X = pd.DataFrame({"feat1": [1, 2, 3, 4], "feat2": [4, 3, 2, 1]})
+    y = pd.Series([0.1, 0.4, 0.7, 0.9])
+    group = [4]
+
+    ranker = LearnedRanker(params={"n_estimators": 2, "max_depth": 1})
+    ranker.fit(X, y, group)
+
+    preds = ranker.predict(X)
+    assert len(preds) == 4
+
+    path = str(tmp_path / "ranker.joblib")
+    ranker.save(path)
+
+    loaded = LearnedRanker.load(path)
+    assert loaded.feature_names == ["feat1", "feat2"]
+    assert len(loaded.predict(X)) == 4
+
+
+# ── survival evaluation ───────────────────────────────────────────────────────
+
+def test_survival_model_rsf(sample_restaurant_history: pd.DataFrame) -> None:
+    from src.models.survival_model import SurvivalModelBundle, HAS_SKSURV
+    if not HAS_SKSURV:
+        pytest.skip("sksurv required for RSF test")
+    model = SurvivalModelBundle(baseline="rsf")
+    model.fit(sample_restaurant_history)
+    assert model.fitted_
+    if not model.uses_heuristic_:
+        assert model.rsf_model_ is not None
+        risk = model.predict_risk(sample_restaurant_history.head(5))
+        assert len(risk) == 5
+        median = model.predict_median_survival(sample_restaurant_history.head(5))
+        assert len(median) == 5
+
+
+def test_survival_model_evaluation(sample_restaurant_history: pd.DataFrame) -> None:
+    from src.models.survival_model import SurvivalModelBundle
+    model = SurvivalModelBundle(baseline="cox")
+    model.fit(sample_restaurant_history)
+
+    if not model.uses_heuristic_:
+        c_index = model.concordance_index(sample_restaurant_history)
+        assert 0.0 <= c_index <= 1.0
+
+        brier = model.brier_score(sample_restaurant_history, times=[100, 365])
+        assert not brier.empty
+        assert "brier_score" in brier.columns
+
+        calib = model.calibration_data(sample_restaurant_history)
+        assert "predicted_survival" in calib.columns
+
+        ph_test = model.test_proportional_hazards(sample_restaurant_history)
+        assert "error" not in ph_test
+
+
+def test_survival_model_predict_median_survival_heuristic() -> None:
+    from src.models.survival_model import SurvivalModelBundle
+    model = SurvivalModelBundle()
+    model.fit(pd.DataFrame())  # heuristic
+    median = model.predict_median_survival(pd.DataFrame({"rent_pressure": [0.5], "competition_score": [0.5]}))
+    assert float(median.iloc[0]) > 0
