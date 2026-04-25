@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
 
 from src.features.zone_crosswalk import ZONE_TO_NTA, aggregate_nta_to_zone
 
 logger = logging.getLogger(__name__)
+
+_GEMINI_CACHE = Path("data/processed/gemini_labels_full.csv")
+_GEMINI_FALLBACK_TIME_KEY = 2024
 
 
 @dataclass(frozen=True)
@@ -137,12 +141,12 @@ def build_zone_year_matrix(
             if not rt_zone.empty:
                 rent_static = rt_zone
 
-    # --- Demand signals (needs "yelp" + "reddit") ---
+    # --- Demand signals (needs "yelp" + "complaints_311") ---
     yelp_df = etl_outputs.get("yelp", pd.DataFrame())
-    reddit_df = etl_outputs.get("reddit", pd.DataFrame())
+    complaints_311_df = etl_outputs.get("complaints_311", pd.DataFrame())
     review_locations = _build_restaurant_zone_lookup(inspections_df)
     review_frame = _prepare_review_signals(yelp_df, restaurant_locations=review_locations)
-    social_frame = _prepare_social_signals(reddit_df)
+    social_frame = _prepare_social_signals(complaints_311_df)
     if not review_frame.empty or not social_frame.empty:
         ds = build_demand_features(review_frame, social_frame)
         if not ds.empty:
@@ -179,6 +183,44 @@ def build_zone_year_matrix(
         if not grade_zone.empty:
             feature_tables["inspections"] = grade_zone
 
+    # --- Permits: construction velocity (needs "permits" dataset) ---
+    permits_df = etl_outputs.get("permits", pd.DataFrame())
+    if not permits_df.empty and "nta_id" in permits_df.columns and "job_count" in permits_df.columns:
+        p = permits_df.copy()
+        p["permit_date"] = pd.to_datetime(p["permit_date"], errors="coerce")
+        p = p.dropna(subset=["permit_date"])
+        p["time_key"] = p["permit_date"].dt.year.astype(int)
+        pv = p.groupby(["nta_id", "time_key"], as_index=False).agg(permit_velocity=("job_count", "sum"))
+        pv_zone = aggregate_nta_to_zone(pv, zone_col="nta_id", agg_rules={"permit_velocity": "sum"})
+        if not pv_zone.empty:
+            feature_tables["permits"] = pv_zone
+
+    # --- Citi Bike: mobility proxy (needs "citibike" dataset) ---
+    citibike_df = etl_outputs.get("citibike", pd.DataFrame())
+    if not citibike_df.empty and "nta_id" in citibike_df.columns:
+        cb = citibike_df.copy()
+        if "year" in cb.columns and "time_key" not in cb.columns:
+            cb = cb.rename(columns={"year": "time_key"})
+        cb["time_key"] = pd.to_numeric(cb["time_key"], errors="coerce").fillna(0).astype(int)
+        cb_zone = aggregate_nta_to_zone(
+            cb, zone_col="nta_id",
+            agg_rules={"trip_count": "sum", "station_count": "sum"},
+        )
+        if not cb_zone.empty:
+            feature_tables["citibike"] = cb_zone
+
+    # --- Airbnb: housing pressure static covariate ---
+    airbnb_df = etl_outputs.get("airbnb", pd.DataFrame())
+    airbnb_static: pd.DataFrame | None = None
+    if not airbnb_df.empty and "nta_id" in airbnb_df.columns:
+        ab = airbnb_df.copy()
+        ab_zone = aggregate_nta_to_zone(
+            ab, zone_col="nta_id",
+            agg_rules={"listing_count": "sum", "entire_home_ratio": "mean"},
+        )
+        if not ab_zone.empty:
+            airbnb_static = ab_zone
+
     if not feature_tables and rent_static is None:
         return pd.DataFrame(columns=["zone_id", "time_key"])
 
@@ -192,6 +234,18 @@ def build_zone_year_matrix(
         merged = merged.merge(rent_static, on="zone_id", how="left")
     elif rent_static is not None:
         merged = rent_static  # only static features available
+
+    if airbnb_static is not None and not merged.empty:
+        merged = merged.merge(airbnb_static, on="zone_id", how="left")
+    elif airbnb_static is not None:
+        merged = merged.merge(airbnb_static, on="zone_id", how="outer")
+
+    # --- Upgrade healthy_review_share with Gemini labels if cache exists ---
+    gemini_features = _load_gemini_review_features(yelp_df, review_locations)
+    if not gemini_features.empty and "healthy_review_share" in gemini_features.columns:
+        gemini_zone = _agg_to_zone(gemini_features)
+        if not gemini_zone.empty:
+            feature_tables["gemini_nlp"] = gemini_zone
 
     return merged
 
@@ -261,10 +315,68 @@ def _prepare_review_signals(
     return grouped[["zone_id", "time_key", "healthy_review_share"]]
 
 
-def _prepare_social_signals(reddit_df: pd.DataFrame) -> pd.DataFrame:
-    """Convert raw Reddit data into zone_id/time_key social buzz signals."""
-    if reddit_df.empty:
-        return pd.DataFrame(columns=["zone_id", "time_key", "social_buzz"])
-    if "zone_id" not in reddit_df.columns and "nta_id" not in reddit_df.columns:
-        return pd.DataFrame(columns=["zone_id", "time_key", "social_buzz"])
-    return pd.DataFrame(columns=["zone_id", "time_key", "social_buzz"])
+_CD_TO_ZONE: dict[str, str | None] = {
+    "Brooklyn": "BK09", "Manhattan": "MN17", "Queens": "QN70",
+    "Bronx": "BX44", "Harlem": "MN25", "Astoria": "QN35",
+    "Flushing": "QN49", "Williamsburg": "BK73", "Bushwick": "BK21",
+    "Flatbush": "BK38", "Greenpoint": "BK29", "Sunset Park": "BK54",
+    "Jackson Heights": "QN27", "Bay Ridge": "BK43", "Ridgewood": "QN17",
+    "Unknown": None,
+}
+
+
+def _prepare_social_signals(
+    complaints_311_df: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Convert 311 complaint data into zone_id/time_key social buzz signals."""
+    _empty = pd.DataFrame(columns=["zone_id", "time_key", "social_buzz"])
+
+    if complaints_311_df is not None and not complaints_311_df.empty and "community_district" in complaints_311_df.columns:
+        df = complaints_311_df.copy()
+        if "year" in df.columns and "time_key" not in df.columns:
+            df = df.rename(columns={"year": "time_key"})
+        elif "time_key" not in df.columns and "month" in df.columns:
+            df["time_key"] = pd.to_datetime(df["month"], errors="coerce").dt.year
+        if "time_key" not in df.columns:
+            return _empty
+        df["time_key"] = pd.to_numeric(df["time_key"], errors="coerce")
+        df = df.dropna(subset=["time_key"])
+        df["time_key"] = df["time_key"].astype(int)
+        count_col = "count" if "count" in df.columns else None
+        if count_col:
+            agg = df.groupby(["community_district", "time_key"], as_index=False)[count_col].sum()
+            agg = agg.rename(columns={count_col: "complaint_count"})
+        else:
+            agg = df.groupby(["community_district", "time_key"], as_index=False).size()
+            agg = agg.rename(columns={"size": "complaint_count"})
+        agg["social_buzz"] = (agg["complaint_count"] / 20.0).clip(upper=1.0)
+        agg["zone_id"] = agg["community_district"].map(_CD_TO_ZONE.get)
+        agg = agg.dropna(subset=["zone_id"])
+        if agg.empty:
+            return _empty
+        return agg[["zone_id", "time_key", "social_buzz"]].reset_index(drop=True)
+
+    return _empty
+
+
+def _load_gemini_review_features(
+    yelp_df: pd.DataFrame,
+    restaurant_locations: pd.DataFrame,
+) -> pd.DataFrame:
+    if not _GEMINI_CACHE.exists():
+        return pd.DataFrame()
+    try:
+        from src.nlp.review_aggregates import aggregate_review_labels
+        labels_df = pd.read_csv(_GEMINI_CACHE)
+        if "zone_id" not in labels_df.columns and not restaurant_locations.empty:
+            labels_df = labels_df.merge(
+                restaurant_locations,
+                on="restaurant_id",
+                how="left",
+            )
+        if "time_key" not in labels_df.columns:
+            labels_df["time_key"] = _GEMINI_FALLBACK_TIME_KEY
+        return aggregate_review_labels(labels_df)
+    except Exception:
+        logger.warning("feature_matrix: failed to load Gemini review features", exc_info=True)
+        return pd.DataFrame()

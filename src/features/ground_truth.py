@@ -79,6 +79,8 @@ def _review_quality(reviews_df: pd.DataFrame) -> pd.DataFrame:
     """Average review rating per zone-year, GLOBAL z-score then sigmoid to [0,1]."""
     if reviews_df.empty or "rating" not in reviews_df.columns:
         return pd.DataFrame(columns=["zone_id", "time_key", "y_review_quality"])
+    if "zone_id" not in reviews_df.columns or "time_key" not in reviews_df.columns:
+        return pd.DataFrame(columns=["zone_id", "time_key", "y_review_quality"])
 
     grouped = (
         reviews_df.groupby(["zone_id", "time_key"])["rating"]

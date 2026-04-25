@@ -188,3 +188,35 @@ def test_embed_reviews_returns_empty_matrix_for_blank_inputs() -> None:
         config=EmbeddingConfig(batch_size=8, device="cuda"),
     )
     assert embeddings.shape == (0, 384)
+
+
+# ── aggregate_review_labels schema tests ──────────────────────────────────────
+
+def test_aggregate_review_labels_subtype_gap_non_negative(sample_review_labels: pd.DataFrame) -> None:
+    from src.nlp.review_aggregates import aggregate_review_labels
+
+    result = aggregate_review_labels(sample_review_labels)
+    if not result.empty:
+        assert (result["subtype_gap"] >= 0.0).all()
+
+
+def test_aggregate_review_labels_dominant_subtype_is_string(sample_review_labels: pd.DataFrame) -> None:
+    from src.nlp.review_aggregates import aggregate_review_labels
+
+    result = aggregate_review_labels(sample_review_labels)
+    if not result.empty and "dominant_subtype" in result.columns:
+        non_null = result["dominant_subtype"].dropna()
+        assert non_null.apply(lambda v: isinstance(v, str)).all()
+
+
+def test_build_zone_year_matrix_accepts_311_for_social_buzz() -> None:
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    complaints = pd.DataFrame({
+        "month": ["2024-01", "2024-02", "2024-03"],
+        "community_district": ["Brooklyn", "Manhattan", "Harlem"],
+        "complaint_type": ["Food Establishment"] * 3,
+        "count": [5, 8, 12],
+    })
+    result = build_zone_year_matrix({"complaints_311": complaints})
+    assert isinstance(result, pd.DataFrame)

@@ -18,7 +18,6 @@ from src.data import (
     etl_licenses,
     etl_permits,
     etl_pluto,
-    etl_reddit,
     etl_yelp,
 )
 from src.data.quality import validate_dataset_contract
@@ -26,7 +25,7 @@ from src.data.registry import DATASET_REGISTRY
 
 logger = logging.getLogger(__name__)
 
-_OPTIONAL_ENRICHMENT_DATASETS = frozenset({"yelp", "reddit"})
+_OPTIONAL_ENRICHMENT_DATASETS = frozenset({"yelp", "acs", "permits", "airbnb"})
 
 _ETL_MODULES: dict[str, object] = {
     "permits": etl_permits,
@@ -37,7 +36,6 @@ _ETL_MODULES: dict[str, object] = {
     "citibike": etl_citibike,
     "airbnb": etl_airbnb,
     "yelp": etl_yelp,
-    "reddit": etl_reddit,
     "complaints_311": etl_311,
     "boundaries": etl_boundaries,
     "google_trends": etl_google_trends,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import dataclasses
 import logging
 
 import numpy as np
@@ -138,6 +140,37 @@ _RISK_ADJUST = {"conservative": -0.06, "balanced": 0.0, "aggressive": 0.06}
 _PRICE_ADJUST = {"budget": 0.04, "mid": 0.0, "premium": -0.04}
 
 
+def _get_zone_type_clusters(
+    subtype: str, risk_tolerance: str, price_tier: str
+) -> dict[str, str]:
+    """Fit k-means across all zones and return cluster label per zone_type.
+
+    Called by the UI layer; Streamlit caches the result.
+    """
+    zone_types = [ztype for _, ztype, _, _ in _NYC_ZONES]
+    rows = [
+        _build_features(zid, ztype, subtype, risk_tolerance, price_tier)
+        for zid, ztype, _, _ in _NYC_ZONES
+    ]
+    frame = pd.DataFrame(rows)
+    n_clusters = min(4, len(frame))
+    model = TrajectoryClusteringModel(
+        n_clusters=n_clusters, random_state=42
+    ).fit(frame)
+    labels = model.predict(frame)
+    label_names = {
+        "cluster_0": "emerging",
+        "cluster_1": "gentrifying",
+        "cluster_2": "stable",
+        "cluster_3": "declining",
+    }
+    result: dict[str, str] = {}
+    for idx, zt in enumerate(zone_types):
+        raw = labels.iloc[idx]
+        result[zt] = label_names.get(raw, raw)
+    return result
+
+
 def _build_features(
     zone_id: str,
     zone_type: str,
@@ -201,12 +234,17 @@ def _score_one(
     # Use the full 10-signal ScoreComponents
     components = score_zone_for_concept(feats, concept_subtype)
     opp_score = compute_opening_score(components)
+    feature_contributions = {
+        k: round(float(v), 4) for k, v in dataclasses.asdict(components).items()
+    }
+    survival_risk = round(1.0 - components.merchant_viability_score, 4)
     gap_pct = int(feats["subtype_gap"] * 100)
     concept_display = concept_subtype.replace("_", " ")
     return ZoneRecommendation(
         zone_id=zone_id,
         zone_name=describe_microzone(zone_type, zone_label),
         concept_subtype=concept_subtype,
+        zone_type=zone_type,
         opportunity_score=opp_score,
         confidence_bucket=_confidence_bucket(opp_score),
         healthy_gap_summary=(
@@ -218,7 +256,12 @@ def _score_one(
         freshness_note=(
             "Data sourced from NYC Open Data (permits, licenses, inspections, PLUTO). "
             "Last refreshed: 2026-04."
+            " Survival risk is a merchant viability proxy (heuristic path)."
         ),
+        feature_contributions=feature_contributions,
+        survival_risk=survival_risk,
+        scoring_path="heuristic",
+        model_version="heuristic",
     )
 
 
@@ -229,6 +272,8 @@ def _score_with_learned_model(
     feature_matrix: pd.DataFrame,
     scoring_model,
     survival_model,
+    *,
+    zone_type: str = "",
 ) -> ZoneRecommendation | None:
     """Score a zone using the trained ML model + SHAP explainability."""
     if "zone_id" in feature_matrix.columns:
@@ -285,6 +330,7 @@ def _score_with_learned_model(
         zone_id=zone_id,
         zone_name=zone_label,
         concept_subtype=concept_subtype,
+        zone_type=zone_type,
         opportunity_score=float(np.clip(pred_score, 0.0, 1.0)),
         confidence_bucket=_confidence_bucket(pred_score),
         healthy_gap_summary=(
@@ -302,9 +348,8 @@ def _score_with_learned_model(
     )
 
 
-@router.post("/predict/cmf", response_model=RecommendationResponse)
-async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
-    """Score all NYC candidate zones and return the top-N ranked recommendations."""
+def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
+    """Synchronous implementation — callable from both FastAPI and Streamlit in-process."""
     subtype = canonical_subtype(request.concept_subtype)
     borough_filter = (request.borough or "Any").strip()
     zone_type_filter = (request.zone_type or "").strip()
@@ -327,6 +372,7 @@ async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
         for zid, _ztype, zlabel, _boro in candidates:
             rec = _score_with_learned_model(
                 zid, zlabel, subtype, _FEATURE_MATRIX, _SCORING_MODEL, _SURVIVAL_MODEL,
+                zone_type=_ztype,
             )
             if rec is not None:
                 scored.append(rec)
@@ -360,6 +406,13 @@ async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
         },
         recommendations=top_n,
     )
+
+
+@router.post("/predict/cmf", response_model=RecommendationResponse)
+async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
+    """Score all NYC candidate zones and return the top-N ranked recommendations."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, predict_cmf_sync, request)
 
 
 @router.post("/predict/trajectory")

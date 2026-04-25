@@ -10,7 +10,6 @@ from .etl_inspections import DATASET_SPEC as INSPECTIONS_SPEC
 from .etl_licenses import DATASET_SPEC as LICENSES_SPEC
 from .etl_permits import DATASET_SPEC as PERMITS_SPEC
 from .etl_pluto import DATASET_SPEC as PLUTO_SPEC
-from .etl_reddit import DATASET_SPEC as REDDIT_SPEC
 from .etl_yelp import DATASET_SPEC as YELP_SPEC
 
 DATASET_REGISTRY = {
@@ -24,7 +23,6 @@ DATASET_REGISTRY = {
         CITIBIKE_SPEC,
         AIRBNB_SPEC,
         YELP_SPEC,
-        REDDIT_SPEC,
         COMPLAINTS_311_SPEC,
         BOUNDARIES_SPEC,
         GOOGLE_TRENDS_SPEC,

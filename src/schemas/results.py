@@ -13,6 +13,7 @@ class ZoneRecommendation(BaseModel):
     concept_subtype: str
     opportunity_score: float = Field(default=0.0)
     confidence_bucket: str = Field(default="low")
+    zone_type: str = Field(default="")
     healthy_gap_summary: str = Field(default="")
     positives: list[str] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
@@ -45,7 +46,7 @@ def build_placeholder_response(concept_subtype: str, limit: int = 5) -> Recommen
             zone_id=f"zone-{index}",
             zone_name=f"Placeholder Zone {index}",
             concept_subtype=concept_subtype,
-            opportunity_score=80.0 - index,
+            opportunity_score=round(0.75 - index * 0.05, 4),
             confidence_bucket="medium",
             healthy_gap_summary="Healthy options are under-supplied relative to quick lunch demand.",
             positives=[

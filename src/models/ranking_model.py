@@ -22,6 +22,10 @@ try:
 except ImportError:
     HAS_JOBLIB = False
 
+# rank:ndcg requires non-negative integer relevance grades; quartile bins
+# give XGBoost enough resolution without amplifying noise from tied scores.
+_NDCG_GRADE_BINS = 4
+
 
 def rank_zones(scored_rows: Iterable[dict[str, float | str]]) -> list[dict[str, float | str]]:
     """Sort scored rows by descending opportunity score."""
@@ -55,8 +59,9 @@ class LearnedRanker:
         if not HAS_XGB:
             raise ImportError("xgboost is required for LearnedRanker.fit()")
         self.feature_names = list(X.columns)
+        y_int = pd.qcut(y, q=_NDCG_GRADE_BINS, labels=False, duplicates="drop").fillna(0).astype(int)
         self.model = xgb.XGBRanker(**self.params)
-        self.model.fit(X, y, group=group)
+        self.model.fit(X, y_int, group=group)
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:

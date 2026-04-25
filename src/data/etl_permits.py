@@ -33,10 +33,7 @@ _DATASET_ID = "ipu4-2q9a"
 
 def fetch(limit: int = 50000) -> pd.DataFrame:
     url = f"https://data.cityofnewyork.us/resource/{_DATASET_ID}.json"
-    params = {
-        "$limit": limit,
-        "$select": "issueddate,communityboard,permitsub,jobtype",
-    }
+    params = {"$limit": limit}
     resp = requests.get(url, params=params, timeout=30)
     resp.raise_for_status()
     return pd.DataFrame(resp.json())
@@ -44,12 +41,29 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
-    df = df.rename(columns={
-        "issueddate": "permit_date",
-        "communityboard": "nta_id",
-        "permitsub": "permit_type",
-        "jobtype": "_jobtype",
-    })
+    cols_lower = {c.lower(): c for c in df.columns}
+
+    date_col = next((cols_lower[k] for k in cols_lower if k in ("issueddate", "issuance_date", "filing_date", "issued_date") or ("issued" in k and "date" in k)), None)
+    board_col = next((cols_lower[k] for k in cols_lower if k in ("nta_id", "communityboard", "community_board", "cb_no") or ("community" in k and "board" in k)), None)
+    type_col = next((cols_lower[k] for k in cols_lower if k in ("permitsub", "permit_sub_type", "permit_type", "permitsubtype", "permit_subtype")), None)
+
+    rename: dict[str, str] = {}
+    if date_col:
+        rename[date_col] = "permit_date"
+    if board_col:
+        rename[board_col] = "nta_id"
+    if type_col:
+        rename[type_col] = "permit_type"
+
+    df = df.rename(columns=rename)
+
+    if "permit_date" not in df.columns or "nta_id" not in df.columns:
+        logger.warning("etl_permits: required columns not found in API response (available: %s)", list(df.columns))
+        return build_empty_frame(DATASET_SPEC)
+
+    if "permit_type" not in df.columns:
+        df["permit_type"] = "unknown"
+
     df["permit_date"] = pd.to_datetime(df["permit_date"], errors="coerce")
     df = df.dropna(subset=["permit_date"])
     df["year"] = df["permit_date"].dt.year

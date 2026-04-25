@@ -41,7 +41,8 @@ def _fetch_one(
     business_id: str,
     per_business_limit: int,
 ) -> list[dict[str, object]]:
-    resp = session.get(f"{API_BASE}/businesses/{business_id}/reviews", timeout=30)
+    params = {"limit": per_business_limit, "date_from": "2022", "date_to": "2025"}
+    resp = session.get(f"{API_BASE}/businesses/{business_id}/reviews", params=params, timeout=30)
     if resp.status_code == 404:
         return []
     resp.raise_for_status()

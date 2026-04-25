@@ -1,156 +1,144 @@
-"""Methodology page with real explanatory content."""
-
 from __future__ import annotations
 
+from pathlib import Path
+
+import joblib
+import pandas as pd
 import streamlit as st
 
 
-def render_methodology_page() -> None:
-    """Render the methods explainer with expandable sections."""
+@st.cache_resource(show_spinner=False)
+def _load_model_info() -> dict:
+    info = {"survival": {}, "ranking": {}, "scoring": {}}
+    models_dir = Path("data/models")
+    for name in ("survival_model", "ranking_model", "scoring_model"):
+        path = models_dir / f"{name}.joblib"
+        if path.exists():
+            try:
+                bundle = joblib.load(path)
+                info[name.split("_")[0]] = {
+                    "path": str(path),
+                    "keys": list(bundle.keys()) if isinstance(bundle, dict) else [type(bundle).__name__],
+                }
+            except Exception as e:
+                info[name.split("_")[0]] = {"error": str(e)}
+    return info
 
-    st.subheader("Methodology")
-    st.write(
-        "The NYC Restaurant Intelligence Platform combines geospatial, transactional, "
-        "and text signals to surface healthy-food white-space recommendations."
+
+def render_methodology_page() -> None:
+    st.header("📖 Methodology")
+    st.markdown(
+        """
+        This page documents how the NYC Healthy-Food White-Space Finder scores and ranks
+        micro-zones for new quick-service healthy-food concepts, from raw data ingestion
+        through opportunity ranking, survival-risk estimation, and trajectory clustering.
+        """
     )
 
-    with st.expander("1. Data Sources"):
-        st.markdown(
-            """
-| # | Source | Description |
-|---|--------|-------------|
-| 1 | **NYC DCA License Events** | Restaurant license open/close events by NTA and year |
-| 2 | **NYC PLUTO** | Parcel-level assessed value and commercial square footage |
-| 3 | **Yelp Fusion API** | Business listings, categories, review counts, ratings |
-| 4 | **Google Places API** | Supplementary location data and category signals |
-| 5 | **NYC 311 Complaints** | Noise/food-safety complaints as negative demand proxies |
-| 6 | **NYC Health Inspections** | Inspection grades and violation counts per restaurant |
-| 7 | **MTA Turnstile Data** | Station-level ridership as foot-traffic proxy |
-| 8 | **Census ACS 5-Year** | Block-group income, education, and household composition |
-| 9 | **NYC Neighborhood Tabulation Areas** | Administrative zone boundaries for spatial joins |
-| 10 | **Yelp Review Text** | Full review text used for NLP labeling pipeline |
-| 11 | **NYC Open Data – DOHMH** | Health department restaurant inspection result details |
-| 12 | **Google Trends (local)** | Search-interest proxy for healthy-food demand trends |
-"""
-        )
+    # Section 1: Problem Framing
+    st.subheader("1. Problem Framing")
+    st.markdown(
+        """
+        We operate at the granularity of NYC **micro-zones** — Neighborhood Tabulation
+        Areas (NTAs) — and look for places where a healthy-food concept has the strongest
+        combination of underserved demand, viable merchant economics, and low survival
+        risk. Each zone is classified into one of four zone types:
 
-    with st.expander("2. Neighborhood Phase Discovery"):
-        st.markdown(
-            """
-**Algorithm:** K-Means (primary) and Gaussian Mixture Models (GMM, secondary)
+        - **Campus walkshed** — high student foot traffic around universities.
+        - **Lunch corridor** — dense daytime-worker catchments with quick-service demand.
+        - **Transit catchment** — strong commuter flow around rail / multimodal hubs.
+        - **Business district** — office-heavy cores with weekday lunch peaks.
+        """
+    )
 
-Each neighborhood-time observation is represented as a feature vector covering:
-- License velocity (net opens minus closes per year)
-- Rent pressure (normalized assessed value trajectory)
-- Healthy review share (from NLP pipeline)
-- Competition density (direct competitors per 0.5 km radius)
+    # Section 2: Data Sources
+    st.subheader("2. Data Sources")
+    st.markdown(
+        "Sources are organized into two tiers: **Tier 1 (Core)** drives the CMF score "
+        "directly; **Tier 2 (Enrichment)** refines signals and adds qualitative context."
+    )
+    sources = pd.DataFrame(
+        [
+            {"Tier": "Tier 1 (Core)", "Source": "NYC Open Data — Restaurant Inspections (DOHMH)", "Use": "Healthy vs. non-healthy establishment counts and subtype gap analysis"},
+            {"Tier": "Tier 1 (Core)", "Source": "NYC Open Data — DOB Permits", "Use": "Merchant license velocity and turnover signal"},
+            {"Tier": "Tier 1 (Core)", "Source": "Citi Bike trip data", "Use": "Micro-mobility proxy for foot traffic and transit catchment strength"},
+            {"Tier": "Tier 1 (Core)", "Source": "U.S. Census ACS 5-year", "Use": "Income gradient and demographic weighting"},
+            {"Tier": "Tier 1 (Core)", "Source": "NYC NTA boundary shapefile", "Use": "Micro-zone geometry and spatial joins"},
+            {"Tier": "Tier 2 (Enrichment)", "Source": "Yelp Fusion API", "Use": "Reviews, ratings, and cuisine categories for merchant viability"},
+            {"Tier": "Tier 2 (Enrichment)", "Source": "Inside Airbnb", "Use": "Listing density as a transient / visitor-flow proxy"},
+        ]
+    )
+    st.dataframe(sources, hide_index=True, use_container_width=True)
 
-K-Means partitions zones into *k* = 3–5 clusters representing macro regimes:
-`emerging`, `saturated`, `stable`, and `declining`.
+    # Section 3: Zone Typing
+    st.subheader("3. Zone Typing")
+    st.markdown(
+        """
+        Each NTA is classified into its zone type using ACS demographics (age mix,
+        educational attainment, household composition), employment density from permit
+        and business-activity data, and transit / POI proximity. The resulting zone type
+        conditions downstream demand modeling — a campus walkshed weights student
+        lunch patterns differently from a business district's weekday peak.
+        """
+    )
 
-GMM adds soft-assignment probabilities useful for borderline zones.
-Both models use `StandardScaler` normalization. Hyperparameters are
-selected via silhouette score on a held-out validation split.
-"""
-        )
+    # Section 4: CMF Opportunity Score
+    st.subheader("4. CMF Opportunity Score")
+    st.markdown(
+        """
+        The **Composite Micro-zone Fitness (CMF)** score is a weighted sum of ten
+        normalized signals in [0, 1]. Base signals add to the score; penalty signals
+        (competition saturation, rent pressure) subtract from it. Weights below are the
+        production values from `src/models/cmf_score.py`.
+        """
+    )
+    weights = pd.DataFrame(
+        [
+            {"Signal": "Quick-lunch demand", "Weight": 0.20, "Type": "Base"},
+            {"Signal": "Merchant viability", "Weight": 0.18, "Type": "Base"},
+            {"Signal": "Subtype healthy gap", "Weight": 0.16, "Type": "Base"},
+            {"Signal": "General healthy gap", "Weight": 0.12, "Type": "Base"},
+            {"Signal": "License velocity", "Weight": 0.10, "Type": "Base"},
+            {"Signal": "Review volume", "Weight": 0.08, "Type": "Base"},
+            {"Signal": "Transit proximity", "Weight": 0.07, "Type": "Base"},
+            {"Signal": "Income gradient", "Weight": 0.05, "Type": "Base"},
+            {"Signal": "Competition penalty", "Weight": 0.08, "Type": "Penalty"},
+            {"Signal": "Rent penalty", "Weight": 0.04, "Type": "Penalty"},
+        ]
+    )
+    st.dataframe(weights, hide_index=True, use_container_width=True)
 
-    with st.expander("3. Survival Modeling"):
-        st.markdown(
-            """
-**Algorithm:** Cox Proportional Hazards (lifelines `CoxPHFitter`)
+    # Section 5: Survival Risk
+    st.subheader("5. Survival Risk")
+    st.markdown(
+        """
+        Survival risk estimates the probability that a new merchant in the zone fails to
+        reach a 12-month operating milestone. The production model is a **Cox
+        Proportional Hazards / XGBoost hybrid**: Cox provides calibrated hazard ratios
+        over tenure, and XGBoost captures non-linear interactions among zone features.
+        When the learned model is unavailable or falls back, we surface a heuristic
+        proxy of **(1 − merchant_viability_score)** so the UI always has a defensible
+        risk estimate.
+        """
+    )
 
-The survival model estimates the probability that a newly opened restaurant
-survives beyond a given number of days, conditioned on zone-level covariates.
+    # Section 6: Zone Trajectory Clustering
+    st.subheader("6. Zone Trajectory Clustering")
+    st.markdown(
+        """
+        Zones are grouped by trajectory using **K-Means** over a time-windowed feature
+        vector (license velocity deltas, review-volume growth, demographic drift). The
+        resulting clusters map to four trajectory labels — **emerging**, **gentrifying**,
+        **stable**, and **declining** — and are displayed on each recommendation card as
+        a trajectory badge.
+        """
+    )
 
-**Duration variable:** `duration_days` — days from license open to close (or censoring)
+    # Section 7: Model Configuration
+    with st.expander("7. Model Configuration"):
+        info = _load_model_info()
+        st.json(info)
 
-**Event variable:** `event_observed` — 1 if the restaurant closed, 0 if still active
-
-**Covariates:** rent pressure, competition score, inspection grade (numeric),
-license velocity of the surrounding zone.
-
-The partial-hazard scores are normalized to [0, 1] and used as the
-`survival_score` input to the CMF opening score.
-"""
-        )
-
-    with st.expander("4. NLP Labeling (Gemini Weak Labeling)"):
-        st.markdown(
-            """
-**Model:** Gemini 2.5 Flash Lite via `google-genai` SDK
-
-Review texts are batched in groups of 10 and sent to Gemini with a
-structured prompt requesting:
-- `sentiment`: positive / neutral / negative
-- `concept_subtype`: one of the allowed taxonomy labels
-- `confidence`: float in [0, 1]
-- `rationale`: brief explanation
-
-Labels with `confidence < 0.7` are discarded. The remaining labels are
-aggregated at (zone, year) granularity to produce:
-- **healthy_review_share**: fraction of positive reviews
-- **dominant_subtype**: most frequently labeled concept subtype
-- **subtype_gap**: standard deviation of normalized subtype proportions
-  (high variance → unmet demand for underrepresented subtypes)
-
-When no API key is present the pipeline falls back to deterministic
-synthetic labels for local development and CI.
-"""
-        )
-
-    with st.expander("5. Healthy Gap Scoring"):
-        st.markdown(
-            r"""
-**Formula:**
-
-```
-healthy_gap_score = max(0,
-    quick_lunch_demand × 0.50
-  + subtype_gap        × 0.35
-  - healthy_supply_ratio × 0.25
-)
-```
-
-**Opening score (CMF):**
-
-```
-opening_score =
-    healthy_gap_score       × 0.35
-  + subtype_gap_score       × 0.25
-  + merchant_viability_score × 0.30
-  - competition_penalty      × 0.10
-```
-
-**Merchant viability:**
-
-```
-merchant_viability = max(0,
-    survival_score   × 0.50
-  - rent_pressure    × 0.25
-  - competition_score × 0.25
-)
-```
-
-All inputs are normalized to [0, 1] before scoring.
-"""
-        )
-
-    with st.expander("6. Temporal Validation"):
-        st.markdown(
-            """
-**Strategy:** Blocked time-series splits (no data leakage across years)
-
-The dataset spans 2014–2023. Validation uses rolling-origin blocked splits:
-- **Train:** years *t* through *t + k*
-- **Validation:** year *t + k + 1*
-- **Test:** years 2022–2023 (held out until final evaluation)
-
-This prevents temporal leakage: features computed from future license events
-or future rent trajectories never appear in training folds.
-
-Key metrics tracked across folds:
-- Spearman rank correlation of predicted vs. realized zone performance
-- Precision@5 for top recommended zones
-- Calibration of survival probability estimates (Brier score)
-"""
-        )
+    st.caption(
+        "Sources: NYC Open Data · U.S. Census · Yelp · Inside Airbnb · Citi Bike."
+    )

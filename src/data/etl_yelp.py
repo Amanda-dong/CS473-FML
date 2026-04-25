@@ -17,6 +17,7 @@ from .base import DatasetSpec, build_empty_frame
 
 logger = logging.getLogger(__name__)
 _DEFAULT_FUSION_REVIEW_PATH = Path("data/raw/yelp_reviews_fusion.csv")
+_DEFAULT_FUSION_BUSINESS_PATH = Path("data/raw/yelp_business.csv")
 
 DATASET_SPEC = DatasetSpec(
     name="yelp",
@@ -33,12 +34,12 @@ def run_placeholder_etl() -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Synthetic data (Yelp dataset requires application/agreement)
+# Loaders
 # ---------------------------------------------------------------------------
 
 
 def _load_local() -> pd.DataFrame:
-    """Load Yelp data from default Fusion CSV or env-configured local file."""
+    """Load Yelp reviews from default Fusion CSV or env-configured local file."""
     if _DEFAULT_FUSION_REVIEW_PATH.is_file():
         path = _DEFAULT_FUSION_REVIEW_PATH
         logger.info("etl_yelp: loading default Fusion review file %s", path)
@@ -60,6 +61,34 @@ def _load_local() -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _load_business() -> pd.DataFrame:
+    """Load Yelp business lat/lon from default business CSV.
+
+    Returns a DataFrame with (id, latitude, longitude) or empty if file missing.
+    """
+    if not _DEFAULT_FUSION_BUSINESS_PATH.is_file():
+        logger.warning("etl_yelp: business file not found at %s — skipping geo join", _DEFAULT_FUSION_BUSINESS_PATH)
+        return pd.DataFrame(columns=["id", "latitude", "longitude"])
+    try:
+        df = pd.read_csv(_DEFAULT_FUSION_BUSINESS_PATH, usecols=["id", "latitude", "longitude"])
+        df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+        df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
+        return df.dropna(subset=["latitude", "longitude"])
+    except Exception as exc:
+        logger.warning("etl_yelp: could not load business file: %s", exc)
+        return pd.DataFrame(columns=["id", "latitude", "longitude"])
+
+
 def run_etl(limit: int = 50000) -> pd.DataFrame:  # noqa: ARG001
-    """Load real Yelp data from local file. Raises if not configured."""
-    return _load_local()
+    """Load real Yelp data from local file and enrich with business lat/lon."""
+    reviews = _load_local()
+    business = _load_business()
+
+    if not business.empty and "business_id" in reviews.columns:
+        reviews = reviews.merge(
+            business.rename(columns={"id": "business_id"}),
+            on="business_id",
+            how="left",
+        )
+
+    return reviews

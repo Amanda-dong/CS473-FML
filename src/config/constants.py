@@ -9,7 +9,6 @@ ACTIVE_DATASETS = (
     "citibike",
     "airbnb",
     "yelp",
-    "reddit",
     "complaints_311",
     "boundaries",
 )

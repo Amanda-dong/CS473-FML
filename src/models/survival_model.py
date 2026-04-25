@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 from lifelines import CoxPHFitter
+
+logger = logging.getLogger(__name__)
 
 try:
     from sksurv.ensemble import RandomSurvivalForest  # type: ignore[import]
@@ -72,8 +75,25 @@ class SurvivalModelBundle:
         return self
 
     def _fit_cox(self, model_frame: pd.DataFrame) -> None:
-        self.cox_model_ = CoxPHFitter()
-        self.cox_model_.fit(model_frame, duration_col=self.duration_col, event_col=self.event_col)
+        feature_cols = [c for c in model_frame.columns if c not in {self.duration_col, self.event_col}]
+        std = model_frame[feature_cols].std()
+        good_cols = std[std > 1e-6].index.tolist()
+        if not good_cols:
+            logger.warning("All feature columns have near-zero variance — falling back to heuristic")
+            self.uses_heuristic_ = True
+            return
+        if len(good_cols) < len(feature_cols):
+            dropped = set(feature_cols) - set(good_cols)
+            logger.warning("Dropped %d near-zero-variance columns before Cox fit: %s", len(dropped), sorted(dropped))
+            self.feature_columns_ = good_cols
+        fit_frame = model_frame[[self.duration_col, self.event_col, *good_cols]]
+        try:
+            self.cox_model_ = CoxPHFitter(penalizer=0.1)
+            self.cox_model_.fit(fit_frame, duration_col=self.duration_col, event_col=self.event_col)
+        except Exception as exc:
+            logger.warning("Cox convergence failed (%s) — falling back to heuristic", exc)
+            self.cox_model_ = None
+            self.uses_heuristic_ = True
 
     def _fit_rsf(self, model_frame: pd.DataFrame) -> None:
         y = np.array(
