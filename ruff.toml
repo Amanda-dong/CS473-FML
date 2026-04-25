@@ -1,0 +1,5 @@
+[lint.per-file-ignores]
+# frontend/app.py must insert the repo root into sys.path before importing
+# project modules — this is the standard Streamlit workaround for running
+# from an arbitrary working directory.
+"frontend/app.py" = ["E402"]

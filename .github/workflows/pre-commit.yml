@@ -42,7 +42,7 @@ jobs:
 
       - name: Run all pre-commit hooks
         id: hooks
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure
         continue-on-error: true
 
       - name: Commit and push auto-fixes
