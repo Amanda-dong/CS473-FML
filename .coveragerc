@@ -1,0 +1,16 @@
+[coverage:run]
+relative_files = true
+omit =
+    src/data/build_nta_features.py
+    src/data/build_phase1_neighborhood_finding.py
+    src/data/download_census.py
+    src/data/fetch_yelp_reviews_fusion_v2.py
+    src/models/train_scoring.py
+    src/models/train_survival.py
+    src/validation/run_evaluation.py
+
+[coverage:report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError

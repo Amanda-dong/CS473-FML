@@ -1,0 +1,39 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+  - title: "Features"
+    labels: ["feat", "feature"]
+  - title: "Bug Fixes"
+    labels: ["fix", "bugfix"]
+  - title: "Performance"
+    labels: ["perf"]
+  - title: "Refactoring"
+    labels: ["refactor"]
+  - title: "Documentation"
+    labels: ["docs", "documentation"]
+  - title: "CI / Build"
+    labels: ["ci", "build"]
+  - title: "Dependencies"
+    labels: ["dependencies"]
+  - title: "Tests"
+    labels: ["test", "tests"]
+
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+change-title-escapes: '\<*_&'
+
+version-resolver:
+  major:
+    labels: ["major", "breaking-change"]
+  minor:
+    labels: ["feat", "feature"]
+  patch:
+    labels: ["fix", "bugfix", "perf", "refactor", "docs", "ci", "build", "dependencies", "test", "tests"]
+  default: patch
+
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  **Full Changelog**: $PREVIOUS_TAG...v$RESOLVED_VERSION

@@ -154,10 +154,11 @@ def test_gemini_label_prompt_contains_review() -> None:
     assert review in prompt
 
 
-def test_label_reviews_requires_api_key() -> None:
+def test_label_reviews_requires_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify labeling raises when no API key is provided."""
     from src.nlp.gemini_labels import label_reviews_with_gemini
 
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     reviews = ["good food", "bad service", "amazing tacos"]
     with pytest.raises(RuntimeError, match="GEMINI_API_KEY"):
         label_reviews_with_gemini(reviews, ("salad_bowls", "mexican"), api_key=None)

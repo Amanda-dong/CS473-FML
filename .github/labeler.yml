@@ -1,0 +1,31 @@
+api:
+  - src/api/**
+  - src/schemas/**
+
+data:
+  - src/data/**
+
+models:
+  - src/models/**
+
+nlp:
+  - src/nlp/**
+
+features:
+  - src/features/**
+
+pipeline:
+  - src/pipeline/**
+  - src/validation/**
+
+tests:
+  - tests/**
+
+ci:
+  - .github/**
+  - .pre-commit-config.yaml
+  - pytest.ini
+  - .coveragerc
+
+dependencies:
+  - requirements.txt
