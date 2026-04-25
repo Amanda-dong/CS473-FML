@@ -42,7 +42,9 @@ def _fetch_one(
     per_business_limit: int,
 ) -> list[dict[str, object]]:
     params = {"limit": per_business_limit, "date_from": "2022", "date_to": "2025"}
-    resp = session.get(f"{API_BASE}/businesses/{business_id}/reviews", params=params, timeout=30)
+    resp = session.get(
+        f"{API_BASE}/businesses/{business_id}/reviews", params=params, timeout=30
+    )
     if resp.status_code == 404:
         return []
     resp.raise_for_status()
@@ -92,7 +94,13 @@ def fetch_reviews(
 
     out = pd.DataFrame(
         rows,
-        columns=["review_date", "business_id", "restaurant_id", "rating", "review_text"],
+        columns=[
+            "review_date",
+            "business_id",
+            "restaurant_id",
+            "rating",
+            "review_text",
+        ],
     )
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(output_csv, index=False, encoding="utf-8")
@@ -101,7 +109,9 @@ def fetch_reviews(
 
 def main() -> None:
     _load_repo_env()
-    parser = argparse.ArgumentParser(description="Fetch Yelp Fusion reviews from business IDs.")
+    parser = argparse.ArgumentParser(
+        description="Fetch Yelp Fusion reviews from business IDs."
+    )
     parser.add_argument("--input-csv", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output-csv", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--id-column", type=str, default="id")

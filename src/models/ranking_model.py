@@ -27,10 +27,16 @@ except ImportError:
 _NDCG_GRADE_BINS = 4
 
 
-def rank_zones(scored_rows: Iterable[dict[str, float | str]]) -> list[dict[str, float | str]]:
+def rank_zones(
+    scored_rows: Iterable[dict[str, float | str]],
+) -> list[dict[str, float | str]]:
     """Sort scored rows by descending opportunity score."""
 
-    return sorted(scored_rows, key=lambda row: float(row.get("opportunity_score", 0.0)), reverse=True)
+    return sorted(
+        scored_rows,
+        key=lambda row: float(row.get("opportunity_score", 0.0)),
+        reverse=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +65,11 @@ class LearnedRanker:
         if not HAS_XGB:
             raise ImportError("xgboost is required for LearnedRanker.fit()")
         self.feature_names = list(X.columns)
-        y_int = pd.qcut(y, q=_NDCG_GRADE_BINS, labels=False, duplicates="drop").fillna(0).astype(int)
+        y_int = (
+            pd.qcut(y, q=_NDCG_GRADE_BINS, labels=False, duplicates="drop")
+            .fillna(0)
+            .astype(int)
+        )
         self.model = xgb.XGBRanker(**self.params)
         self.model.fit(X, y_int, group=group)
         return self
@@ -75,7 +85,14 @@ class LearnedRanker:
         if not HAS_JOBLIB:
             raise ImportError("joblib is required for save()")
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump({"model": self.model, "feature_names": self.feature_names, "params": self.params}, path)
+        joblib.dump(
+            {
+                "model": self.model,
+                "feature_names": self.feature_names,
+                "params": self.params,
+            },
+            path,
+        )
 
     @classmethod
     def load(cls, path: str) -> "LearnedRanker":

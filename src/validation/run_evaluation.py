@@ -110,24 +110,25 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         return pd.DataFrame(), pd.DataFrame()
 
     # Check for existing target labels
-    target_ok = (
-        "target" in fm.columns
-        and fm["target"].notna().sum() >= 10
-    )
+    target_ok = "target" in fm.columns and fm["target"].notna().sum() >= 10
 
     if target_ok:
         logger.info(
             "Found %d labeled rows in feature_matrix.target",
             fm["target"].notna().sum(),
         )
-        gt = fm[["zone_id", "time_key", "target"]].rename(
-            columns={"target": "y_composite"}
-        ) if "zone_id" in fm.columns else fm[["target"]].rename(
-            columns={"target": "y_composite"}
+        gt = (
+            fm[["zone_id", "time_key", "target"]].rename(
+                columns={"target": "y_composite"}
+            )
+            if "zone_id" in fm.columns
+            else fm[["target"]].rename(columns={"target": "y_composite"})
         )
         return fm, gt
 
-    logger.warning("Insufficient labels in feature_matrix — running build_ground_truth()")
+    logger.warning(
+        "Insufficient labels in feature_matrix — running build_ground_truth()"
+    )
     licenses = _load_parquet_safe(_LICENSES_PATH, "licenses")
     yelp = _load_parquet_safe(_YELP_PATH, "yelp")
     inspections = _load_parquet_safe(_INSPECTIONS_PATH, "inspections")
@@ -152,10 +153,17 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     if "y_composite" in gt.columns:
         coverage = gt["y_composite"].notna().mean()
         if coverage < 0.5:
-            logger.warning("Label coverage is %.1f%% — below 50%% threshold", coverage * 100)
+            logger.warning(
+                "Label coverage is %.1f%% — below 50%% threshold", coverage * 100
+            )
 
     # Merge composite label back into feature matrix
-    if "zone_id" in fm.columns and "zone_id" in gt.columns and "time_key" in fm.columns and "time_key" in gt.columns:
+    if (
+        "zone_id" in fm.columns
+        and "zone_id" in gt.columns
+        and "time_key" in fm.columns
+        and "time_key" in gt.columns
+    ):
         gt_slim = gt[["zone_id", "time_key", "y_composite"]].drop_duplicates(
             subset=["zone_id", "time_key"]
         )
@@ -187,17 +195,28 @@ def stage_temporal_backtest(
             raise ValueError("Ground truth is empty or missing y_composite.")
 
         # Align ground_truth index to feature_matrix index where possible
-        if "zone_id" in fm.columns and "zone_id" in gt.columns and "time_key" in gt.columns:
-            gt_aligned = fm[["zone_id", "time_key"]].reset_index().merge(
-                gt[["zone_id", "time_key", "y_composite"]].drop_duplicates(
-                    subset=["zone_id", "time_key"]
-                ),
-                on=["zone_id", "time_key"],
-                how="left",
-            ).set_index("index")["y_composite"]
+        if (
+            "zone_id" in fm.columns
+            and "zone_id" in gt.columns
+            and "time_key" in gt.columns
+        ):
+            gt_aligned = (
+                fm[["zone_id", "time_key"]]
+                .reset_index()
+                .merge(
+                    gt[["zone_id", "time_key", "y_composite"]].drop_duplicates(
+                        subset=["zone_id", "time_key"]
+                    ),
+                    on=["zone_id", "time_key"],
+                    how="left",
+                )
+                .set_index("index")["y_composite"]
+            )
             gt_df = gt_aligned.to_frame(name="y_composite")
         else:
-            gt_df = gt[["y_composite"]].copy() if "y_composite" in gt.columns else gt.copy()
+            gt_df = (
+                gt[["y_composite"]].copy() if "y_composite" in gt.columns else gt.copy()
+            )
 
         gt_df.index = fm.index
 
@@ -235,10 +254,7 @@ def _build_feature_groups(columns: list[str]) -> dict[str, list[str]]:
     }
     groups: dict[str, list[str]] = {}
     for group, keywords in patterns.items():
-        matched = [
-            col for col in columns
-            if any(kw in col.lower() for kw in keywords)
-        ]
+        matched = [col for col in columns if any(kw in col.lower() for kw in keywords)]
         if matched:
             groups[group] = matched
     return groups
@@ -252,32 +268,57 @@ def stage_feature_ablation(
         from src.validation.ablation import feature_ablation
 
         if fm.empty or gt.empty:
-            raise ValueError("Feature matrix or ground truth is empty — skipping ablation.")
+            raise ValueError(
+                "Feature matrix or ground truth is empty — skipping ablation."
+            )
 
-        drop_cols = [c for c in ("zone_id", "time_key", "target", "y_composite") if c in fm.columns]
+        drop_cols = [
+            c
+            for c in ("zone_id", "time_key", "target", "y_composite")
+            if c in fm.columns
+        ]
         X = fm.drop(columns=drop_cols).select_dtypes(include="number").fillna(0.0)
 
         # Resolve target series aligned to X index
-        if "y_composite" in gt.columns and "zone_id" in fm.columns and "zone_id" in gt.columns and "time_key" in gt.columns:
-            y_series = fm[["zone_id", "time_key"]].reset_index().merge(
-                gt[["zone_id", "time_key", "y_composite"]].drop_duplicates(
-                    subset=["zone_id", "time_key"]
-                ),
-                on=["zone_id", "time_key"],
-                how="left",
-            ).set_index("index")["y_composite"].reindex(fm.index)
+        if (
+            "y_composite" in gt.columns
+            and "zone_id" in fm.columns
+            and "zone_id" in gt.columns
+            and "time_key" in gt.columns
+        ):
+            y_series = (
+                fm[["zone_id", "time_key"]]
+                .reset_index()
+                .merge(
+                    gt[["zone_id", "time_key", "y_composite"]].drop_duplicates(
+                        subset=["zone_id", "time_key"]
+                    ),
+                    on=["zone_id", "time_key"],
+                    how="left",
+                )
+                .set_index("index")["y_composite"]
+                .reindex(fm.index)
+            )
         elif "target" in fm.columns:
             y_series = fm["target"]
         else:
-            y_series = gt.iloc[:, -1] if not gt.empty else pd.Series(
-                np.random.default_rng(1).uniform(0, 1, len(X)), index=X.index
+            y_series = (
+                gt.iloc[:, -1]
+                if not gt.empty
+                else pd.Series(
+                    np.random.default_rng(1).uniform(0, 1, len(X)), index=X.index
+                )
             )
 
-        y_series = y_series.reindex(X.index).fillna(y_series.median() if y_series.notna().any() else 0.5)
+        y_series = y_series.reindex(X.index).fillna(
+            y_series.median() if y_series.notna().any() else 0.5
+        )
 
         feature_groups = _build_feature_groups(list(X.columns))
         if not feature_groups:
-            raise ValueError("No feature groups matched any column in the feature matrix.")
+            raise ValueError(
+                "No feature groups matched any column in the feature matrix."
+            )
 
         logger.info(
             "Running feature ablation for groups: %s",
@@ -288,10 +329,14 @@ def stage_feature_ablation(
         n = len(X)
         fold_size = max(1, n // 3)
         splits = [
-            (list(range(0, i * fold_size)) + list(range((i + 1) * fold_size, n)), list(range(i * fold_size, (i + 1) * fold_size)))
+            (
+                list(range(0, i * fold_size)) + list(range((i + 1) * fold_size, n)),
+                list(range(i * fold_size, (i + 1) * fold_size)),
+            )
             for i in range(3)
-            if len(list(range(0, i * fold_size)) + list(range((i + 1) * fold_size, n))) > 0
-               and len(list(range(i * fold_size, (i + 1) * fold_size))) > 0
+            if len(list(range(0, i * fold_size)) + list(range((i + 1) * fold_size, n)))
+            > 0
+            and len(list(range(i * fold_size, (i + 1) * fold_size))) > 0
         ]
         if not splits:
             splits = [(list(range(max(1, n // 2))), list(range(max(1, n // 2), n)))]
@@ -338,13 +383,15 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
             else:
                 bundle = raw
 
-            if bundle is not None and hasattr(bundle, "cox_model_") and bundle.cox_model_ is not None:
+            if (
+                bundle is not None
+                and hasattr(bundle, "cox_model_")
+                and bundle.cox_model_ is not None
+            ):
                 try:
                     ci = bundle.cox_model_.concordance_index_
                     metrics["concordance_index"] = float(ci)
-                    logger.info(
-                        "Concordance index from cox_model_ attribute: %.4f", ci
-                    )
+                    logger.info("Concordance index from cox_model_ attribute: %.4f", ci)
                 except AttributeError:
                     pass
 
@@ -353,7 +400,10 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
         inspections = _load_parquet_safe(_INSPECTIONS_PATH, "inspections")
 
         if not licenses.empty:
-            from src.models.survival_model import SurvivalModelBundle, build_real_restaurant_history
+            from src.models.survival_model import (
+                SurvivalModelBundle,
+                build_real_restaurant_history,
+            )
 
             zone_features = fm if not fm.empty else None
             history = build_real_restaurant_history(
@@ -368,7 +418,9 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
                 duration_col = "duration_days"
                 event_col = "event_observed"
                 if duration_col in history.columns and event_col in history.columns:
-                    history_sorted = history.sort_values(duration_col).reset_index(drop=True)
+                    history_sorted = history.sort_values(duration_col).reset_index(
+                        drop=True
+                    )
                     split_idx = int(len(history_sorted) * 0.8)
                     train_hist = history_sorted.iloc[:split_idx]
                     test_hist = history_sorted.iloc[split_idx:]
@@ -413,10 +465,18 @@ def _extract_backtest_summary(bt: pd.DataFrame | None) -> dict:
             "backtest_map_mean": None,
         }
     return {
-        "backtest_ndcg5_mean": float(bt["ndcg_5"].mean()) if "ndcg_5" in bt.columns else None,
-        "backtest_ndcg5_std": float(bt["ndcg_5"].std()) if "ndcg_5" in bt.columns else None,
-        "backtest_precision5_mean": float(bt["precision_5"].mean()) if "precision_5" in bt.columns else None,
-        "backtest_map_mean": float(bt["map_score"].mean()) if "map_score" in bt.columns else None,
+        "backtest_ndcg5_mean": float(bt["ndcg_5"].mean())
+        if "ndcg_5" in bt.columns
+        else None,
+        "backtest_ndcg5_std": float(bt["ndcg_5"].std())
+        if "ndcg_5" in bt.columns
+        else None,
+        "backtest_precision5_mean": float(bt["precision_5"].mean())
+        if "precision_5" in bt.columns
+        else None,
+        "backtest_map_mean": float(bt["map_score"].mean())
+        if "map_score" in bt.columns
+        else None,
     }
 
 

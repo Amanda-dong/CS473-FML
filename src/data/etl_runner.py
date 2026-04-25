@@ -49,7 +49,9 @@ def _run_module(module: object, limit: int) -> pd.DataFrame:
     if runner is None:
         runner = getattr(module, "run_placeholder_etl", None)
     if runner is None:
-        raise AttributeError(f"{module!r} does not expose run_etl() or run_placeholder_etl()")
+        raise AttributeError(
+            f"{module!r} does not expose run_etl() or run_placeholder_etl()"
+        )
     try:
         return runner(limit=limit)
     except TypeError:
@@ -89,7 +91,9 @@ def run_all_etl(
 
             df = _run_module(module, limit=limit)
             if spec is None:
-                raise KeyError(f"{name} missing from DATASET_REGISTRY and module has no DATASET_SPEC")
+                raise KeyError(
+                    f"{name} missing from DATASET_REGISTRY and module has no DATASET_SPEC"
+                )
             validate_dataset_contract(df, spec)
             results[name] = df
             if df.empty:
@@ -118,5 +122,7 @@ def run_all_etl(
 
     ok = sum(1 for v in status.values() if v == "ok")
     failed = sum(1 for v in status.values() if v == "failed")
-    logger.info("etl_runner: %d ok, %d failed, %d empty", ok, failed, len(status) - ok - failed)
+    logger.info(
+        "etl_runner: %d ok, %d failed, %d empty", ok, failed, len(status) - ok - failed
+    )
     return results, status

@@ -38,9 +38,7 @@ _FOOD_COMPLAINT_TYPES = (
 )
 
 _COMPLAINT_WHERE = (
-    "complaint_type IN ("
-    + ", ".join(f"'{c}'" for c in _FOOD_COMPLAINT_TYPES)
-    + ")"
+    "complaint_type IN (" + ", ".join(f"'{c}'" for c in _FOOD_COMPLAINT_TYPES) + ")"
 )
 
 
@@ -58,10 +56,12 @@ def fetch(limit: int = 10000) -> pd.DataFrame:
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
-    df = df.rename(columns={
-        "created_date": "_created_date",
-        "community_board": "community_district",
-    })
+    df = df.rename(
+        columns={
+            "created_date": "_created_date",
+            "community_board": "community_district",
+        }
+    )
     df["_created_date"] = pd.to_datetime(df["_created_date"], errors="coerce")
     df = df.dropna(subset=["_created_date"])
     df["month"] = df["_created_date"].dt.strftime("%Y-%m")

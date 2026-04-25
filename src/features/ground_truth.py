@@ -139,7 +139,11 @@ def _inspection_quality(inspections_df: pd.DataFrame) -> pd.DataFrame:
     df = inspections_df.copy()
 
     # Inspections ETL outputs nta_id, not zone_id
-    id_col = "nta_id" if "nta_id" in df.columns else ("zone_id" if "zone_id" in df.columns else None)
+    id_col = (
+        "nta_id"
+        if "nta_id" in df.columns
+        else ("zone_id" if "zone_id" in df.columns else None)
+    )
     if "grade" not in df.columns or id_col is None:
         return pd.DataFrame(columns=["zone_id", "time_key", "y_inspection"])
 
@@ -177,9 +181,15 @@ def build_ground_truth(
              missingness_fraction, label_quality
     """
     output_cols = [
-        "zone_id", "time_key", "y_survival", "y_review_quality",
-        "y_license_velocity", "y_inspection", "y_composite",
-        "missingness_fraction", "label_quality",
+        "zone_id",
+        "time_key",
+        "y_survival",
+        "y_review_quality",
+        "y_license_velocity",
+        "y_inspection",
+        "y_composite",
+        "missingness_fraction",
+        "label_quality",
     ]
 
     # Components are computed at NTA level (zone_id = NTA code).
@@ -188,7 +198,9 @@ def build_ground_truth(
         if df.empty:
             return df
         renamed = df.rename(columns={"zone_id": "nta_id"})
-        return aggregate_nta_to_zone(renamed, zone_col="nta_id", agg_rules={value_col: agg})
+        return aggregate_nta_to_zone(
+            renamed, zone_col="nta_id", agg_rules={value_col: agg}
+        )
 
     surv = _to_zone(_survival_rate(licenses_df), "y_survival")
     review_q = _to_zone(_review_quality(reviews_df), "y_review_quality")
@@ -204,7 +216,12 @@ def build_ground_truth(
         if not component.empty:
             result = result.merge(component, on=["zone_id", "time_key"], how="left")
 
-    component_cols = ["y_survival", "y_review_quality", "y_license_velocity", "y_inspection"]
+    component_cols = [
+        "y_survival",
+        "y_review_quality",
+        "y_license_velocity",
+        "y_inspection",
+    ]
     w = np.array(weights, dtype=float)
 
     # Ensure columns exist (as NaN, not filled)

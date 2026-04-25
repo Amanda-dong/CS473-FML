@@ -13,7 +13,9 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
 
     quick_lunch = zone_features.get("quick_lunch_demand", 0.0)
     if quick_lunch > 0.6:
-        drivers.append(f"High daytime foot-traffic / lunch-demand index ({quick_lunch:.0%})")
+        drivers.append(
+            f"High daytime foot-traffic / lunch-demand index ({quick_lunch:.0%})"
+        )
 
     subtype_gap = zone_features.get("subtype_gap", 0.0)
     if subtype_gap > 0.5:
@@ -23,7 +25,9 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
 
     survival_score = zone_features.get("survival_score", 0.0)
     if survival_score > 0.6:
-        drivers.append(f"Survival model gives {survival_score:.0%} commercial viability")
+        drivers.append(
+            f"Survival model gives {survival_score:.0%} commercial viability"
+        )
 
     license_velocity = zone_features.get("license_velocity", 0.0)
     if license_velocity > 0.3:
@@ -31,11 +35,15 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
 
     healthy_review_share = zone_features.get("healthy_review_share", 0.0)
     if healthy_review_share > 0.3:
-        drivers.append(f"NLP review signals show {healthy_review_share:.0%} demand for this category")
+        drivers.append(
+            f"NLP review signals show {healthy_review_share:.0%} demand for this category"
+        )
 
     transit_access = zone_features.get("transit_access", 0.0)
     if transit_access > 0.75:
-        drivers.append(f"Excellent transit accessibility ({transit_access:.0%}) — maximises foot-traffic")
+        drivers.append(
+            f"Excellent transit accessibility ({transit_access:.0%}) — maximises foot-traffic"
+        )
 
     income_alignment = zone_features.get("income_alignment", 0.0)
     if income_alignment > 0.65:
@@ -50,7 +58,9 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
 
     rent_pressure = zone_features.get("rent_pressure", 0.0)
     if rent_pressure > 0.5:
-        risks.append(f"High rent pressure ({rent_pressure:.0%}) — may compress margins significantly")
+        risks.append(
+            f"High rent pressure ({rent_pressure:.0%}) — may compress margins significantly"
+        )
 
     competition_score = zone_features.get("competition_score", 0.0)
     if competition_score > 0.5:
@@ -64,11 +74,15 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
 
     income_alignment = zone_features.get("income_alignment", 0.0)
     if income_alignment < 0.35:
-        risks.append("Income/price-tier mismatch — local spending power may not support this concept")
+        risks.append(
+            "Income/price-tier mismatch — local spending power may not support this concept"
+        )
 
     transit_access = zone_features.get("transit_access", 0.0)
     if transit_access < 0.45:
-        risks.append("Limited transit access — foot-traffic relies on local residents only")
+        risks.append(
+            "Limited transit access — foot-traffic relies on local residents only"
+        )
 
     return risks or ["Risk rules not configured yet"]
 
@@ -95,7 +109,9 @@ FEATURE_DISPLAY_NAMES: dict[str, str] = {
 }
 
 
-def shap_drivers(model: object, X_row: pd.Series, top_n: int = 3) -> tuple[list[str], list[str]]:
+def shap_drivers(
+    model: object, X_row: pd.Series, top_n: int = 3
+) -> tuple[list[str], list[str]]:
     """SHAP-based top positive and negative drivers for a single prediction.
 
     Parameters

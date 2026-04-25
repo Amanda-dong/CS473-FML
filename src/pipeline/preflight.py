@@ -67,7 +67,11 @@ def assess_embedding_readiness(
             message=str(exc),
         )
 
-    unique_restaurants = int(cleaned["restaurant_id"].nunique()) if "restaurant_id" in cleaned.columns else 0
+    unique_restaurants = (
+        int(cleaned["restaurant_id"].nunique())
+        if "restaurant_id" in cleaned.columns
+        else 0
+    )
     passed = len(cleaned) >= min_rows
     return PreflightCheck(
         name="embedding_corpus",
@@ -103,7 +107,9 @@ def assess_scoring_training_readiness(
             message=str(exc),
         )
 
-    zone_count = int(cleaned["zone_id"].nunique()) if "zone_id" in cleaned.columns else 0
+    zone_count = (
+        int(cleaned["zone_id"].nunique()) if "zone_id" in cleaned.columns else 0
+    )
     passed = len(cleaned) >= min_rows and zone_count >= min_zones
     return PreflightCheck(
         name="scoring_training",
@@ -139,7 +145,11 @@ def assess_survival_training_readiness(
             message=str(exc),
         )
 
-    event_count = int(cleaned["event_observed"].sum()) if "event_observed" in cleaned.columns else 0
+    event_count = (
+        int(cleaned["event_observed"].sum())
+        if "event_observed" in cleaned.columns
+        else 0
+    )
     passed = len(cleaned) >= min_rows and event_count >= min_events
     return PreflightCheck(
         name="survival_training",
@@ -170,7 +180,9 @@ def run_processed_data_preflight(
     """Validate the processed artifacts needed for embeddings and model training."""
 
     settings = get_settings()
-    base_dir = Path(processed_dir) if processed_dir is not None else settings.processed_dir
+    base_dir = (
+        Path(processed_dir) if processed_dir is not None else settings.processed_dir
+    )
 
     checks: list[PreflightCheck] = []
 
@@ -223,8 +235,14 @@ def run_processed_data_preflight(
             validate_dataset_contract(licenses, DATASET_REGISTRY["licenses"])
             validate_dataset_contract(inspections, DATASET_REGISTRY["inspections"])
             zone_features_path = base_dir / "zone_features.parquet"
-            zone_features = pd.read_parquet(zone_features_path) if zone_features_path.exists() else None
-            history = build_real_restaurant_history(licenses, inspections, zone_features)
+            zone_features = (
+                pd.read_parquet(zone_features_path)
+                if zone_features_path.exists()
+                else None
+            )
+            history = build_real_restaurant_history(
+                licenses, inspections, zone_features
+            )
             checks.append(
                 assess_survival_training_readiness(
                     history,
@@ -279,9 +297,17 @@ def run_processed_data_preflight(
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Validate processed data before embeddings or model training.")
-    parser.add_argument("--processed-dir", default=None, help="Directory containing processed parquet artifacts.")
-    parser.add_argument("--json", action="store_true", help="Emit JSON instead of text.")
+    parser = argparse.ArgumentParser(
+        description="Validate processed data before embeddings or model training."
+    )
+    parser.add_argument(
+        "--processed-dir",
+        default=None,
+        help="Directory containing processed parquet artifacts.",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Emit JSON instead of text."
+    )
     return parser
 
 

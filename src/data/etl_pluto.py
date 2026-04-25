@@ -51,6 +51,7 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     # Map zipcode → NTA using the inspections module's shared crosswalk
     try:
         from src.data.etl_inspections import _get_zip_to_nta
+
         zip_nta = _get_zip_to_nta()
     except Exception:
         zip_nta = {}
@@ -64,20 +65,26 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     _boro_prefix = {"MN": "MN", "BK": "BK", "QN": "QN", "BX": "BX", "SI": "SI"}
     unmapped = df["nta_id"].isna()
     if unmapped.any() and "borough" in df.columns:
-        df.loc[unmapped, "nta_id"] = df.loc[unmapped, "borough"].map(_boro_prefix).fillna("MN") + "01"
+        df.loc[unmapped, "nta_id"] = (
+            df.loc[unmapped, "borough"].map(_boro_prefix).fillna("MN") + "01"
+        )
 
-    df = df.rename(columns={
-        "yearbuilt": "year",
-        "comarea": "commercial_sqft",
-        "assesstot": "assessed_value",
-    })
+    df = df.rename(
+        columns={
+            "yearbuilt": "year",
+            "comarea": "commercial_sqft",
+            "assesstot": "assessed_value",
+        }
+    )
     for col in ("year", "commercial_sqft", "bldgarea", "assessed_value"):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
     if "bldgarea" in df.columns:
         df["mixed_use_ratio"] = df.apply(
-            lambda r: r["commercial_sqft"] / r["bldgarea"] if r["bldgarea"] > 0 else 0.0,
+            lambda r: (
+                r["commercial_sqft"] / r["bldgarea"] if r["bldgarea"] > 0 else 0.0
+            ),
             axis=1,
         )
     else:

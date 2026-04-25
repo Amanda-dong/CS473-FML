@@ -90,7 +90,9 @@ def embed_reviews(
 
     # Pad to _EMBEDDING_DIM if needed
     if reduced.shape[1] < _EMBEDDING_DIM:
-        padding = np.zeros((reduced.shape[0], _EMBEDDING_DIM - reduced.shape[1]), dtype=np.float32)
+        padding = np.zeros(
+            (reduced.shape[0], _EMBEDDING_DIM - reduced.shape[1]), dtype=np.float32
+        )
         reduced = np.hstack([reduced, padding])
 
     return _restore_alignment(reduced.astype(np.float32))
@@ -118,7 +120,9 @@ def optimal_k_search(
         labels = km.fit_predict(embeddings)
         if len(set(labels)) < 2:
             continue
-        scores[k] = float(silhouette_score(embeddings, labels, sample_size=min(5000, len(embeddings))))
+        scores[k] = float(
+            silhouette_score(embeddings, labels, sample_size=min(5000, len(embeddings)))
+        )
 
     best_k = max(scores, key=scores.get) if scores else 2
     return best_k, scores

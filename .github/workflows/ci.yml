@@ -24,7 +24,7 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uv pip install --system ruff==0.15.5
+      - run: uv tool install ruff==0.15.12
       - run: ruff format --check src tests
       - run: ruff check src tests
 
@@ -48,7 +48,9 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uv pip install --system -r requirements.txt pytest-cov
+      - run: uv venv
+      - run: echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+      - run: uv pip install -r requirements.txt pytest-cov
       - run: |
           python -m pytest -v --tb=short \
             --cov=src \
@@ -82,7 +84,8 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uv pip install --system bandit pip-audit
+      - run: uv tool install bandit
+      - run: uv tool install pip-audit
       - run: bandit -r src -ll -ii -f txt
       - run: pip-audit -r requirements.txt --progress-spinner=off --strict
 

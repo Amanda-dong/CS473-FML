@@ -67,10 +67,15 @@ def _load_business() -> pd.DataFrame:
     Returns a DataFrame with (id, latitude, longitude) or empty if file missing.
     """
     if not _DEFAULT_FUSION_BUSINESS_PATH.is_file():
-        logger.warning("etl_yelp: business file not found at %s — skipping geo join", _DEFAULT_FUSION_BUSINESS_PATH)
+        logger.warning(
+            "etl_yelp: business file not found at %s — skipping geo join",
+            _DEFAULT_FUSION_BUSINESS_PATH,
+        )
         return pd.DataFrame(columns=["id", "latitude", "longitude"])
     try:
-        df = pd.read_csv(_DEFAULT_FUSION_BUSINESS_PATH, usecols=["id", "latitude", "longitude"])
+        df = pd.read_csv(
+            _DEFAULT_FUSION_BUSINESS_PATH, usecols=["id", "latitude", "longitude"]
+        )
         df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
         df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
         return df.dropna(subset=["latitude", "longitude"])

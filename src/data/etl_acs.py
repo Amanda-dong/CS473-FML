@@ -37,15 +37,36 @@ _BOROUGH_PARAMS: dict[str, dict[str, float]] = {
 
 # Micro-zone IDs used by the recommendation engine
 _ZONE_IDS: list[str] = [
-    "bk-tandon", "bk-downtownbk", "bk-williamsburg", "bk-navy-yard",
-    "bk-fort-greene", "bk-crown-hts", "bk-sunset-pk",
-    "mn-midtown-e", "mn-fidi", "mn-columbia", "mn-nyu-wash-sq",
-    "mn-ues-hosp", "mn-chelsea", "mn-harlem", "mn-lic-adj",
-    "qn-lic", "qn-astoria", "qn-flushing", "qn-jackson-hts",
-    "qn-forest-hills", "qn-jamaica",
-    "bx-fordham", "bx-mott-haven", "bx-co-op-city",
+    "bk-tandon",
+    "bk-downtownbk",
+    "bk-williamsburg",
+    "bk-navy-yard",
+    "bk-fort-greene",
+    "bk-crown-hts",
+    "bk-sunset-pk",
+    "mn-midtown-e",
+    "mn-fidi",
+    "mn-columbia",
+    "mn-nyu-wash-sq",
+    "mn-ues-hosp",
+    "mn-chelsea",
+    "mn-harlem",
+    "mn-lic-adj",
+    "qn-lic",
+    "qn-astoria",
+    "qn-flushing",
+    "qn-jackson-hts",
+    "qn-forest-hills",
+    "qn-jamaica",
+    "bx-fordham",
+    "bx-mott-haven",
+    "bx-co-op-city",
     "si-st-george",
-    "BK09", "MN17", "QN31", "BX44", "SI22",
+    "BK09",
+    "MN17",
+    "QN31",
+    "BX44",
+    "SI22",
 ]
 
 _YEARS = list(range(2018, 2025))
@@ -72,16 +93,22 @@ def _build_synthetic_acs(limit: int) -> pd.DataFrame:
             rng = np.random.default_rng(seed)
             noise = rng.uniform(0.85, 1.15)
             growth = 1.0 + 0.02 * (year - 2018)  # 2% annual income growth
-            rows.append({
-                "year": year,
-                "nta_id": nta_id,
-                "median_income": round(params["median_income"] * growth * noise),
-                "population": round(params["population"] * noise),
-                "rent_burden": round(
-                    min(0.85, max(0.10, params["rent_burden"] * rng.uniform(0.90, 1.10))), 3
-                ),
-                "_synthetic": True,
-            })
+            rows.append(
+                {
+                    "year": year,
+                    "nta_id": nta_id,
+                    "median_income": round(params["median_income"] * growth * noise),
+                    "population": round(params["population"] * noise),
+                    "rent_burden": round(
+                        min(
+                            0.85,
+                            max(0.10, params["rent_burden"] * rng.uniform(0.90, 1.10)),
+                        ),
+                        3,
+                    ),
+                    "_synthetic": True,
+                }
+            )
     df = pd.DataFrame(rows)
     return df.head(limit)
 
@@ -110,5 +137,7 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
             raise RuntimeError("etl_acs: local file returned empty frame")
         return df.head(limit)
     except (RuntimeError, FileNotFoundError) as exc:
-        logger.warning("etl_acs: real data unavailable (%s) — using synthetic fallback", exc)
+        logger.warning(
+            "etl_acs: real data unavailable (%s) — using synthetic fallback", exc
+        )
         return _build_synthetic_acs(limit)

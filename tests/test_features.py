@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
-import pytest
 
 from src.features.healthy_gap import score_healthy_gap
 from src.features.microzones import default_microzones
@@ -12,6 +10,7 @@ from src.utils.taxonomy import all_known_subtypes, canonical_subtype, healthy_ta
 
 
 # ── taxonomy ──────────────────────────────────────────────────────────────────
+
 
 def test_taxonomy_contains_healthy_indian() -> None:
     assert "healthy_indian" in healthy_taxonomy()
@@ -48,6 +47,7 @@ def test_all_known_subtypes_is_tuple() -> None:
 
 # ── microzones ────────────────────────────────────────────────────────────────
 
+
 def test_microzones_are_available() -> None:
     assert len(default_microzones()) >= 2
 
@@ -56,18 +56,30 @@ def test_microzones_have_valid_zone_types() -> None:
     from src.config.constants import MICROZONE_TYPES
 
     for z in default_microzones():
-        assert z.zone_type in MICROZONE_TYPES, f"{z.zone_id} has invalid zone_type {z.zone_type}"
+        assert z.zone_type in MICROZONE_TYPES, (
+            f"{z.zone_id} has invalid zone_type {z.zone_type}"
+        )
 
 
 # ── healthy gap scoring ───────────────────────────────────────────────────────
 
-def test_healthy_gap_scoring_returns_named_fields(sample_zone_features: dict[str, float]) -> None:
+
+def test_healthy_gap_scoring_returns_named_fields(
+    sample_zone_features: dict[str, float],
+) -> None:
     result = score_healthy_gap(sample_zone_features)
-    for field in ("healthy_gap_score", "healthy_supply_ratio", "subtype_gap", "quick_lunch_demand"):
+    for field in (
+        "healthy_gap_score",
+        "healthy_supply_ratio",
+        "subtype_gap",
+        "quick_lunch_demand",
+    ):
         assert field in result
 
 
-def test_healthy_gap_score_is_non_negative(sample_zone_features: dict[str, float]) -> None:
+def test_healthy_gap_score_is_non_negative(
+    sample_zone_features: dict[str, float],
+) -> None:
     result = score_healthy_gap(sample_zone_features)
     assert result["healthy_gap_score"] >= 0.0
 
@@ -79,7 +91,10 @@ def test_healthy_gap_score_zero_inputs() -> None:
 
 # ── license velocity ──────────────────────────────────────────────────────────
 
-def test_license_velocity_computes_net_opens(sample_license_events: pd.DataFrame) -> None:
+
+def test_license_velocity_computes_net_opens(
+    sample_license_events: pd.DataFrame,
+) -> None:
     from src.features.license_velocity import build_license_velocity_features
 
     result = build_license_velocity_features(sample_license_events)
@@ -91,7 +106,13 @@ def test_license_velocity_empty_input() -> None:
     from src.features.license_velocity import build_license_velocity_features
 
     result = build_license_velocity_features(pd.DataFrame())
-    assert list(result.columns) == ["zone_id", "time_key", "license_velocity", "net_opens", "net_closes"]
+    assert list(result.columns) == [
+        "zone_id",
+        "time_key",
+        "license_velocity",
+        "net_opens",
+        "net_closes",
+    ]
 
 
 def test_license_velocity_has_zone_id(sample_license_events: pd.DataFrame) -> None:
@@ -103,7 +124,10 @@ def test_license_velocity_has_zone_id(sample_license_events: pd.DataFrame) -> No
 
 # ── rent trajectory ───────────────────────────────────────────────────────────
 
-def test_rent_trajectory_normalizes_to_unit_interval(sample_pluto_frame: pd.DataFrame) -> None:
+
+def test_rent_trajectory_normalizes_to_unit_interval(
+    sample_pluto_frame: pd.DataFrame,
+) -> None:
     from src.features.rent_trajectory import build_rent_trajectory_features
 
     result = build_rent_trajectory_features(sample_pluto_frame)
@@ -119,6 +143,7 @@ def test_rent_trajectory_empty_input() -> None:
 
 # ── demand signals ────────────────────────────────────────────────────────────
 
+
 def test_demand_signals_merges_empty_inputs() -> None:
     from src.features.demand_signals import build_demand_features
 
@@ -129,12 +154,21 @@ def test_demand_signals_merges_empty_inputs() -> None:
 def test_demand_signals_healthy_review_share_computation() -> None:
     from src.features.demand_signals import compute_healthy_review_share
 
-    df = pd.DataFrame({"review_text": ["great salad bowl", "average burger place", "fresh healthy wrap"]})
+    df = pd.DataFrame(
+        {
+            "review_text": [
+                "great salad bowl",
+                "average burger place",
+                "fresh healthy wrap",
+            ]
+        }
+    )
     share = compute_healthy_review_share(df, ["salad", "healthy", "fresh"])
     assert 0.0 < share <= 1.0
 
 
 # ── feature matrix ────────────────────────────────────────────────────────────
+
 
 def test_feature_matrix_joins_tables() -> None:
     from src.features.feature_matrix import build_feature_matrix
@@ -187,6 +221,7 @@ def test_build_zone_year_matrix_enriches_yelp_reviews_from_inspections() -> None
 
 def test_normalize_feature_matrix_constant_column() -> None:
     from src.features.feature_matrix import normalize_feature_matrix
+
     df = pd.DataFrame({"x": [1.0, 1.0, 1.0]})
     result = normalize_feature_matrix(df)
     assert (result["x"] == 1.0).all()
@@ -194,11 +229,10 @@ def test_normalize_feature_matrix_constant_column() -> None:
 
 def test_prepare_social_signals_year_column() -> None:
     from src.features.feature_matrix import _prepare_social_signals
-    df = pd.DataFrame({
-        "community_district": ["Brooklyn"],
-        "year": [2024],
-        "count": [10]
-    })
+
+    df = pd.DataFrame(
+        {"community_district": ["Brooklyn"], "year": [2024], "count": [10]}
+    )
     result = _prepare_social_signals(df)
     assert not result.empty
     assert result["time_key"].iloc[0] == 2024
@@ -206,11 +240,10 @@ def test_prepare_social_signals_year_column() -> None:
 
 def test_prepare_social_signals_month_column() -> None:
     from src.features.feature_matrix import _prepare_social_signals
-    df = pd.DataFrame({
-        "community_district": ["Brooklyn"],
-        "month": ["2024-05"],
-        "count": [10]
-    })
+
+    df = pd.DataFrame(
+        {"community_district": ["Brooklyn"], "month": ["2024-05"], "count": [10]}
+    )
     result = _prepare_social_signals(df)
     assert not result.empty
     assert result["time_key"].iloc[0] == 2024
@@ -218,32 +251,66 @@ def test_prepare_social_signals_month_column() -> None:
 
 def test_build_zone_year_matrix_all_datasets() -> None:
     from src.features.feature_matrix import build_zone_year_matrix
+
     etl_outputs = {
-        "licenses": pd.DataFrame({
-            "nta_id": ["BK09"], "event_date": ["2024-01-01"], "license_status": ["Issued"]
-        }),
-        "pluto": pd.DataFrame({
-            "nta_id": ["BK09"], "assessed_value": [1000.0], "year": [2024], "commercial_sqft": [5000.0]
-        }),
-        "acs": pd.DataFrame({
-            "nta_id": ["BK09"], "population": [1000.0], "median_income": [50000.0], "rent_burden": [0.3]
-        }),
-        "inspections": pd.DataFrame({
-            "inspection_date": ["2024-01-01"], "nta_id": ["BK09"], "grade": ["A"], "restaurant_id": ["r1"]
-        }),
-        "permits": pd.DataFrame({
-            "permit_date": ["2024-01-01"], "nta_id": ["BK09"], "job_count": [5.0]
-        }),
-        "citibike": pd.DataFrame({
-            "nta_id": ["BK09"], "time_key": [2024], "trip_count": [100.0], "station_count": [5.0]
-        }),
-        "airbnb": pd.DataFrame({
-            "nta_id": ["BK09"], "listing_count": [10.0], "entire_home_ratio": [0.6]
-        })
+        "licenses": pd.DataFrame(
+            {
+                "nta_id": ["BK09"],
+                "event_date": ["2024-01-01"],
+                "license_status": ["Issued"],
+            }
+        ),
+        "pluto": pd.DataFrame(
+            {
+                "nta_id": ["BK09"],
+                "assessed_value": [1000.0],
+                "year": [2024],
+                "commercial_sqft": [5000.0],
+            }
+        ),
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK09"],
+                "population": [1000.0],
+                "median_income": [50000.0],
+                "rent_burden": [0.3],
+            }
+        ),
+        "inspections": pd.DataFrame(
+            {
+                "inspection_date": ["2024-01-01"],
+                "nta_id": ["BK09"],
+                "grade": ["A"],
+                "restaurant_id": ["r1"],
+            }
+        ),
+        "permits": pd.DataFrame(
+            {"permit_date": ["2024-01-01"], "nta_id": ["BK09"], "job_count": [5.0]}
+        ),
+        "citibike": pd.DataFrame(
+            {
+                "nta_id": ["BK09"],
+                "time_key": [2024],
+                "trip_count": [100.0],
+                "station_count": [5.0],
+            }
+        ),
+        "airbnb": pd.DataFrame(
+            {"nta_id": ["BK09"], "listing_count": [10.0], "entire_home_ratio": [0.6]}
+        ),
     }
     result = build_zone_year_matrix(etl_outputs)
     assert not result.empty
-    expected_cols = ["zone_id", "time_key", "license_velocity", "rent_pressure", "population", "inspection_grade_avg", "permit_velocity", "trip_count", "listing_count"]
+    expected_cols = [
+        "zone_id",
+        "time_key",
+        "license_velocity",
+        "rent_pressure",
+        "population",
+        "inspection_grade_avg",
+        "permit_velocity",
+        "trip_count",
+        "listing_count",
+    ]
     for col in expected_cols:
         assert col in result.columns, f"Column {col} missing from merged matrix"
-

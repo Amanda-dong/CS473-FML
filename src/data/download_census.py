@@ -15,8 +15,7 @@ SOURCE_ZIP_URL = (
     "data-tools/population/american-community-survey/5-yr-ACS-2023.zip"
 )
 ZIP_MEMBER_PATH = (
-    "5-yr ACS 2023/5-yr ACS 2023/Neighborhood-NTA/"
-    "Economic/Econ_1923_NTA.xlsx"
+    "5-yr ACS 2023/5-yr ACS 2023/Neighborhood-NTA/Economic/Econ_1923_NTA.xlsx"
 )
 RAW_XLSX_PATH = "data/raw/Econ_1923_NTA.xlsx"
 CSV_OUTPUT_PATH = "data/raw/census_nta.csv"
@@ -163,7 +162,9 @@ def main() -> None:
     print(frame.head(10).to_string(index=False))
     print("looks usable for later merge steps:")
     if has_identifier and has_median_income and has_population:
-        print("yes, with the caveat that the population field here is Pop16plE rather than total population.")
+        print(
+            "yes, with the caveat that the population field here is Pop16plE rather than total population."
+        )
     else:
         print("no, this file is missing one or more core fields needed later.")
 

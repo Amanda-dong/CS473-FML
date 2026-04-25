@@ -40,11 +40,23 @@ def run_placeholder_etl() -> pd.DataFrame:
 def _transform(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """Aggregate raw trip CSV to (nta_id, year) with trip_count and station_count."""
     lat_col = next((c for c in df.columns if "start_lat" in c.lower()), None)
-    lon_col = next((c for c in df.columns if "start_lng" in c.lower() or "start_lon" in c.lower()), None)
-    station_col = next((c for c in df.columns if "start_station_id" in c.lower() or "start_station_name" in c.lower()), None)
+    lon_col = next(
+        (c for c in df.columns if "start_lng" in c.lower() or "start_lon" in c.lower()),
+        None,
+    )
+    station_col = next(
+        (
+            c
+            for c in df.columns
+            if "start_station_id" in c.lower() or "start_station_name" in c.lower()
+        ),
+        None,
+    )
 
     if lat_col is None or lon_col is None:
-        logger.warning("etl_citibike: lat/lon columns not found in %s", df.columns.tolist())
+        logger.warning(
+            "etl_citibike: lat/lon columns not found in %s", df.columns.tolist()
+        )
         return build_empty_frame(DATASET_SPEC)
 
     df = df[[c for c in [lat_col, lon_col, station_col] if c]].copy()
@@ -89,6 +101,7 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
 
     try:
         import requests
+
         logger.info("etl_citibike: downloading from %s", _S3_URL)
         resp = requests.get(_S3_URL, timeout=60)
         resp.raise_for_status()
@@ -97,5 +110,7 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
         _RAW_ZIP.write_bytes(data)
         return _load_zip(data, _TRIP_YEAR, limit)
     except Exception as exc:
-        logger.warning("etl_citibike: download failed (%s) — returning placeholder", exc)
+        logger.warning(
+            "etl_citibike: download failed (%s) — returning placeholder", exc
+        )
         return run_placeholder_etl()
