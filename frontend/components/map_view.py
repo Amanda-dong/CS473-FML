@@ -9,31 +9,31 @@ import streamlit as st
 _GEOJSON_PATH = Path("data/geojson/nta_boundaries.geojson")
 
 _ZONE_COORDS: dict[str, tuple[float, float]] = {
-    "bk-tandon":       (40.6928, -73.9872),
-    "bk-downtownbk":   (40.6935, -73.9866),
+    "bk-tandon": (40.6928, -73.9872),
+    "bk-downtownbk": (40.6935, -73.9866),
     "bk-williamsburg": (40.7136, -73.9537),
-    "bk-navy-yard":    (40.6995, -73.9710),
-    "bk-fort-greene":  (40.6891, -73.9744),
-    "bk-crown-hts":    (40.6681, -73.9442),
-    "bk-sunset-pk":    (40.6451, -74.0020),
-    "mn-midtown-e":    (40.7549, -73.9730),
-    "mn-fidi":         (40.7074, -74.0113),
-    "mn-columbia":     (40.8075, -73.9626),
-    "mn-nyu-wash-sq":  (40.7295, -73.9965),
-    "mn-ues-hosp":     (40.7701, -73.9547),
-    "mn-chelsea":      (40.7465, -74.0014),
-    "mn-harlem":       (40.8116, -73.9465),
-    "mn-lic-adj":      (40.7529, -73.9677),
-    "qn-lic":          (40.7471, -73.9440),
-    "qn-astoria":      (40.7722, -73.9301),
-    "qn-flushing":     (40.7675, -73.8330),
-    "qn-jackson-hts":  (40.7498, -73.8830),
+    "bk-navy-yard": (40.6995, -73.9710),
+    "bk-fort-greene": (40.6891, -73.9744),
+    "bk-crown-hts": (40.6681, -73.9442),
+    "bk-sunset-pk": (40.6451, -74.0020),
+    "mn-midtown-e": (40.7549, -73.9730),
+    "mn-fidi": (40.7074, -74.0113),
+    "mn-columbia": (40.8075, -73.9626),
+    "mn-nyu-wash-sq": (40.7295, -73.9965),
+    "mn-ues-hosp": (40.7701, -73.9547),
+    "mn-chelsea": (40.7465, -74.0014),
+    "mn-harlem": (40.8116, -73.9465),
+    "mn-lic-adj": (40.7529, -73.9677),
+    "qn-lic": (40.7471, -73.9440),
+    "qn-astoria": (40.7722, -73.9301),
+    "qn-flushing": (40.7675, -73.8330),
+    "qn-jackson-hts": (40.7498, -73.8830),
     "qn-forest-hills": (40.7196, -73.8448),
-    "qn-jamaica":      (40.6921, -73.8063),
-    "bx-fordham":      (40.8609, -73.8896),
-    "bx-mott-haven":   (40.8084, -73.9218),
-    "bx-co-op-city":   (40.8743, -73.8296),
-    "si-st-george":    (40.6437, -74.0733),
+    "qn-jamaica": (40.6921, -73.8063),
+    "bx-fordham": (40.8609, -73.8896),
+    "bx-mott-haven": (40.8084, -73.9218),
+    "bx-co-op-city": (40.8743, -73.8296),
+    "si-st-george": (40.6437, -74.0733),
 }
 
 
@@ -61,26 +61,28 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
                 name = rec.get("zone_name", zid)
                 risk = float(rec.get("survival_risk", 0.0) or 0.0)
                 texts.append(
-                    f"<b>{name}</b><br>Score: {score*100:.0f}%<br>Risk: {risk*100:.0f}%"
+                    f"<b>{name}</b><br>Score: {score * 100:.0f}%<br>Risk: {risk * 100:.0f}%"
                 )
                 zone_ids.append(zid)
 
             if lats:
-                fig = go.Figure(go.Scattermapbox(
-                    lat=lats,
-                    lon=lons,
-                    mode="markers",
-                    marker=go.scattermapbox.Marker(
-                        size=18,
-                        color=scores,
-                        colorscale="RdYlGn",
-                        cmin=0,
-                        cmax=100,
-                        colorbar=dict(title="Score %", thickness=12),
-                    ),
-                    text=texts,
-                    hoverinfo="text",
-                ))
+                fig = go.Figure(
+                    go.Scattermapbox(
+                        lat=lats,
+                        lon=lons,
+                        mode="markers",
+                        marker=go.scattermapbox.Marker(
+                            size=18,
+                            color=scores,
+                            colorscale="RdYlGn",
+                            cmin=0,
+                            cmax=100,
+                            colorbar=dict(title="Score %", thickness=12),
+                        ),
+                        text=texts,
+                        hoverinfo="text",
+                    )
+                )
                 fig.update_layout(
                     mapbox_style="open-street-map",
                     mapbox=dict(center=dict(lat=40.730, lon=-73.935), zoom=10),
@@ -96,7 +98,6 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
     if _GEOJSON_PATH.exists():
         try:
             import geopandas as gpd
-            import pandas as pd
 
             gdf = gpd.read_file(str(_GEOJSON_PATH))
             centroids = gdf.copy()

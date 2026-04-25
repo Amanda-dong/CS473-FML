@@ -18,7 +18,9 @@ def _load_model_info() -> dict:
                 bundle = joblib.load(path)
                 info[name.split("_")[0]] = {
                     "path": str(path),
-                    "keys": list(bundle.keys()) if isinstance(bundle, dict) else [type(bundle).__name__],
+                    "keys": list(bundle.keys())
+                    if isinstance(bundle, dict)
+                    else [type(bundle).__name__],
                 }
             except Exception as e:
                 info[name.split("_")[0]] = {"error": str(e)}
@@ -59,13 +61,41 @@ def render_methodology_page() -> None:
     )
     sources = pd.DataFrame(
         [
-            {"Tier": "Tier 1 (Core)", "Source": "NYC Open Data — Restaurant Inspections (DOHMH)", "Use": "Healthy vs. non-healthy establishment counts and subtype gap analysis"},
-            {"Tier": "Tier 1 (Core)", "Source": "NYC Open Data — DOB Permits", "Use": "Merchant license velocity and turnover signal"},
-            {"Tier": "Tier 1 (Core)", "Source": "Citi Bike trip data", "Use": "Micro-mobility proxy for foot traffic and transit catchment strength"},
-            {"Tier": "Tier 1 (Core)", "Source": "U.S. Census ACS 5-year", "Use": "Income gradient and demographic weighting"},
-            {"Tier": "Tier 1 (Core)", "Source": "NYC NTA boundary shapefile", "Use": "Micro-zone geometry and spatial joins"},
-            {"Tier": "Tier 2 (Enrichment)", "Source": "Yelp Fusion API", "Use": "Reviews, ratings, and cuisine categories for merchant viability"},
-            {"Tier": "Tier 2 (Enrichment)", "Source": "Inside Airbnb", "Use": "Listing density as a transient / visitor-flow proxy"},
+            {
+                "Tier": "Tier 1 (Core)",
+                "Source": "NYC Open Data — Restaurant Inspections (DOHMH)",
+                "Use": "Healthy vs. non-healthy establishment counts and subtype gap analysis",
+            },
+            {
+                "Tier": "Tier 1 (Core)",
+                "Source": "NYC Open Data — DOB Permits",
+                "Use": "Merchant license velocity and turnover signal",
+            },
+            {
+                "Tier": "Tier 1 (Core)",
+                "Source": "Citi Bike trip data",
+                "Use": "Micro-mobility proxy for foot traffic and transit catchment strength",
+            },
+            {
+                "Tier": "Tier 1 (Core)",
+                "Source": "U.S. Census ACS 5-year",
+                "Use": "Income gradient and demographic weighting",
+            },
+            {
+                "Tier": "Tier 1 (Core)",
+                "Source": "NYC NTA boundary shapefile",
+                "Use": "Micro-zone geometry and spatial joins",
+            },
+            {
+                "Tier": "Tier 2 (Enrichment)",
+                "Source": "Yelp Fusion API",
+                "Use": "Reviews, ratings, and cuisine categories for merchant viability",
+            },
+            {
+                "Tier": "Tier 2 (Enrichment)",
+                "Source": "Inside Airbnb",
+                "Use": "Listing density as a transient / visitor-flow proxy",
+            },
         ]
     )
     st.dataframe(sources, hide_index=True, use_container_width=True)

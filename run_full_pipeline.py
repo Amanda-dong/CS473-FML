@@ -35,8 +35,12 @@ def run_etl_stage(limit: int) -> dict[str, pd.DataFrame]:
 
     ok = sum(1 for v in status.values() if v == "ok")
     failed = [k for k, v in status.items() if v == "failed"]
-    logger.info("ETL complete: %d ok, %d failed, %d empty/skipped",
-                ok, len(failed), len(status) - ok - len(failed))
+    logger.info(
+        "ETL complete: %d ok, %d failed, %d empty/skipped",
+        ok,
+        len(failed),
+        len(status) - ok - len(failed),
+    )
     if failed:
         logger.warning("Failed datasets: %s", failed)
 
@@ -56,7 +60,9 @@ def build_feature_matrix_stage(etl_outputs: dict[str, pd.DataFrame]) -> pd.DataF
 
     logger.info("=== Stage 2: Feature matrix ===")
     features = build_zone_year_matrix(etl_outputs)
-    logger.info("Zone-year matrix: %d rows × %d cols", len(features), len(features.columns))
+    logger.info(
+        "Zone-year matrix: %d rows × %d cols", len(features), len(features.columns)
+    )
 
     licenses_df = etl_outputs.get("licenses", pd.DataFrame())
     yelp_df = etl_outputs.get("yelp", pd.DataFrame())
@@ -66,15 +72,25 @@ def build_feature_matrix_stage(etl_outputs: dict[str, pd.DataFrame]) -> pd.DataF
     logger.info("Ground truth: %d rows", len(gt))
 
     if gt.empty or features.empty:
-        logger.warning("Ground truth or features empty — saving features without target")
+        logger.warning(
+            "Ground truth or features empty — saving features without target"
+        )
         matrix = features
     else:
-        matrix = features.merge(gt[["zone_id", "time_key", "y_composite", "label_quality"]],
-                                on=["zone_id", "time_key"], how="left")
+        matrix = features.merge(
+            gt[["zone_id", "time_key", "y_composite", "label_quality"]],
+            on=["zone_id", "time_key"],
+            how="left",
+        )
         matrix = matrix.rename(columns={"y_composite": "target"})
-        logger.info("Merged matrix: %d rows × %d cols (target coverage: %.1f%%)",
-                    len(matrix), len(matrix.columns),
-                    100 * matrix["target"].notna().mean() if "target" in matrix.columns else 0.0)
+        logger.info(
+            "Merged matrix: %d rows × %d cols (target coverage: %.1f%%)",
+            len(matrix),
+            len(matrix.columns),
+            100 * matrix["target"].notna().mean()
+            if "target" in matrix.columns
+            else 0.0,
+        )
 
     out_path = PROCESSED_DIR / "feature_matrix.parquet"
     matrix.to_parquet(out_path, index=False)
@@ -99,10 +115,14 @@ def train_survival_stage() -> None:
     licenses_path = PROCESSED_DIR / "licenses.parquet"
     inspections_path = PROCESSED_DIR / "inspections.parquet"
     if not licenses_path.exists() or not inspections_path.exists():
-        logger.warning("Skipping survival training — %s or %s not found",
-                       licenses_path, inspections_path)
+        logger.warning(
+            "Skipping survival training — %s or %s not found",
+            licenses_path,
+            inspections_path,
+        )
         return
     from src.models.train_survival import train_and_evaluate as train_surv
+
     train_surv()
 
 
@@ -114,17 +134,35 @@ def train_scoring_stage() -> None:
         return
     matrix = pd.read_parquet(fm_path)
     if "target" not in matrix.columns or matrix["target"].notna().sum() < 10:
-        logger.warning("feature_matrix.parquet has <10 labeled rows — skipping scoring training")
+        logger.warning(
+            "feature_matrix.parquet has <10 labeled rows — skipping scoring training"
+        )
         return
     from src.models.train_scoring import train_and_evaluate as train_score
+
     train_score()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="NYC Restaurant Intelligence full pipeline")
-    parser.add_argument("--etl-only", action="store_true", help="Run ETL + feature matrix, skip training")
-    parser.add_argument("--train-only", action="store_true", help="Train from existing parquets, skip ETL")
-    parser.add_argument("--limit", type=int, default=50000, help="Row limit per ETL module (default: 50000)")
+    parser = argparse.ArgumentParser(
+        description="NYC Restaurant Intelligence full pipeline"
+    )
+    parser.add_argument(
+        "--etl-only",
+        action="store_true",
+        help="Run ETL + feature matrix, skip training",
+    )
+    parser.add_argument(
+        "--train-only",
+        action="store_true",
+        help="Train from existing parquets, skip ETL",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=50000,
+        help="Row limit per ETL module (default: 50000)",
+    )
     args = parser.parse_args()
 
     if args.train_only:

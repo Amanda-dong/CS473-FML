@@ -14,18 +14,26 @@ _ZONE_TYPE_HELP = {
     "business_district": "Office-heavy cores with weekday lunch concentration",
 }
 
-_BOROUGH_HELP = "Filter to a specific NYC borough, or leave as Any to search all five boroughs."
+_BOROUGH_HELP = (
+    "Filter to a specific NYC borough, or leave as Any to search all five boroughs."
+)
 
 
 def render_input_form() -> dict[str, str | int]:
     """Render zone/borough filters and return user selections."""
-    zone_options = ["All", "campus_walkshed", "lunch_corridor", "transit_catchment", "business_district"]
+    zone_options = [
+        "All",
+        "campus_walkshed",
+        "lunch_corridor",
+        "transit_catchment",
+        "business_district",
+    ]
     zone_type = st.selectbox(
         "Zone type",
         zone_options,
         key=FORM_KEYS["zone_type"],
         help="Filter recommendations to a specific micro-zone type. "
-             + " | ".join(f"{k}: {v}" for k, v in _ZONE_TYPE_HELP.items() if k != "All"),
+        + " | ".join(f"{k}: {v}" for k, v in _ZONE_TYPE_HELP.items() if k != "All"),
     )
     if zone_type and zone_type != "All":
         st.caption(_ZONE_TYPE_HELP.get(zone_type, ""))

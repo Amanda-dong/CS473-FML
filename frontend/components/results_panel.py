@@ -36,9 +36,7 @@ def _render_summary_row(recommendations: list[dict]) -> None:
         if bucket in conf_counts:
             conf_counts[bucket] += 1
 
-    conf_label = (
-        f"{conf_counts['high']} high / {conf_counts['medium']} medium / {conf_counts['low']} low"
-    )
+    conf_label = f"{conf_counts['high']} high / {conf_counts['medium']} medium / {conf_counts['low']} low"
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Zones shown", len(recommendations))

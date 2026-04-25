@@ -57,9 +57,7 @@ def _render_driver_chart(feature_contributions: dict) -> None:
         FEATURE_DISPLAY_NAMES.get(k, k.replace("_", " ").title()) for k, _ in items
     ]
     values = [float(v) for _, v in items]
-    fig = go.Figure(
-        go.Bar(x=values, y=labels, orientation="h", marker_color="#4CAF50")
-    )
+    fig = go.Figure(go.Bar(x=values, y=labels, orientation="h", marker_color="#4CAF50"))
     fig.update_layout(
         height=320,
         margin=dict(l=10, r=10, t=10, b=10),
@@ -72,7 +70,9 @@ def _render_driver_chart(feature_contributions: dict) -> None:
 def render_recommendation_card(card: dict, cluster: str = "") -> None:
     zone_type = str(card.get("zone_type", ""))
     zone_label = str(card.get("zone_name", card.get("zone_label", "")))
-    score_progress = float(card.get("opportunity_score", card.get("score_progress", 0.0)) or 0.0)
+    score_progress = float(
+        card.get("opportunity_score", card.get("score_progress", 0.0)) or 0.0
+    )
     survival_risk = float(card.get("survival_risk", 0.0) or 0.0)
     confidence_bucket = str(card.get("confidence_bucket", ""))
     healthy_gap_summary = str(card.get("healthy_gap_summary", "") or "")

@@ -9,14 +9,44 @@ import streamlit as st
 
 _SOURCES: list[tuple[str, str, str, str | None]] = [
     # (tier, name, freshness_note, parquet_check)
-    ("T1", "NYC DOHMH Inspections", "Refreshed weekly from NYC Open Data", "data/processed/inspections.parquet"),
-    ("T1", "NYC DOB Permits", "Refreshed weekly from NYC Open Data", "data/processed/permits.parquet"),
-    ("T1", "Citi Bike trips", "Monthly S3 dumps (202603 snapshot)", "data/processed/citibike.parquet"),
+    (
+        "T1",
+        "NYC DOHMH Inspections",
+        "Refreshed weekly from NYC Open Data",
+        "data/processed/inspections.parquet",
+    ),
+    (
+        "T1",
+        "NYC DOB Permits",
+        "Refreshed weekly from NYC Open Data",
+        "data/processed/permits.parquet",
+    ),
+    (
+        "T1",
+        "Citi Bike trips",
+        "Monthly S3 dumps (202603 snapshot)",
+        "data/processed/citibike.parquet",
+    ),
     ("T1", "U.S. Census ACS 5-year", "Annual release (2023 vintage)", None),
-    ("T1", "NYC NTA boundaries", "Static shapefile (2020 tabulation)", "data/processed/boundaries.parquet"),
-    ("T2", "Yelp Fusion API", "Pulled on-demand; 24h cache", "data/processed/yelp.parquet"),
+    (
+        "T1",
+        "NYC NTA boundaries",
+        "Static shapefile (2020 tabulation)",
+        "data/processed/boundaries.parquet",
+    ),
+    (
+        "T2",
+        "Yelp Fusion API",
+        "Pulled on-demand; 24h cache",
+        "data/processed/yelp.parquet",
+    ),
     ("T2", "Inside Airbnb", "Quarterly scrape snapshot", None),
-    ("T2", "NYC 311 Complaints", "Monthly export from NYC Open Data", "data/processed/complaints_311.parquet"),
+    (
+        "T2",
+        "NYC 311 Complaints",
+        "Monthly export from NYC Open Data",
+        "data/processed/complaints_311.parquet",
+    ),
 ]
 
 _PARQUET_CHECKS = {

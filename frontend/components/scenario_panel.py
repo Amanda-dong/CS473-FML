@@ -9,48 +9,50 @@ from src.utils.taxonomy import all_known_subtypes, canonical_subtype
 from frontend.components._form_keys import FORM_KEYS
 
 _DISPLAY_NAMES: dict[str, str] = {
-    "healthy_indian":       "Healthy Indian / South Asian",
-    "mediterranean_bowls":  "Mediterranean Bowls",
-    "salad_bowls":          "Salad Bowls",
-    "vegan_grab_and_go":    "Vegan / Plant-Based",
-    "protein_forward_lunch":"Protein-Forward Lunch",
-    "ramen":                "Ramen",
-    "dim_sum":              "Dim Sum",
-    "japanese":             "Japanese",
-    "korean":               "Korean / K-BBQ",
-    "chinese":              "Chinese",
-    "thai":                 "Thai",
-    "mexican":              "Mexican / Tacos",
-    "caribbean":            "Caribbean",
-    "ethiopian":            "Ethiopian",
-    "west_african":         "West African",
-    "middle_eastern":       "Middle Eastern",
-    "greek":                "Greek",
-    "italian":              "Italian",
-    "pizza":                "Pizza",
-    "american_comfort":     "American Comfort / BBQ",
-    "burgers":              "Burgers",
-    "seafood":              "Seafood",
-    "bakery_cafe":          "Bakery / Café",
-    "smoothie_juice":       "Smoothies & Juice Bar",
-    "__custom__":           "Custom — type below...",
+    "healthy_indian": "Healthy Indian / South Asian",
+    "mediterranean_bowls": "Mediterranean Bowls",
+    "salad_bowls": "Salad Bowls",
+    "vegan_grab_and_go": "Vegan / Plant-Based",
+    "protein_forward_lunch": "Protein-Forward Lunch",
+    "ramen": "Ramen",
+    "dim_sum": "Dim Sum",
+    "japanese": "Japanese",
+    "korean": "Korean / K-BBQ",
+    "chinese": "Chinese",
+    "thai": "Thai",
+    "mexican": "Mexican / Tacos",
+    "caribbean": "Caribbean",
+    "ethiopian": "Ethiopian",
+    "west_african": "West African",
+    "middle_eastern": "Middle Eastern",
+    "greek": "Greek",
+    "italian": "Italian",
+    "pizza": "Pizza",
+    "american_comfort": "American Comfort / BBQ",
+    "burgers": "Burgers",
+    "seafood": "Seafood",
+    "bakery_cafe": "Bakery / Café",
+    "smoothie_juice": "Smoothies & Juice Bar",
+    "__custom__": "Custom — type below...",
 }
 
 _CONCEPT_DESCRIPTIONS: dict[str, str] = {
-    "healthy_indian":       "South Asian cuisine with modern healthy fast-casual positioning — think tandoor bowls, daal, and grilled proteins over rice.",
-    "mediterranean_bowls":  "Mediterranean grain bowls, mezze plates, and falafel wraps — high overlap with salad-forward and bowl-format dining.",
-    "salad_bowls":          "Salad-forward fast-casual (Sweetgreen-style) — customizable bases, toppings, and dressings with quick turnaround.",
-    "vegan_grab_and_go":    "Explicitly plant-based or vegetarian quick-service — cold-pressed juices, wraps, and grab-and-go snack items.",
-    "protein_forward_lunch":"High-protein lunch formats — grilled chicken, steak bowls, or macro-focused fast-casual for fitness-adjacent demand.",
-    "smoothie_juice":       "Smoothie bars and cold-pressed juice concepts — high ticket, low footprint, strong campus and gym-adjacent demand.",
-    "bakery_cafe":          "Café and bakery format — morning peak + remote-worker daytime dwell time; low healthy-food competition signal.",
+    "healthy_indian": "South Asian cuisine with modern healthy fast-casual positioning — think tandoor bowls, daal, and grilled proteins over rice.",
+    "mediterranean_bowls": "Mediterranean grain bowls, mezze plates, and falafel wraps — high overlap with salad-forward and bowl-format dining.",
+    "salad_bowls": "Salad-forward fast-casual (Sweetgreen-style) — customizable bases, toppings, and dressings with quick turnaround.",
+    "vegan_grab_and_go": "Explicitly plant-based or vegetarian quick-service — cold-pressed juices, wraps, and grab-and-go snack items.",
+    "protein_forward_lunch": "High-protein lunch formats — grilled chicken, steak bowls, or macro-focused fast-casual for fitness-adjacent demand.",
+    "smoothie_juice": "Smoothie bars and cold-pressed juice concepts — high ticket, low footprint, strong campus and gym-adjacent demand.",
+    "bakery_cafe": "Café and bakery format — morning peak + remote-worker daytime dwell time; low healthy-food competition signal.",
 }
 
 
 def render_scenario_panel() -> dict[str, str | bool | None]:
     """Render concept, price, and risk controls.  Supports any cuisine type."""
     subtypes = list(all_known_subtypes()) + ["__custom__"]
-    display_labels = [_DISPLAY_NAMES.get(s, s.replace("_", " ").title()) for s in subtypes]
+    display_labels = [
+        _DISPLAY_NAMES.get(s, s.replace("_", " ").title()) for s in subtypes
+    ]
 
     selected_idx = st.selectbox(
         "Cuisine / concept type",
