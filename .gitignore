@@ -44,6 +44,12 @@ data/geojson/*
 # macOS metadata
 .DS_Store
 
+# Test artifacts
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
 # AI configs
 .claude/
 .claude_verify_results_panel.py
