@@ -2,7 +2,7 @@
 repos:
   # ── File hygiene ─────────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -22,7 +22,7 @@ repos:
 
   # ── Ruff: lint + format ───────────────────────────────────────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.4
+    rev: v0.15.12
     hooks:
       - id: ruff
         # Auto-fix then fail if any changes were made — forces devs to stage the fix
@@ -31,7 +31,7 @@ repos:
 
   # ── Bandit: static security analysis ─────────────────────────────────────────
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.3
+    rev: 1.9.4
     hooks:
       - id: bandit
         args: ["-r", "src", "-ll", "-ii"]
@@ -39,7 +39,7 @@ repos:
 
   # ── YAML schema validation ─────────────────────────────────────────────────────
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.0
+    rev: v1.38.0
     hooks:
       - id: yamllint
         args: [-d, "{extends: relaxed, rules: {line-length: {max: 120}}}"]

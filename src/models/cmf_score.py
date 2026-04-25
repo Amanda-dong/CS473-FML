@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -107,7 +108,6 @@ def score_zone_for_concept(zone_features: dict, concept_subtype: str) -> ScoreCo
     survival = float(zone_features.get("survival_score", 0.5))
     vel_raw = float(zone_features.get("license_velocity", 0.0))
     # Normalise license velocity: sigmoid(vel) maps (−∞,+∞) → (0,1)
-    import math
     vel_norm = 1.0 / (1.0 + math.exp(-vel_raw)) if vel_raw != 0.0 else 0.5
     competition = float(zone_features.get("competition_score", 0.0))
     rent = float(zone_features.get("rent_pressure", 0.0))
@@ -192,8 +192,7 @@ class LearnedScoringModel:
         rng = np.random.default_rng(seed)
 
         preds_all = []
-        import xgboost as _xgb
-        dmat = _xgb.DMatrix(X, feature_names=self.feature_names)
+        dmat = xgb.DMatrix(X, feature_names=self.feature_names)
         for _ in range(n_bootstrap):
             # Sample ~80% of trees
             end = rng.integers(max(int(n_trees * 0.6), 1), n_trees + 1)

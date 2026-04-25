@@ -44,11 +44,12 @@ data/geojson/*
 # macOS metadata
 .DS_Store
 
-# Test artifacts
+# Test & lint artifacts
 .coverage
 coverage.xml
 htmlcov/
 .pytest_cache/
+.ruff_cache/
 
 # AI configs
 .claude/

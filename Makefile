@@ -1,4 +1,4 @@
-.PHONY: install etl train-survival train-scoring train pipeline api ui run test all
+.PHONY: install etl etl-small train-survival train-scoring train pipeline api ui run test coverage lint format all
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 
@@ -38,7 +38,8 @@ ui:
 	uv run python -m streamlit run frontend/app.py
 
 run:
-	uv run python -m uvicorn src.api.main:app --port 8000 &
+	trap 'kill %1 2>/dev/null' EXIT && \
+	uv run python -m uvicorn src.api.main:app --port 8000 & \
 	uv run python -m streamlit run frontend/app.py
 
 # ── Quality ──────────────────────────────────────────────────────────────────
@@ -46,9 +47,16 @@ run:
 test:
 	uv run python -m pytest -v
 
+coverage:
+	uv run python -m pytest -v --cov=src --cov-report=term-missing
+
 lint:
 	uv run ruff check src tests
 	uv run ruff format --check src tests
+
+format:
+	uv run ruff format src tests
+	uv run ruff check --fix src tests
 
 # ── Combined ─────────────────────────────────────────────────────────────────
 
