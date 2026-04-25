@@ -43,3 +43,8 @@ data/geojson/*
 
 # macOS metadata
 .DS_Store
+
+# AI configs
+.claude/
+.claude_verify_results_panel.py
+
