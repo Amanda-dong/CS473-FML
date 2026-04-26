@@ -1,6 +1,14 @@
 # NYC Restaurant Intelligence Platform
 
-Updated: April 1, 2026<br>
+## Teammates
+
+- Amanda Dong (`yd2825`) - [GitHub](https://github.com/Amanda-dong)
+- Tony Zhao (`sz3822`) - [GitHub](https://github.com/Tonyzsp)
+- Harsh Agarwal (`ha2957`) - [GitHub](https://github.com/harshagarwalnyu)
+- Siqi Zhu (`sz3950`) - [GitHub](https://github.com/HelenZhutt)
+- Catherine Yi (`cgy2014`)
+
+Updated: April 26, 2026<br>
 Course project · Spring 2026<br>
 Team: Catherine, Harsh, Tony, Siqi, Amanda
 
