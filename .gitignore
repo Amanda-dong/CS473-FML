@@ -32,6 +32,7 @@ data/processed/*
 !data/processed/hygiene_nta_features.csv
 !data/processed/census_nta_features.csv
 !data/processed/citibike_nta_features.csv
+!data/processed/*.parquet
 data/geojson/*
 !data/geojson/.gitkeep
 

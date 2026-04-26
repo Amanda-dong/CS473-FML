@@ -13,7 +13,6 @@ from src.data import (
     etl_airbnb,
     etl_boundaries,
     etl_citibike,
-    etl_google_trends,
     etl_inspections,
     etl_licenses,
     etl_permits,
@@ -38,7 +37,6 @@ _ETL_MODULES: dict[str, object] = {
     "yelp": etl_yelp,
     "complaints_311": etl_311,
     "boundaries": etl_boundaries,
-    "google_trends": etl_google_trends,
 }
 
 

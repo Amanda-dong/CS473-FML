@@ -842,16 +842,6 @@ def test_project_paths_returns_dict() -> None:
     assert "geojson_dir" in paths
 
 
-# ── etl_google_trends — deprecated placeholder ────────────────────────────────
-
-
-def test_google_trends_run_etl_returns_empty() -> None:
-    from src.data.etl_google_trends import run_etl, run_placeholder_etl
-
-    assert run_etl().empty
-    assert run_placeholder_etl().empty
-
-
 # ── schemas.results — build_placeholder_response ─────────────────────────────
 
 
