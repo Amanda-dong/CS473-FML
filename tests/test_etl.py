@@ -153,26 +153,14 @@ def test_etl_acs_borough_key_bn() -> None:
     assert _borough_key("mn-fidi") == "MN"
 
 
-def test_etl_acs_build_synthetic() -> None:
-    from src.data.etl_acs import _build_synthetic_acs
-
-    result = _build_synthetic_acs(limit=10)
-    assert not result.empty
-    assert "nta_id" in result.columns
-    assert "median_income" in result.columns
-    assert "population" in result.columns
-    assert "rent_burden" in result.columns
-
-
-def test_etl_acs_run_etl_uses_synthetic_fallback(
+def test_etl_acs_run_etl_raises_when_no_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from src.data import etl_acs
 
     monkeypatch.setenv("ACS_DATA_PATH", "")
-    result = etl_acs.run_etl(limit=5)
-    assert not result.empty
-    assert "nta_id" in result.columns
+    with pytest.raises(RuntimeError, match="ACS_DATA_PATH"):
+        etl_acs.run_etl(limit=5)
 
 
 def test_etl_acs_load_local_raises_when_no_path(
@@ -229,16 +217,6 @@ def test_etl_yelp_run_placeholder() -> None:
 # ── etl_airbnb ────────────────────────────────────────────────────────────────
 
 
-def test_etl_airbnb_build_synthetic() -> None:
-    from src.data.etl_airbnb import _build_synthetic_airbnb
-
-    result = _build_synthetic_airbnb()
-    assert not result.empty
-    assert "nta_id" in result.columns
-    assert "listing_count" in result.columns
-    assert "entire_home_ratio" in result.columns
-    assert (result["listing_count"] >= 1).all()
-    assert result["entire_home_ratio"].between(0.01, 0.99).all()
 
 
 def test_etl_airbnb_transform_with_lat_lon(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -279,13 +257,6 @@ def test_etl_airbnb_transform_no_room_type(monkeypatch: pytest.MonkeyPatch) -> N
     assert "nta_id" in result.columns
 
 
-def test_etl_airbnb_run_etl_synthetic_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
-    from src.data import etl_airbnb
-
-    monkeypatch.setattr(etl_airbnb, "_RAW_CSV", etl_airbnb._RAW_CSV_GZ)
-    monkeypatch.setattr(etl_airbnb._RAW_CSV_GZ.__class__, "exists", lambda _: False)
-    result = etl_airbnb._build_synthetic_airbnb()
-    assert not result.empty
 
 
 def test_etl_airbnb_run_placeholder() -> None:
@@ -730,15 +701,14 @@ def test_base_dataset_pipeline_methods() -> None:
 # ── etl_acs — additional ──────────────────────────────────────────────────────
 
 
-def test_etl_acs_run_etl_uses_synthetic_when_no_env(
+def test_etl_acs_run_etl_raises_when_no_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from src.data import etl_acs
 
     monkeypatch.delenv("ACS_DATA_PATH", raising=False)
-    result = etl_acs.run_etl(limit=10)
-    assert not result.empty
-    assert "nta_id" in result.columns
+    with pytest.raises(RuntimeError, match="ACS_DATA_PATH"):
+        etl_acs.run_etl(limit=10)
 
 
 def test_etl_acs_load_local_raises_when_file_missing(
@@ -754,10 +724,11 @@ def test_etl_acs_load_local_raises_when_file_missing(
 # ── etl_airbnb — run_etl synthetic fallback ──────────────────────────────────
 
 
-def test_etl_airbnb_run_etl_synthetic_when_no_local_and_download_fails(
+def test_etl_airbnb_run_etl_raises_when_download_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from pathlib import Path
+
     from src.data import etl_airbnb
 
     monkeypatch.setattr(etl_airbnb, "_RAW_CSV", Path("/nonexistent/airbnb.csv"))
@@ -766,34 +737,33 @@ def test_etl_airbnb_run_etl_synthetic_when_no_local_and_download_fails(
         "requests.get",
         lambda *a, **kw: (_ for _ in ()).throw(ConnectionError("offline")),
     )
-    result = etl_airbnb.run_etl(limit=5)
-    assert not result.empty
-    assert "nta_id" in result.columns
+    with pytest.raises(ConnectionError, match="offline"):
+        etl_airbnb.run_etl(limit=5)
 
 
-def test_etl_airbnb_run_etl_synthetic_when_transform_empty(
-    monkeypatch: pytest.MonkeyPatch,
+def test_etl_airbnb_run_etl_raises_when_transform_empty(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
+    import gzip
     from pathlib import Path
+
     from src.data import etl_airbnb
 
+    dl_path = tmp_path / "airbnb.csv.gz"
+    gz_content = gzip.compress(b"a,b\n1,2\n")
     monkeypatch.setattr(etl_airbnb, "_RAW_CSV", Path("/nonexistent/airbnb.csv"))
-    monkeypatch.setattr(etl_airbnb, "_RAW_CSV_GZ", Path("/nonexistent/airbnb.csv.gz"))
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV_GZ", dl_path)
     monkeypatch.setattr(etl_airbnb, "_transform", lambda df: pd.DataFrame())
     monkeypatch.setattr(
         "requests.get",
         lambda *a, **kw: type(
             "R",
             (),
-            {
-                "status_code": 200,
-                "content": b"a,b\n1,2\n",
-                "raise_for_status": lambda s: None,
-            },
+            {"status_code": 200, "content": gz_content, "raise_for_status": lambda s: None},
         )(),
     )
-    result = etl_airbnb.run_etl(limit=5)
-    assert not result.empty  # falls back to synthetic
+    with pytest.raises(RuntimeError, match="empty frame"):
+        etl_airbnb.run_etl(limit=5)
 
 
 # ── etl_citibike — run_etl download fallback ─────────────────────────────────
@@ -1245,20 +1215,26 @@ def test_etl_acs_load_local_success(monkeypatch: pytest.MonkeyPatch, tmp_path) -
     assert not result.empty
 
 
-def test_etl_acs_run_etl_empty_local_falls_back_to_synthetic(
+def test_etl_acs_run_etl_raises_when_local_empty(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from src.data import etl_acs
 
     monkeypatch.setattr(etl_acs, "_load_local", lambda: pd.DataFrame())
-    result = etl_acs.run_etl(limit=5)
-    assert not result.empty  # synthetic fallback
+    with pytest.raises(RuntimeError, match="empty frame"):
+        etl_acs.run_etl(limit=5)
 
 
 def test_etl_acs_run_etl_success_from_local(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.data import etl_acs
 
-    fake = pd.DataFrame({"nta_id": ["BK09"], "median_income": [60000]})
+    fake = pd.DataFrame({
+        "year": [2024],
+        "nta_id": ["BK09"],
+        "median_income": [60000.0],
+        "population": [5000.0],
+        "rent_burden": [0.35],
+    })
     monkeypatch.setattr(etl_acs, "_load_local", lambda: fake)
     result = etl_acs.run_etl(limit=10)
     assert len(result) == 1
@@ -1283,11 +1259,12 @@ def test_etl_airbnb_read_local_existing_csv(
     assert result is not None
 
 
-def test_etl_airbnb_run_etl_download_then_synthetic(
+def test_etl_airbnb_run_etl_raises_when_transform_returns_empty(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     import requests
     from pathlib import Path
+
     from src.data import etl_airbnb
 
     monkeypatch.setattr(etl_airbnb, "_RAW_CSV", Path("/nonexistent/listings.csv"))
@@ -1302,8 +1279,8 @@ def test_etl_airbnb_run_etl_download_then_synthetic(
 
     monkeypatch.setattr(requests, "get", lambda *a, **kw: MockResponse())
     monkeypatch.setattr(etl_airbnb, "_transform", lambda df: pd.DataFrame())
-    result = etl_airbnb.run_etl(limit=5)
-    assert isinstance(result, pd.DataFrame)  # synthetic fallback
+    with pytest.raises(RuntimeError, match="empty frame"):
+        etl_airbnb.run_etl(limit=5)
 
 
 # ── etl_citibike — PK zip path and download mock ─────────────────────────────

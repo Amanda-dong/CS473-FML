@@ -781,6 +781,7 @@ def test_gemini_save_cache_exception_is_swallowed(
         concept_subtype="healthy_bowl",
         confidence=0.9,
         rationale="good",
+        halal_relevance="not_related",
     )
     monkeypatch.setattr(gl, "_CACHE_PATH", Path("/nonexistent_dir_xyz/labels.parquet"))
     gl._save_cache([label])  # must not raise
@@ -807,6 +808,7 @@ def test_gemini_label_reviews_cached_hit_and_all_cached(monkeypatch) -> None:
         concept_subtype="healthy_bowl",
         confidence=0.95,
         rationale="healthy",
+        halal_relevance="not_related",
     )
     monkeypatch.setattr(gl, "_load_cache", lambda: {review_id: cached_label})
     monkeypatch.setattr(gl, "_save_cache", lambda labels: None)

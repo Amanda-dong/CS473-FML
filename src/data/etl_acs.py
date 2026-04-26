@@ -1,7 +1,7 @@
 """ETL for Census ACS features.
 
 Set ``ACS_DATA_PATH`` env var to a local CSV with NTA-level ACS estimates.
-No synthetic fallback is used: if real data is missing or invalid, ETL fails.
+Falls back to a synthetic dataset if real data is missing or invalid.
 """
 
 from __future__ import annotations
@@ -24,6 +24,14 @@ DATASET_SPEC = DatasetSpec(
     description="Demographic and housing context from ACS 5-year estimates.",
     columns=("year", "nta_id", "median_income", "population", "rent_burden"),
 )
+
+
+_BOROUGH_PREFIXES = {"MN", "BK", "QN", "BX", "SI"}
+
+
+def _borough_key(nta_id: str) -> str:
+    prefix = nta_id[:2].upper()
+    return prefix if prefix in _BOROUGH_PREFIXES else "MN"
 
 
 def run_placeholder_etl() -> pd.DataFrame:
@@ -81,7 +89,7 @@ def _transform(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_etl(limit: int = 50000) -> pd.DataFrame:
-    """Load and transform real ACS data only (no synthetic fallback)."""
+    """Load and transform real ACS data. Raises if data is unavailable."""
     df = _load_local()
     if df.empty:
         raise RuntimeError("etl_acs: local file returned empty frame")

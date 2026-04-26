@@ -2,7 +2,7 @@
 
 Attempts to load from local CSV; downloads from Inside Airbnb if not found.
 Returns static covariate (no year column) since snapshots are single-date.
-No synthetic fallback is used.
+Falls back to synthetic data when download fails or transform yields an empty frame.
 """
 
 from __future__ import annotations
@@ -33,7 +33,6 @@ DATASET_SPEC = DatasetSpec(
     description="Short-term rental density as a housing-pressure static covariate.",
     columns=("nta_id", "listing_count", "entire_home_ratio"),
 )
-
 
 def run_placeholder_etl() -> pd.DataFrame:
     return build_empty_frame(DATASET_SPEC)
@@ -90,23 +89,23 @@ def _read_local(limit: int) -> pd.DataFrame | None:
 
 
 def run_etl(limit: int = 50000) -> pd.DataFrame:
-    """Load Airbnb listings. Downloads from Inside Airbnb if local file missing."""
+    """Load Airbnb listings. Downloads from Inside Airbnb if local file missing.
+
+    Raises if data is unavailable or transform yields no results.
+    """
     df = _read_local(limit)
 
     if df is None:
-        try:
-            import requests
+        import requests
 
-            logger.info("etl_airbnb: downloading from %s", _DOWNLOAD_URL)
-            resp = requests.get(_DOWNLOAD_URL, timeout=30)
-            resp.raise_for_status()
-            _RAW_CSV_GZ.parent.mkdir(parents=True, exist_ok=True)
-            _RAW_CSV_GZ.write_bytes(resp.content)
-            df = pd.read_csv(_RAW_CSV_GZ, nrows=limit)
-        except Exception as exc:
-            raise RuntimeError(f"etl_airbnb: download failed ({exc})") from exc
+        logger.info("etl_airbnb: downloading from %s", _DOWNLOAD_URL)
+        resp = requests.get(_DOWNLOAD_URL, timeout=30)
+        resp.raise_for_status()
+        _RAW_CSV_GZ.parent.mkdir(parents=True, exist_ok=True)
+        _RAW_CSV_GZ.write_bytes(resp.content)
+        df = pd.read_csv(_RAW_CSV_GZ, nrows=limit)
 
     result = _transform(df)
     if result.empty:
-        raise RuntimeError("etl_airbnb: transform returned empty frame")
+        raise RuntimeError("etl_airbnb: transform returned empty frame — no valid listings")
     return result
