@@ -948,3 +948,189 @@ def test_trajectory_model_sweep_k_runs(sample_restaurant_history: pd.DataFrame) 
     assert isinstance(result, pd.DataFrame)
     assert "k" in result.columns
     assert "silhouette" in result.columns
+
+
+# ── model_loader — exception handlers ─────────────────────────────────────────
+
+
+def test_save_model_exception_is_swallowed(tmp_path, monkeypatch) -> None:
+    import joblib
+    import src.models.model_loader as ml
+
+    monkeypatch.setattr(joblib, "dump", lambda *a, **kw: (_ for _ in ()).throw(OSError("disk full")))
+    ml.save_model(object(), tmp_path / "bad.joblib")  # must not raise
+
+
+def test_load_scoring_model_corrupt_file_returns_none(tmp_path) -> None:
+    from src.models.model_loader import load_scoring_model
+
+    (tmp_path / "bad.joblib").write_bytes(b"not a joblib file")
+    assert load_scoring_model(tmp_path / "bad.joblib") is None
+
+
+def test_load_survival_model_corrupt_file_returns_none(tmp_path) -> None:
+    from src.models.model_loader import load_survival_model
+
+    (tmp_path / "bad.joblib").write_bytes(b"not a joblib file")
+    assert load_survival_model(tmp_path / "bad.joblib") is None
+
+
+def test_load_feature_matrix_corrupt_file_returns_none(tmp_path) -> None:
+    from src.models.model_loader import load_feature_matrix
+
+    (tmp_path / "bad.parquet").write_bytes(b"not a parquet file")
+    assert load_feature_matrix(tmp_path / "bad.parquet") is None
+
+
+# ── survival_model — partial-variance drop and Cox convergence failure ─────────
+
+
+def test_survival_model_drops_near_zero_variance_cols() -> None:
+    from src.models.survival_model import SurvivalModelBundle
+
+    df = pd.DataFrame({
+        "duration_days": [100, 200, 300, 400, 500],
+        "event_observed": [1, 0, 1, 0, 1],
+        "feature_constant": [1.0, 1.0, 1.0, 1.0, 1.0],
+        "feature_var": [0.1, 0.5, 0.9, 0.3, 0.7],
+    })
+    bundle = SurvivalModelBundle()
+    bundle.fit(df)
+    assert "feature_var" in bundle.feature_columns_
+    assert "feature_constant" not in bundle.feature_columns_
+
+
+def test_survival_model_cox_convergence_failure(monkeypatch) -> None:
+    import src.models.survival_model as sm_module
+
+    class _FailCox:
+        def __init__(self, **kwargs): pass
+        def fit(self, *a, **kw): raise RuntimeError("convergence failure")
+
+    monkeypatch.setattr(sm_module, "CoxPHFitter", _FailCox)
+    df = pd.DataFrame({
+        "duration_days": [100, 200, 300],
+        "event_observed": [1, 0, 1],
+        "feature_var": [0.1, 0.5, 0.9],
+    })
+    bundle = sm_module.SurvivalModelBundle()
+    bundle.fit(df)
+    assert bundle.uses_heuristic_
+    assert bundle.cox_model_ is None
+
+
+# ── survival_model — brier_score alt paths ────────────────────────────────────
+
+
+def test_survival_model_brier_score_heuristic_path(
+    sample_restaurant_history: pd.DataFrame,
+) -> None:
+    from src.models.survival_model import SurvivalModelBundle
+
+    bundle = SurvivalModelBundle(baseline="heuristic")
+    bundle.fit(sample_restaurant_history)
+    result = bundle.brier_score(sample_restaurant_history, times=[365])
+    assert isinstance(result, pd.DataFrame)
+    assert "brier_score" in result.columns
+
+
+def test_survival_model_brier_score_zero_informative() -> None:
+    from src.models.survival_model import SurvivalModelBundle
+
+    df = pd.DataFrame({
+        "duration_days": [10, 20],
+        "event_observed": [0, 0],
+        "rent_pressure": [0.5, 0.3],
+    })
+    bundle = SurvivalModelBundle(baseline="heuristic")
+    bundle.fit(df)
+    result = bundle.brier_score(df, times=[9999])
+    assert np.isnan(result["brier_score"].iloc[0])
+
+
+def test_survival_model_brier_score_no_ipcw_fallback(
+    monkeypatch,
+    sample_restaurant_history: pd.DataFrame,
+) -> None:
+    import lifelines
+    from src.models.survival_model import SurvivalModelBundle
+
+    class _BadKMF:
+        def __init__(self): pass
+        def fit(self, *a, **kw): raise RuntimeError("forced")
+
+    monkeypatch.setattr(lifelines, "KaplanMeierFitter", _BadKMF)
+    bundle = SurvivalModelBundle(baseline="heuristic")
+    bundle.fit(sample_restaurant_history)
+    result = bundle.brier_score(sample_restaurant_history, times=[365])
+    assert isinstance(result, pd.DataFrame)
+
+
+# ── survival_model — calibration_data alt paths ───────────────────────────────
+
+
+def test_survival_model_calibration_data_heuristic_path(
+    sample_restaurant_history: pd.DataFrame,
+) -> None:
+    from src.models.survival_model import SurvivalModelBundle
+
+    bundle = SurvivalModelBundle(baseline="heuristic")
+    bundle.fit(sample_restaurant_history)
+    result = bundle.calibration_data(sample_restaurant_history)
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_survival_model_calibration_data_empty_informative() -> None:
+    from src.models.survival_model import SurvivalModelBundle
+
+    df = pd.DataFrame({
+        "duration_days": [10],
+        "event_observed": [0],
+        "rent_pressure": [0.5],
+    })
+    bundle = SurvivalModelBundle(baseline="heuristic")
+    bundle.fit(df)
+    result = bundle.calibration_data(df, horizon_days=9999)
+    assert result.empty
+
+
+# ── ranking_model — fit without xgboost ──────────────────────────────────────
+
+
+def test_learned_ranker_fit_requires_xgboost(monkeypatch) -> None:
+    import src.models.ranking_model as rm_module
+    from src.models.ranking_model import LearnedRanker
+
+    monkeypatch.setattr(rm_module, "HAS_XGB", False)
+    r = LearnedRanker()
+    with pytest.raises(ImportError, match="xgboost"):
+        r.fit(pd.DataFrame({"f": [1.0]}), pd.Series([1.0]), group=[1])
+
+
+# ── trajectory_model — GMM stability and auto k_range ─────────────────────────
+
+
+def test_trajectory_model_gmm_cluster_stability(
+    sample_restaurant_history: pd.DataFrame,
+) -> None:
+    from src.models.trajectory_model import TrajectoryClusteringModel
+
+    model = TrajectoryClusteringModel(n_clusters=2, algorithm="gmm")
+    model.fit(sample_restaurant_history)
+    scaled = model.scaler_.transform(
+        sample_restaurant_history[model.feature_columns_].fillna(0.0)
+    )
+    score = model.cluster_stability(scaled, n_runs=3)
+    assert isinstance(score, float)
+
+
+def test_trajectory_model_sweep_k_auto_range(
+    sample_restaurant_history: pd.DataFrame,
+) -> None:
+    from src.models.trajectory_model import TrajectoryClusteringModel
+
+    model = TrajectoryClusteringModel(n_clusters=2)
+    model.fit(sample_restaurant_history)
+    result = model.sweep_k(sample_restaurant_history)
+    assert isinstance(result, pd.DataFrame)
+    assert "k" in result.columns
