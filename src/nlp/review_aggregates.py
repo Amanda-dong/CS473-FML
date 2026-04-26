@@ -20,6 +20,16 @@ _OUTPUT_COLUMNS: list[str] = [
     "subtype_gap",
     "dominant_subtype",
 ]
+_FULL_HALAL_REQUIRED_COLUMNS: list[str] = [
+    "restaurant_id",
+    "time_key",
+    "zone_id",
+    "rating",
+    "sentiment",
+    "halal_relevance",
+    "concept_subtype",
+    "confidence",
+]
 
 
 def aggregate_review_labels(
@@ -150,3 +160,134 @@ def aggregate_nlp_features(
             sentiment_agg = sentiment_agg.merge(emb_subset, on="zone_id", how="left")
 
     return sentiment_agg
+
+
+def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate full Gemini labels into zone-time halal demand features.
+
+    This keeps ``not_related`` reviews as a negative baseline so downstream
+    modeling can compare halal-related and non-halal sentiment within the same
+    zone-year panel.
+    """
+    if review_labels.empty:
+        return pd.DataFrame(
+            columns=[
+                "zone_id",
+                "time_key",
+                "total_review_count",
+                "unique_restaurant_count",
+                "halal_related_review_count",
+                "explicit_halal_review_count",
+                "implicit_halal_review_count",
+                "not_related_review_count",
+                "halal_related_share",
+                "explicit_halal_share",
+                "implicit_halal_share",
+                "not_related_share",
+                "implicit_to_explicit_ratio",
+                "overall_positive_rate",
+                "overall_negative_rate",
+                "halal_positive_rate",
+                "halal_negative_rate",
+                "non_halal_positive_rate",
+                "non_halal_negative_rate",
+                "avg_rating",
+                "avg_confidence",
+                "dominant_subtype",
+                "subtype_gap",
+            ]
+        )
+
+    missing = [c for c in _FULL_HALAL_REQUIRED_COLUMNS if c not in review_labels.columns]
+    if missing:
+        return pd.DataFrame()
+
+    df = review_labels.copy()
+    df = df.dropna(subset=["zone_id", "time_key"])
+    if df.empty:
+        return pd.DataFrame()
+
+    df["time_key"] = pd.to_numeric(df["time_key"], errors="coerce")
+    df["confidence"] = pd.to_numeric(df["confidence"], errors="coerce")
+    df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+    df = df.dropna(subset=["time_key"])
+    if df.empty:
+        return pd.DataFrame()
+
+    df["time_key"] = df["time_key"].astype(int)
+    df["confidence"] = df["confidence"].fillna(0.0)
+    df["sentiment"] = df["sentiment"].fillna("neutral")
+    df["halal_relevance"] = df["halal_relevance"].fillna("not_related")
+    df["concept_subtype"] = df["concept_subtype"].fillna("other")
+
+    def _agg_group(grp: pd.DataFrame) -> pd.Series:
+        total = len(grp)
+        halal_grp = grp[grp["halal_relevance"] != "not_related"]
+        non_halal_grp = grp[grp["halal_relevance"] == "not_related"]
+
+        explicit_count = int((grp["halal_relevance"] == "explicit_halal").sum())
+        implicit_count = int((grp["halal_relevance"] == "implicit_halal").sum())
+        not_related_count = int((grp["halal_relevance"] == "not_related").sum())
+
+        subtype_counts = halal_grp["concept_subtype"].value_counts()
+        dominant_subtype = subtype_counts.idxmax() if not subtype_counts.empty else "other"
+        subtype_gap = (
+            float((subtype_counts / len(halal_grp)).std())
+            if len(halal_grp) > 0 and len(subtype_counts) > 1
+            else 0.0
+        )
+
+        return pd.Series(
+            {
+                "total_review_count": int(total),
+                "unique_restaurant_count": int(grp["restaurant_id"].nunique()),
+                "halal_related_review_count": int(len(halal_grp)),
+                "explicit_halal_review_count": explicit_count,
+                "implicit_halal_review_count": implicit_count,
+                "not_related_review_count": not_related_count,
+                "halal_related_share": float(len(halal_grp) / total) if total else 0.0,
+                "explicit_halal_share": float(explicit_count / total) if total else 0.0,
+                "implicit_halal_share": float(implicit_count / total) if total else 0.0,
+                "not_related_share": float(not_related_count / total) if total else 0.0,
+                "implicit_to_explicit_ratio": (
+                    float(implicit_count / explicit_count)
+                    if explicit_count
+                    else (float(implicit_count) if implicit_count else 0.0)
+                ),
+                "overall_positive_rate": float((grp["sentiment"] == "positive").mean()),
+                "overall_negative_rate": float((grp["sentiment"] == "negative").mean()),
+                "halal_positive_rate": (
+                    float((halal_grp["sentiment"] == "positive").mean())
+                    if len(halal_grp)
+                    else 0.0
+                ),
+                "halal_negative_rate": (
+                    float((halal_grp["sentiment"] == "negative").mean())
+                    if len(halal_grp)
+                    else 0.0
+                ),
+                "non_halal_positive_rate": (
+                    float((non_halal_grp["sentiment"] == "positive").mean())
+                    if len(non_halal_grp)
+                    else 0.0
+                ),
+                "non_halal_negative_rate": (
+                    float((non_halal_grp["sentiment"] == "negative").mean())
+                    if len(non_halal_grp)
+                    else 0.0
+                ),
+                "avg_rating": (
+                    float(grp["rating"].mean()) if grp["rating"].notna().any() else 0.0
+                ),
+                "avg_confidence": float(grp["confidence"].mean()),
+                "dominant_subtype": dominant_subtype,
+                "subtype_gap": subtype_gap,
+            }
+        )
+
+    return (
+        df.groupby(["zone_id", "time_key"], as_index=False)
+        .apply(_agg_group, include_groups=False)
+        .sort_values(["zone_id", "time_key"])
+        .reset_index(drop=True)
+    )
