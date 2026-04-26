@@ -9,7 +9,7 @@
 | src/api/deps.py                     |        3 |        3 |      0% |       3-9 |
 | src/api/main.py                     |       16 |        1 |     94% |        19 |
 | src/api/routers/\_\_init\_\_.py     |        0 |        0 |    100% |           |
-| src/api/routers/datasets.py         |        6 |        0 |    100% |           |
+| src/api/routers/datasets.py         |        7 |        0 |    100% |           |
 | src/api/routers/health.py           |        5 |        0 |    100% |           |
 | src/api/routers/recommendations.py  |      156 |       43 |     72% |46, 210-229, 282, 346, 348, 366-368, 374-376, 387-389, 430, 434-469, 527 |
 | src/config/\_\_init\_\_.py          |        3 |        0 |    100% |           |
@@ -51,7 +51,7 @@
 | src/models/explainability.py        |       59 |       12 |     80% |   131-145 |
 | src/models/model\_loader.py         |       87 |       29 |     67% |39-61, 68, 76-78, 103-105, 119-121, 139-140 |
 | src/models/ranking\_model.py        |       49 |        7 |     86% |15-16, 22-23, 66, 86, 101 |
-| src/models/survival\_model.py       |      237 |       63 |     73% |18, 69-73, 75, 91-95, 97-103, 110-115, 118-129, 133, 155-169, 188, 197-215, 224, 247, 264-265, 284, 292-295, 316, 343, 364, 372, 408, 419-420, 460, 472, 485, 531, 557-567 |
+| src/models/survival\_model.py       |      247 |       69 |     72% |16-18, 25, 76-80, 82, 86, 93-94, 103-107, 109-115, 122-127, 130-141, 145, 167-181, 200, 209-227, 236, 259, 276-277, 296, 304-307, 328, 355, 376, 384, 420, 431-432, 472, 484, 497, 543, 569-579 |
 | src/models/trajectory\_model.py     |      135 |       64 |     53% |43, 52-53, 97-120, 153-171, 180-211 |
 | src/nlp/\_\_init\_\_.py             |        3 |        0 |    100% |           |
 | src/nlp/embeddings.py               |      123 |      100 |     19% |32, 48-98, 109-128, 135-147, 157-170, 179-222 |
@@ -67,9 +67,9 @@
 | src/pipeline/preflight.py           |      104 |       28 |     73% |48, 63-64, 103-104, 141-142, 208-209, 253-254, 287-288, 300-311, 317-330 |
 | src/pipeline/stages.py              |        1 |        0 |    100% |           |
 | src/schemas/\_\_init\_\_.py         |        4 |        0 |    100% |           |
-| src/schemas/datasets.py             |        5 |        0 |    100% |           |
-| src/schemas/requests.py             |        8 |        0 |    100% |           |
-| src/schemas/results.py              |       24 |        2 |     92% |     46-66 |
+| src/schemas/datasets.py             |        6 |        0 |    100% |           |
+| src/schemas/requests.py             |        9 |        0 |    100% |           |
+| src/schemas/results.py              |       25 |        2 |     92% |     48-68 |
 | src/utils/\_\_init\_\_.py           |        4 |        0 |    100% |           |
 | src/utils/geospatial.py             |       14 |        7 |     50% |     27-39 |
 | src/utils/paths.py                  |        6 |        2 |     67% |     13-14 |
@@ -77,7 +77,7 @@
 | src/validation/\_\_init\_\_.py      |        2 |        0 |    100% |           |
 | src/validation/ablation.py          |       75 |       75 |      0% |     3-211 |
 | src/validation/backtesting.py       |      149 |       24 |     84% |27-29, 67, 70, 107, 141, 213, 221, 231-243, 249, 259-263, 312, 344-345, 355 |
-| **TOTAL**                           | **2881** | **1188** | **59%** |           |
+| **TOTAL**                           | **2895** | **1194** | **59%** |           |
 
 
 ## Setup coverage badge
