@@ -826,3 +826,158 @@ def test_gemini_label_reviews_cached_hit_and_all_cached(monkeypatch) -> None:
     )
     assert len(result) == 1
     assert result[0].sentiment == "positive"
+
+
+# ── aggregate_full_halal_review_features ─────────────────────────────────────
+
+
+def test_aggregate_full_halal_review_features_empty_df() -> None:
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    result = aggregate_full_halal_review_features(pd.DataFrame())
+    assert "zone_id" in result.columns
+    assert "halal_related_share" in result.columns
+    assert result.empty
+
+
+def test_aggregate_full_halal_review_features_missing_columns() -> None:
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame({"zone_id": ["z1"], "time_key": [2024]})  # missing required cols
+    result = aggregate_full_halal_review_features(df)
+    assert result.empty
+
+
+def test_aggregate_full_halal_review_features_valid_data() -> None:
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r1", "r2"],
+            "time_key": [2024, 2024, 2024],
+            "zone_id": ["z1", "z1", "z1"],
+            "rating": [4.0, 3.0, 5.0],
+            "sentiment": ["positive", "negative", "positive"],
+            "halal_relevance": ["explicit_halal", "not_related", "implicit_halal"],
+            "concept_subtype": ["halal_cart", "other", "halal_diner"],
+            "confidence": [0.9, 0.8, 0.85],
+        }
+    )
+    result = aggregate_full_halal_review_features(df)
+    assert not result.empty
+    assert "halal_related_share" in result.columns
+    assert "explicit_halal_share" in result.columns
+    assert result["halal_related_share"].iloc[0] > 0.0
+
+
+def test_aggregate_full_halal_review_features_all_not_related() -> None:
+    """Rows where all halal_relevance == not_related: halal_related_share == 0."""
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r1"],
+            "time_key": [2024, 2024],
+            "zone_id": ["z1", "z1"],
+            "rating": [3.0, 4.0],
+            "sentiment": ["positive", "neutral"],
+            "halal_relevance": ["not_related", "not_related"],
+            "concept_subtype": ["other", "other"],
+            "confidence": [0.7, 0.8],
+        }
+    )
+    result = aggregate_full_halal_review_features(df)
+    assert not result.empty
+    assert result["halal_related_share"].iloc[0] == pytest.approx(0.0)
+    assert result["not_related_review_count"].iloc[0] == 2
+
+
+def test_aggregate_full_halal_review_features_nan_time_key_dropped() -> None:
+    """Rows with NaN time_key must be dropped before aggregation."""
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r2"],
+            "time_key": [None, 2024],
+            "zone_id": ["z1", "z1"],
+            "rating": [4.0, 3.0],
+            "sentiment": ["positive", "negative"],
+            "halal_relevance": ["explicit_halal", "not_related"],
+            "concept_subtype": ["halal_cart", "other"],
+            "confidence": [0.9, 0.8],
+        }
+    )
+    result = aggregate_full_halal_review_features(df)
+    # Only the non-NaN time_key row survives
+    assert not result.empty
+    assert len(result) == 1
+
+
+def test_aggregate_full_halal_review_features_multiple_zones() -> None:
+    """Aggregation groups by (zone_id, time_key); result has one row per group."""
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r2", "r3"],
+            "time_key": [2024, 2024, 2023],
+            "zone_id": ["z1", "z2", "z1"],
+            "rating": [4.0, 5.0, 3.0],
+            "sentiment": ["positive", "positive", "negative"],
+            "halal_relevance": ["explicit_halal", "implicit_halal", "explicit_halal"],
+            "concept_subtype": ["halal_cart", "halal_diner", "halal_cart"],
+            "confidence": [0.9, 0.85, 0.75],
+        }
+    )
+    result = aggregate_full_halal_review_features(df)
+    assert len(result) == 3  # (z1,2024), (z2,2024), (z1,2023)
+    assert "total_review_count" in result.columns
+    assert "avg_rating" in result.columns
+    assert "unique_restaurant_count" in result.columns
+
+
+def test_aggregate_full_halal_review_features_implicit_to_explicit_ratio() -> None:
+    """implicit_to_explicit_ratio computes correctly when both types present."""
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r1", "r1", "r1"],
+            "time_key": [2024, 2024, 2024, 2024],
+            "zone_id": ["z1", "z1", "z1", "z1"],
+            "rating": [4.0, 4.0, 4.0, 4.0],
+            "sentiment": ["positive", "positive", "positive", "positive"],
+            "halal_relevance": [
+                "explicit_halal",
+                "implicit_halal",
+                "implicit_halal",
+                "not_related",
+            ],
+            "concept_subtype": ["halal_cart", "halal_diner", "halal_diner", "other"],
+            "confidence": [0.9, 0.8, 0.85, 0.7],
+        }
+    )
+    result = aggregate_full_halal_review_features(df)
+    assert result["implicit_to_explicit_ratio"].iloc[0] == pytest.approx(2.0)
+
+
+def test_aggregate_full_halal_review_features_only_implicit_halal() -> None:
+    """When explicit_count == 0, implicit_to_explicit_ratio == float(implicit_count)."""
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
+
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r1"],
+            "time_key": [2024, 2024],
+            "zone_id": ["z1", "z1"],
+            "rating": [4.0, 5.0],
+            "sentiment": ["positive", "positive"],
+            "halal_relevance": ["implicit_halal", "implicit_halal"],
+            "concept_subtype": ["halal_diner", "halal_diner"],
+            "confidence": [0.9, 0.85],
+        }
+    )
+    result = aggregate_full_halal_review_features(df)
+    # explicit_count = 0, implicit_count = 2 → ratio = float(2)
+    assert result["implicit_to_explicit_ratio"].iloc[0] == pytest.approx(2.0)
