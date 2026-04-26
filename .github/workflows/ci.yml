@@ -3,11 +3,26 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "notebooks/**"
+      - "data/**"
+      - "*.md"
+      - ".github/ISSUE_TEMPLATE/**"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "notebooks/**"
+      - "data/**"
+      - "*.md"
+      - ".github/ISSUE_TEMPLATE/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# Least-privilege default; each job grants only what it needs.
+permissions: {}
 
 env:
   PYTHON_VERSION: "3.12"
@@ -15,8 +30,10 @@ env:
 jobs:
   lint:
     name: Lint & Format
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
@@ -30,9 +47,9 @@ jobs:
 
   test:
     name: Tests & Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint
-    timeout-minutes: 30
+    timeout-minutes: 20
     permissions:
       contents: write
       pull-requests: write
@@ -48,21 +65,57 @@ jobs:
           enable-caching: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: uv venv
+
+      - name: Restore venv from cache
+        id: venv-cache
+        uses: actions/cache@v5
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Create venv
+        if: steps.venv-cache.outputs.cache-hit != 'true'
+        run: uv venv
+
       - run: echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
-      - run: uv pip install -r requirements.txt pytest-cov
-      - run: |
+
+      - name: Install Python dependencies
+        if: steps.venv-cache.outputs.cache-hit != 'true'
+        run: uv pip install -r requirements.txt pytest-cov pytest-timeout
+
+      - name: Run tests
+        run: |
           python -m pytest -v --tb=short \
+            --timeout=60 \
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=50
+            --cov-fail-under=50 \
+            --junitxml=/tmp/pytest-results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: /tmp/pytest-results.xml
+          retention-days: 7
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 7
+
       - name: Write coverage to Job Summary
         if: always()
         run: |
           echo "## Test Coverage" >> "$GITHUB_STEP_SUMMARY"
           python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || \
             echo "*(coverage data unavailable)*" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Coverage diff comment on PR
         if: always()
         uses: py-cov-action/python-coverage-comment-action@v3
@@ -74,9 +127,11 @@ jobs:
 
   security:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint
-    timeout-minutes: 20
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
@@ -91,10 +146,13 @@ jobs:
 
   dependency-review:
     name: Dependency Review
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint
     if: github.event_name == 'pull_request'
-    timeout-minutes: 10
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - uses: actions/dependency-review-action@v4
@@ -103,10 +161,12 @@ jobs:
 
   commit-lint:
     name: Conventional Commits
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint
     if: github.event_name == 'pull_request'
-    timeout-minutes: 10
+    timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -116,3 +176,26 @@ jobs:
           configFile: .commitlintrc.yml
           failOnWarnings: false
           helpURL: "https://www.conventionalcommits.org/"
+
+  # Single required status check for branch protection rules.
+  # Set "ci-pass" as the only required check in branch settings.
+  ci-pass:
+    name: CI Pass
+    runs-on: ubuntu-24.04
+    needs: [lint, test, security]
+    if: always()
+    timeout-minutes: 1
+    permissions: {}
+    steps:
+      - name: Verify all required jobs passed
+        run: |
+          results='${{ toJSON(needs) }}'
+          echo "$results" | python3 -c "
+          import json, sys
+          needs = json.load(sys.stdin)
+          failed = [k for k, v in needs.items() if v['result'] not in ('success', 'skipped')]
+          if failed:
+              print('Failed jobs:', failed)
+              sys.exit(1)
+          print('All required checks passed')
+          "
