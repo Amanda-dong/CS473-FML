@@ -436,9 +436,7 @@ def _make_inspections_gt() -> pd.DataFrame:
 def test_license_entity_ids_prefers_restaurant_id() -> None:
     from src.features.ground_truth import _license_entity_ids
 
-    df = pd.DataFrame(
-        {"restaurant_id": ["camis-1"], "business_unique_id": ["dca-1"]}
-    )
+    df = pd.DataFrame({"restaurant_id": ["camis-1"], "business_unique_id": ["dca-1"]})
     result = _license_entity_ids(df)
     assert result.iloc[0] == "camis-1"
 
@@ -446,9 +444,7 @@ def test_license_entity_ids_prefers_restaurant_id() -> None:
 def test_license_entity_ids_falls_back_to_business_unique_id() -> None:
     from src.features.ground_truth import _license_entity_ids
 
-    df = pd.DataFrame(
-        {"restaurant_id": [pd.NA], "business_unique_id": ["dca-1"]}
-    )
+    df = pd.DataFrame({"restaurant_id": [pd.NA], "business_unique_id": ["dca-1"]})
     result = _license_entity_ids(df)
     assert result.iloc[0] == "dca-1"
 
@@ -456,9 +452,7 @@ def test_license_entity_ids_falls_back_to_business_unique_id() -> None:
 def test_license_entity_ids_ignores_unknown() -> None:
     from src.features.ground_truth import _license_entity_ids
 
-    df = pd.DataFrame(
-        {"restaurant_id": ["UNKNOWN"], "business_unique_id": ["dca-1"]}
-    )
+    df = pd.DataFrame({"restaurant_id": ["UNKNOWN"], "business_unique_id": ["dca-1"]})
     result = _license_entity_ids(df)
     assert result.iloc[0] == "dca-1"
 
@@ -595,9 +589,7 @@ def test_inspection_quality_with_zone_id_col() -> None:
 def test_inspection_quality_with_time_key() -> None:
     from src.features.ground_truth import _inspection_quality
 
-    df = pd.DataFrame(
-        {"nta_id": ["BK09"], "time_key": [2022], "grade": ["A", "B"][:1]}
-    )
+    df = pd.DataFrame({"nta_id": ["BK09"], "time_key": [2022], "grade": ["A", "B"][:1]})
     result = _inspection_quality(df)
     assert not result.empty
 
@@ -701,7 +693,9 @@ def test_aggregate_nta_to_zone_basic() -> None:
     from src.features.zone_crosswalk import aggregate_nta_to_zone
 
     df = pd.DataFrame({"nta_id": ["BK09", "MN22"], "population": [5000.0, 8000.0]})
-    result = aggregate_nta_to_zone(df, zone_col="nta_id", agg_rules={"population": "mean"})
+    result = aggregate_nta_to_zone(
+        df, zone_col="nta_id", agg_rules={"population": "mean"}
+    )
     assert not result.empty
     assert "zone_id" in result.columns
 
@@ -776,8 +770,12 @@ def test_resolve_nta_multi_zone_no_primary_falls_back_to_sorted() -> None:
 def test_demand_signals_renames_mention_count() -> None:
     from src.features.demand_signals import build_demand_features
 
-    review = pd.DataFrame({"zone_id": ["z1"], "time_key": [2024], "healthy_review_share": [0.5]})
-    social = pd.DataFrame({"zone_id": ["z1"], "time_key": [2024], "mention_count": [10]})
+    review = pd.DataFrame(
+        {"zone_id": ["z1"], "time_key": [2024], "healthy_review_share": [0.5]}
+    )
+    social = pd.DataFrame(
+        {"zone_id": ["z1"], "time_key": [2024], "mention_count": [10]}
+    )
     result = build_demand_features(review, social)
     assert "social_buzz" in result.columns
 
@@ -797,7 +795,9 @@ def test_demand_signals_missing_healthy_review_share() -> None:
 def test_compute_healthy_review_share_empty_df() -> None:
     from src.features.demand_signals import compute_healthy_review_share
 
-    assert compute_healthy_review_share(pd.DataFrame(), ["fresh", "healthy"]) == pytest.approx(0.0)
+    assert compute_healthy_review_share(
+        pd.DataFrame(), ["fresh", "healthy"]
+    ) == pytest.approx(0.0)
 
 
 def test_compute_healthy_review_share_no_keywords() -> None:
@@ -872,14 +872,16 @@ def test_build_placeholder_response_returns_correct_schema() -> None:
 def test_build_zone_year_matrix_with_licenses() -> None:
     from src.features.feature_matrix import build_zone_year_matrix
 
-    licenses = pd.DataFrame({
-        "event_date": pd.date_range("2022-01-01", periods=6, freq="ME"),
-        "restaurant_id": [f"R{i}" for i in range(6)],
-        "business_unique_id": [f"BU{i}" for i in range(6)],
-        "license_status": ["Active"] * 6,
-        "nta_id": ["BK09"] * 6,
-        "category": ["Restaurant"] * 6,
-    })
+    licenses = pd.DataFrame(
+        {
+            "event_date": pd.date_range("2022-01-01", periods=6, freq="ME"),
+            "restaurant_id": [f"R{i}" for i in range(6)],
+            "business_unique_id": [f"BU{i}" for i in range(6)],
+            "license_status": ["Active"] * 6,
+            "nta_id": ["BK09"] * 6,
+            "category": ["Restaurant"] * 6,
+        }
+    )
     etl_outputs = {"licenses": licenses}
     result = build_zone_year_matrix(etl_outputs)
     assert isinstance(result, pd.DataFrame)

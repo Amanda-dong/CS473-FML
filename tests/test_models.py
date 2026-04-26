@@ -398,7 +398,13 @@ def test_build_real_restaurant_history_empty_licenses() -> None:
     from src.models.survival_model import build_real_restaurant_history
 
     empty_licenses = pd.DataFrame(
-        columns=["event_date", "restaurant_id", "business_unique_id", "license_status", "nta_id"]
+        columns=[
+            "event_date",
+            "restaurant_id",
+            "business_unique_id",
+            "license_status",
+            "nta_id",
+        ]
     )
     result = build_real_restaurant_history(empty_licenses, pd.DataFrame())
     assert "restaurant_id" in result.columns
@@ -417,9 +423,7 @@ def test_build_real_restaurant_history_with_closed_status() -> None:
             "nta_id": ["BK09", "BK09"],
         }
     )
-    inspections = pd.DataFrame(
-        {"restaurant_id": ["camis-1"], "grade": ["A"]}
-    )
+    inspections = pd.DataFrame({"restaurant_id": ["camis-1"], "grade": ["A"]})
     result = build_real_restaurant_history(licenses, inspections)
     assert not result.empty
     assert result.iloc[0]["event_observed"] == 1

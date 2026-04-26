@@ -162,7 +162,9 @@ def test_train_test_split_by_cutoff() -> None:
     from src.validation.backtesting import train_test_split_by_cutoff
 
     frame = pd.DataFrame({"year": [2019, 2020, 2021, 2022], "v": [1, 2, 3, 4]})
-    train, test = train_test_split_by_cutoff(frame, "year", train_end=2020, test_start=2021)
+    train, test = train_test_split_by_cutoff(
+        frame, "year", train_end=2020, test_start=2021
+    )
     assert train["year"].max() == 2020
     assert test["year"].min() == 2021
 
@@ -198,9 +200,17 @@ def test_feature_ablation_returns_dataframe() -> None:
     from src.validation.ablation import feature_ablation
 
     n = 20
-    X = pd.DataFrame({"demand": np.random.default_rng(1).random(n), "rent": np.random.default_rng(2).random(n), "survival": np.random.default_rng(3).random(n)})
+    X = pd.DataFrame(
+        {
+            "demand": np.random.default_rng(1).random(n),
+            "rent": np.random.default_rng(2).random(n),
+            "survival": np.random.default_rng(3).random(n),
+        }
+    )
     y = pd.Series(np.random.default_rng(4).random(n))
-    splits = [([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15, 16, 17, 18, 19])]
+    splits = [
+        ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    ]
     groups = {"demand": ["demand"], "cost": ["rent"], "viability": ["survival"]}
     result = feature_ablation(_SimpleModel, X, y, groups, splits)
     assert isinstance(result, pd.DataFrame)
@@ -329,6 +339,7 @@ def test_run_temporal_backtest_fallback_target_column() -> None:
     class _SimpleModel:
         def fit(self, X, y):
             return self
+
         def predict(self, X):
             return np.zeros(len(X))
 
@@ -346,13 +357,12 @@ def test_run_temporal_backtest_raises_no_target() -> None:
     feature_matrix = pd.DataFrame(
         {"zone_id": ["z1", "z2"], "time_key": [2020, 2021], "feature_a": [1.0, 2.0]}
     )
-    ground_truth = pd.DataFrame(
-        {"zone_id": ["z1", "z2"], "time_key": [2020, 2021]}
-    )
+    ground_truth = pd.DataFrame({"zone_id": ["z1", "z2"], "time_key": [2020, 2021]})
 
     class _SimpleModel:
         def fit(self, X, y):
             return self
+
         def predict(self, X):
             return np.zeros(len(X))
 
@@ -376,6 +386,8 @@ def test_train_test_split_by_cutoff_empty_test() -> None:
     from src.validation.backtesting import train_test_split_by_cutoff
 
     frame = pd.DataFrame({"year": [2018, 2019, 2020], "v": [1, 2, 3]})
-    train, test = train_test_split_by_cutoff(frame, "year", train_end=2020, test_start=2021)
+    train, test = train_test_split_by_cutoff(
+        frame, "year", train_end=2020, test_start=2021
+    )
     assert train["year"].max() == 2020
     assert test.empty

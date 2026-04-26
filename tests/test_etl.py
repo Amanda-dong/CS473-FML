@@ -98,9 +98,17 @@ def test_etl_311_transform_aggregates() -> None:
 
     raw = pd.DataFrame(
         {
-            "created_date": ["2024-01-15T10:00:00", "2024-01-15T11:00:00", "2024-02-01T09:00:00"],
+            "created_date": [
+                "2024-01-15T10:00:00",
+                "2024-01-15T11:00:00",
+                "2024-02-01T09:00:00",
+            ],
             "community_board": ["01 MANHATTAN", "01 MANHATTAN", "02 BROOKLYN"],
-            "complaint_type": ["Food Establishment", "Food Establishment", "Food Poisoning"],
+            "complaint_type": [
+                "Food Establishment",
+                "Food Establishment",
+                "Food Poisoning",
+            ],
         }
     )
     result = transform(raw)
@@ -156,7 +164,9 @@ def test_etl_acs_build_synthetic() -> None:
     assert "rent_burden" in result.columns
 
 
-def test_etl_acs_run_etl_uses_synthetic_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_acs_run_etl_uses_synthetic_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.data import etl_acs
 
     monkeypatch.setenv("ACS_DATA_PATH", "")
@@ -165,7 +175,9 @@ def test_etl_acs_run_etl_uses_synthetic_fallback(monkeypatch: pytest.MonkeyPatch
     assert "nta_id" in result.columns
 
 
-def test_etl_acs_load_local_raises_when_no_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_acs_load_local_raises_when_no_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.data.etl_acs import _load_local
 
     monkeypatch.delenv("ACS_DATA_PATH", raising=False)
@@ -192,12 +204,16 @@ def test_etl_yelp_load_business_empty_when_no_file() -> None:
         assert col in result.columns
 
 
-def test_etl_yelp_load_local_raises_when_no_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_yelp_load_local_raises_when_no_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from pathlib import Path
 
     from src.data import etl_yelp
 
-    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", Path("/nonexistent/yelp.csv"))
+    monkeypatch.setattr(
+        etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", Path("/nonexistent/yelp.csv")
+    )
     monkeypatch.delenv("YELP_DATA_PATH", raising=False)
     with pytest.raises(RuntimeError, match="etl_yelp"):
         etl_yelp._load_local()
@@ -493,7 +509,9 @@ def test_etl_inspections_transform_basic(monkeypatch: pytest.MonkeyPatch) -> Non
     assert not result.empty
 
 
-def test_etl_inspections_transform_unmapped_zip(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_inspections_transform_unmapped_zip(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import src.data.etl_inspections as etl_insp
 
     monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {})
@@ -670,7 +688,10 @@ def test_prepare_embedding_corpus_custom_dedupe() -> None:
     from src.data.quality import prepare_embedding_corpus
 
     df = pd.DataFrame(
-        {"review_text": ["hello world", "hello world", "fresh food"], "restaurant_id": ["r1", "r1", "r2"]}
+        {
+            "review_text": ["hello world", "hello world", "fresh food"],
+            "restaurant_id": ["r1", "r1", "r2"],
+        }
     )
     frame, report = prepare_embedding_corpus(df, dedupe_columns=["review_text"])
     assert len(frame) == 2
@@ -709,7 +730,9 @@ def test_base_dataset_pipeline_methods() -> None:
 # ── etl_acs — additional ──────────────────────────────────────────────────────
 
 
-def test_etl_acs_run_etl_uses_synthetic_when_no_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_acs_run_etl_uses_synthetic_when_no_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.data import etl_acs
 
     monkeypatch.delenv("ACS_DATA_PATH", raising=False)
@@ -718,7 +741,9 @@ def test_etl_acs_run_etl_uses_synthetic_when_no_env(monkeypatch: pytest.MonkeyPa
     assert "nta_id" in result.columns
 
 
-def test_etl_acs_load_local_raises_when_file_missing(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_etl_acs_load_local_raises_when_file_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     from src.data import etl_acs
 
     monkeypatch.setenv("ACS_DATA_PATH", str(tmp_path / "nonexistent.csv"))
@@ -757,7 +782,15 @@ def test_etl_airbnb_run_etl_synthetic_when_transform_empty(
     monkeypatch.setattr(etl_airbnb, "_transform", lambda df: pd.DataFrame())
     monkeypatch.setattr(
         "requests.get",
-        lambda *a, **kw: type("R", (), {"status_code": 200, "content": b"a,b\n1,2\n", "raise_for_status": lambda s: None})(),
+        lambda *a, **kw: type(
+            "R",
+            (),
+            {
+                "status_code": 200,
+                "content": b"a,b\n1,2\n",
+                "raise_for_status": lambda s: None,
+            },
+        )(),
     )
     result = etl_airbnb.run_etl(limit=5)
     assert not result.empty  # falls back to synthetic
@@ -776,28 +809,39 @@ def test_etl_citibike_run_etl_download_fails(monkeypatch: pytest.MonkeyPatch) ->
         lambda *a, **kw: (_ for _ in ()).throw(ConnectionError("offline")),
     )
     result = etl_citibike.run_etl(limit=5)
-    assert result.empty or "trip_count" in result.columns or isinstance(result, pd.DataFrame)
+    assert (
+        result.empty
+        or "trip_count" in result.columns
+        or isinstance(result, pd.DataFrame)
+    )
 
 
 # ── etl_yelp — additional paths ──────────────────────────────────────────────
 
 
-def test_etl_yelp_load_local_reads_from_default_path(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    from pathlib import Path
+def test_etl_yelp_load_local_reads_from_default_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     from src.data import etl_yelp
 
     csv_path = tmp_path / "yelp.csv"
-    pd.DataFrame({"review_id": ["r1"], "text": ["great food"]}).to_csv(csv_path, index=False)
+    pd.DataFrame({"review_id": ["r1"], "text": ["great food"]}).to_csv(
+        csv_path, index=False
+    )
     monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", csv_path)
     result = etl_yelp._load_local()
     assert not result.empty
 
 
-def test_etl_yelp_load_local_reads_from_env_var(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_etl_yelp_load_local_reads_from_env_var(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     from pathlib import Path
     from src.data import etl_yelp
 
-    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", Path("/nonexistent/yelp.csv"))
+    monkeypatch.setattr(
+        etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", Path("/nonexistent/yelp.csv")
+    )
     csv_path = tmp_path / "yelp_env.csv"
     pd.DataFrame({"review_id": ["r1"]}).to_csv(csv_path, index=False)
     monkeypatch.setenv("YELP_DATA_PATH", str(csv_path))
@@ -805,15 +849,21 @@ def test_etl_yelp_load_local_reads_from_env_var(monkeypatch: pytest.MonkeyPatch,
     assert not result.empty
 
 
-def test_etl_yelp_run_etl_with_mocked_files(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_etl_yelp_run_etl_with_mocked_files(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     from pathlib import Path
     from src.data import etl_yelp
 
-    reviews = pd.DataFrame({"business_id": ["b1"], "review_text": ["good food"], "rating": [4]})
+    reviews = pd.DataFrame(
+        {"business_id": ["b1"], "review_text": ["good food"], "rating": [4]}
+    )
     reviews_path = tmp_path / "reviews.csv"
     reviews.to_csv(reviews_path, index=False)
     monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", reviews_path)
-    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_BUSINESS_PATH", Path("/nonexistent/business.csv"))
+    monkeypatch.setattr(
+        etl_yelp, "_DEFAULT_FUSION_BUSINESS_PATH", Path("/nonexistent/business.csv")
+    )
     result = etl_yelp.run_etl()
     assert isinstance(result, pd.DataFrame)
 
@@ -825,11 +875,18 @@ def test_etl_311_fetch_mocked(monkeypatch: pytest.MonkeyPatch) -> None:
     import requests
     from src.data import etl_311
 
-    mock_data = [{"created_date": "2024-01-15", "community_board": "101 BROOKLYN", "complaint_type": "Food Establishment"}]
+    mock_data = [
+        {
+            "created_date": "2024-01-15",
+            "community_board": "101 BROOKLYN",
+            "complaint_type": "Food Establishment",
+        }
+    ]
 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -843,11 +900,18 @@ def test_etl_311_run_etl_mocked(monkeypatch: pytest.MonkeyPatch) -> None:
     import requests
     from src.data import etl_311
 
-    mock_data = [{"created_date": "2024-01-15", "community_board": "101 BROOKLYN", "complaint_type": "Food Establishment"}]
+    mock_data = [
+        {
+            "created_date": "2024-01-15",
+            "community_board": "101 BROOKLYN",
+            "complaint_type": "Food Establishment",
+        }
+    ]
 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -863,11 +927,23 @@ def test_etl_pluto_fetch_mocked(monkeypatch: pytest.MonkeyPatch) -> None:
     import requests
     from src.data import etl_pluto
 
-    mock_data = [{"yearbuilt": "1985", "zipcode": "10001", "borough": "MN", "lotarea": "5000", "bldgarea": "8000", "comarea": "2000", "retailarea": "1000", "assesstot": "500000"}]
+    mock_data = [
+        {
+            "yearbuilt": "1985",
+            "zipcode": "10001",
+            "borough": "MN",
+            "lotarea": "5000",
+            "bldgarea": "8000",
+            "comarea": "2000",
+            "retailarea": "1000",
+            "assesstot": "500000",
+        }
+    ]
 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -881,14 +957,16 @@ def test_etl_pluto_transform_no_bldgarea(monkeypatch: pytest.MonkeyPatch) -> Non
     from src.data import etl_pluto
 
     monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17"})
-    raw = pd.DataFrame({
-        "yearbuilt": ["1985"],
-        "zipcode": ["10001"],
-        "borough": ["MN"],
-        "comarea": ["2000"],
-        "retailarea": ["1000"],
-        "assesstot": ["500000"],
-    })
+    raw = pd.DataFrame(
+        {
+            "yearbuilt": ["1985"],
+            "zipcode": ["10001"],
+            "borough": ["MN"],
+            "comarea": ["2000"],
+            "retailarea": ["1000"],
+            "assesstot": ["500000"],
+        }
+    )
     result = etl_pluto.transform(raw)
     assert "mixed_use_ratio" in result.columns
     assert result.iloc[0]["mixed_use_ratio"] == 0.0
@@ -901,11 +979,22 @@ def test_etl_licenses_fetch_mocked(monkeypatch: pytest.MonkeyPatch) -> None:
     import requests
     from src.data import etl_licenses
 
-    mock_data = [{"license_creation_date": "2024-01-01", "business_unique_id": "dca-1", "license_status": "Active", "address_borough": "BROOKLYN", "nta": "BK09", "address_zip": "11201", "business_category": "Restaurant"}]
+    mock_data = [
+        {
+            "license_creation_date": "2024-01-01",
+            "business_unique_id": "dca-1",
+            "license_status": "Active",
+            "address_borough": "BROOKLYN",
+            "nta": "BK09",
+            "address_zip": "11201",
+            "business_category": "Restaurant",
+        }
+    ]
 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -921,11 +1010,18 @@ def test_etl_permits_fetch_mocked(monkeypatch: pytest.MonkeyPatch) -> None:
     import requests
     from src.data import etl_permits
 
-    mock_data = [{"issueddate": "2024-01-01", "communityboard": "101 BROOKLYN", "permitsub": "NB"}]
+    mock_data = [
+        {
+            "issueddate": "2024-01-01",
+            "communityboard": "101 BROOKLYN",
+            "permitsub": "NB",
+        }
+    ]
 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -941,11 +1037,23 @@ def test_etl_inspections_fetch_mocked(monkeypatch: pytest.MonkeyPatch) -> None:
     import requests
     from src.data import etl_inspections
 
-    mock_data = [{"inspection_date": "2024-01-15", "camis": "12345", "grade": "A", "critical_flag": "Not Critical", "boro": "1", "zipcode": "10001", "cuisine_description": "Chinese", "dba": "Test Restaurant"}]
+    mock_data = [
+        {
+            "inspection_date": "2024-01-15",
+            "camis": "12345",
+            "grade": "A",
+            "critical_flag": "Not Critical",
+            "boro": "1",
+            "zipcode": "10001",
+            "cuisine_description": "Chinese",
+            "dba": "Test Restaurant",
+        }
+    ]
 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -965,6 +1073,7 @@ def test_etl_inspections_get_zip_to_nta_mocked(monkeypatch: pytest.MonkeyPatch) 
     class MockResponse:
         def raise_for_status(self):
             pass
+
         def json(self):
             return mock_data
 
@@ -981,7 +1090,15 @@ def test_etl_runner_strict_raises_on_failure(monkeypatch: pytest.MonkeyPatch) ->
     from src.data import etl_runner
 
     def _failing_module():
-        return type("M", (), {"run_placeholder_etl": staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("forced fail")))})()
+        return type(
+            "M",
+            (),
+            {
+                "run_placeholder_etl": staticmethod(
+                    lambda: (_ for _ in ()).throw(RuntimeError("forced fail"))
+                )
+            },
+        )()
 
     original_modules = etl_runner._ETL_MODULES.copy()
     monkeypatch.setattr(etl_runner, "_ETL_MODULES", {"bad_module": _failing_module()})
@@ -990,12 +1107,22 @@ def test_etl_runner_strict_raises_on_failure(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(etl_runner, "_ETL_MODULES", original_modules)
 
 
-def test_etl_runner_non_strict_continues_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_runner_non_strict_continues_on_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.data import etl_runner
     from src.data.base import DatasetSpec
 
     class FailModule:
-        DATASET_SPEC = DatasetSpec(name="fail", owner="t", spatial_unit="zone", time_grain="year", description="t", columns=("a",))
+        DATASET_SPEC = DatasetSpec(
+            name="fail",
+            owner="t",
+            spatial_unit="zone",
+            time_grain="year",
+            description="t",
+            columns=("a",),
+        )
+
         @staticmethod
         def run_placeholder_etl():
             raise RuntimeError("always fails")

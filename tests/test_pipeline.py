@@ -125,10 +125,12 @@ def test_assess_embedding_readiness_value_error() -> None:
 def test_assess_embedding_readiness_too_few_rows() -> None:
     from src.pipeline.preflight import assess_embedding_readiness
 
-    df = pd.DataFrame({
-        "review_text": ["short review"],
-        "restaurant_id": ["r1"],
-    })
+    df = pd.DataFrame(
+        {
+            "review_text": ["short review"],
+            "restaurant_id": ["r1"],
+        }
+    )
     result = assess_embedding_readiness(df, min_rows=100)
     assert not result.passed
 
@@ -136,10 +138,12 @@ def test_assess_embedding_readiness_too_few_rows() -> None:
 def test_assess_embedding_readiness_passes() -> None:
     from src.pipeline.preflight import assess_embedding_readiness
 
-    df = pd.DataFrame({
-        "review_text": ["healthy salad bowl"] * 5,
-        "restaurant_id": [f"r{i}" for i in range(5)],
-    })
+    df = pd.DataFrame(
+        {
+            "review_text": ["healthy salad bowl"] * 5,
+            "restaurant_id": [f"r{i}" for i in range(5)],
+        }
+    )
     result = assess_embedding_readiness(df, min_rows=1)
     assert result.passed
 
@@ -172,7 +176,6 @@ def test_preflight_main_cli_text_output(tmp_path) -> None:
 
 def test_preflight_main_cli_json_output(tmp_path) -> None:
     from src.pipeline.preflight import main
-    import json
 
     exit_code = main(argv=["--processed-dir", str(tmp_path), "--json"])
     assert exit_code in (0, 1)

@@ -344,7 +344,9 @@ def test_embed_reviews_partial_blanks_alignment() -> None:
 def test_embed_reviews_with_custom_config() -> None:
     from src.nlp.embeddings import EmbeddingConfig
 
-    cfg = EmbeddingConfig(model_name="all-MiniLM-L6-v2", batch_size=4, normalize_embeddings=False)
+    cfg = EmbeddingConfig(
+        model_name="all-MiniLM-L6-v2", batch_size=4, normalize_embeddings=False
+    )
     embeddings = embed_reviews(["test text one", "test text two"], config=cfg)
     assert embeddings.shape == (2, 384)
 
@@ -485,7 +487,14 @@ def test_discover_topics_with_texts() -> None:
 
     rng = np.random.default_rng(42)
     embeddings = rng.standard_normal((6, 8)).astype(np.float32)
-    texts = ["healthy salad", "fresh wrap", "ramen bowl", "tacos fresh", "pizza slice", "burger"]
+    texts = [
+        "healthy salad",
+        "fresh wrap",
+        "ramen bowl",
+        "tacos fresh",
+        "pizza slice",
+        "burger",
+    ]
     result = discover_topics(embeddings, n_topics=2, texts=texts)
     assert "topic_terms" in result
     assert len(result["topic_terms"]) == 2
@@ -577,16 +586,19 @@ def test_cluster_stability_returns_float() -> None:
 # ── gemini labels — cache helpers ────────────────────────────────────────────
 
 
-def test_gemini_load_cache_adds_rationale_column(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from pathlib import Path
+def test_gemini_load_cache_adds_rationale_column(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     import src.nlp.gemini_labels as gl
 
-    cache_df = pd.DataFrame({
-        "review_id": ["r1"],
-        "sentiment": ["positive"],
-        "concept_subtype": ["salad_bowls"],
-        "confidence": [0.9],
-    })
+    cache_df = pd.DataFrame(
+        {
+            "review_id": ["r1"],
+            "sentiment": ["positive"],
+            "concept_subtype": ["salad_bowls"],
+            "confidence": [0.9],
+        }
+    )
     cache_path = tmp_path / "gemini_cache.parquet"
     cache_df.to_parquet(cache_path, index=False)
     monkeypatch.setattr(gl, "_CACHE_PATH", cache_path)
@@ -677,7 +689,9 @@ def test_aggregate_review_labels_with_topic_distribution(
     topic_dist = pd.DataFrame(
         {"zone_id": ["tandon-campus", "columbia-morn"], "topic_0_share": [0.6, 0.4]}
     )
-    result = aggregate_review_labels(sample_review_labels, topic_distribution=topic_dist)
+    result = aggregate_review_labels(
+        sample_review_labels, topic_distribution=topic_dist
+    )
     assert isinstance(result, pd.DataFrame)
 
 
@@ -701,5 +715,7 @@ def test_aggregate_nlp_features_runs() -> None:
             "time_key": [2023] * n,
         }
     )
-    result = aggregate_nlp_features(reviews_df, embeddings, cluster_labels, gemini_labels)
+    result = aggregate_nlp_features(
+        reviews_df, embeddings, cluster_labels, gemini_labels
+    )
     assert isinstance(result, pd.DataFrame)
