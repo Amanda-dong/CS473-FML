@@ -1448,3 +1448,258 @@ def test_prepare_training_frame_raises_on_non_numeric_column() -> None:
     )
     with pytest.raises(ValueError, match="non-numeric"):
         prepare_training_frame(frame, target_col="target")
+
+
+# ── etl_yelp — utility functions ─────────────────────────────────────────────
+
+
+def test_etl_yelp_build_headers() -> None:
+    from src.data.etl_yelp import _build_headers
+
+    headers = _build_headers("my-api-key")
+    assert headers["Authorization"] == "Bearer my-api-key"
+
+
+def test_etl_yelp_build_params() -> None:
+    from src.data.etl_yelp import _build_params
+
+    anchor = {"latitude": 40.7, "longitude": -73.9, "anchor_name": "test"}
+    params = _build_params(anchor, "healthy food", 0)
+    assert params["term"] == "healthy food"
+    assert params["latitude"] == 40.7
+    assert params["offset"] == 0
+    assert params["categories"] == "restaurants"
+
+
+def test_etl_yelp_build_params_nonzero_offset() -> None:
+    from src.data.etl_yelp import _build_params
+
+    anchor = {"latitude": 40.8, "longitude": -74.0, "anchor_name": "grid_r01_c00"}
+    params = _build_params(anchor, "halal", 50)
+    assert params["offset"] == 50
+    assert params["longitude"] == -74.0
+
+
+def test_etl_yelp_extract_businesses_basic() -> None:
+    from src.data.etl_yelp import _extract_businesses
+
+    businesses = [
+        {
+            "id": "abc123",
+            "name": "Test Restaurant",
+            "categories": [{"title": "Salads"}, {"title": "Healthy"}],
+            "rating": 4.5,
+            "review_count": 100,
+            "price": "$$",
+            "is_closed": False,
+            "coordinates": {"latitude": 40.7, "longitude": -73.9},
+        }
+    ]
+    rows = _extract_businesses(businesses, "healthy", "downtown")
+    assert len(rows) == 1
+    assert rows[0]["id"] == "abc123"
+    assert rows[0]["name"] == "Test Restaurant"
+    assert "Salads" in rows[0]["categories"]
+    assert "Healthy" in rows[0]["categories"]
+    assert rows[0]["rating"] == 4.5
+    assert rows[0]["latitude"] == 40.7
+    assert rows[0]["longitude"] == -73.9
+    assert rows[0]["search_term"] == "healthy"
+    assert rows[0]["anchor_name"] == "downtown"
+
+
+def test_etl_yelp_extract_businesses_missing_coordinates() -> None:
+    from src.data.etl_yelp import _extract_businesses
+
+    businesses = [{"id": "x1", "name": "No Coords", "categories": []}]
+    rows = _extract_businesses(businesses, "food", "midtown")
+    assert len(rows) == 1
+    assert rows[0]["latitude"] is None
+    assert rows[0]["longitude"] is None
+
+
+def test_etl_yelp_extract_businesses_null_coordinates_dict() -> None:
+    """Explicitly None coordinates dict should yield None lat/lon."""
+    from src.data.etl_yelp import _extract_businesses
+
+    businesses = [
+        {
+            "id": "y2",
+            "name": "Null Coords",
+            "categories": [{"title": "Halal"}],
+            "coordinates": None,
+        }
+    ]
+    rows = _extract_businesses(businesses, "halal", "bk-tandon")
+    assert rows[0]["latitude"] is None
+    assert rows[0]["longitude"] is None
+    assert rows[0]["categories"] == "Halal"
+
+
+def test_etl_yelp_extract_businesses_multiple() -> None:
+    from src.data.etl_yelp import _extract_businesses
+
+    businesses = [
+        {
+            "id": "b1",
+            "name": "Place A",
+            "categories": [{"title": "Indian"}],
+            "coordinates": {"latitude": 40.71, "longitude": -73.95},
+        },
+        {
+            "id": "b2",
+            "name": "Place B",
+            "categories": [],
+            "coordinates": {"latitude": 40.72, "longitude": -73.96},
+        },
+    ]
+    rows = _extract_businesses(businesses, "halal", "mn-fidi")
+    assert len(rows) == 2
+    assert rows[0]["id"] == "b1"
+    assert rows[1]["categories"] == ""  # no categories → empty join
+
+
+# ── etl_inspections — run_etl ─────────────────────────────────────────────────
+
+
+def test_etl_inspections_run_etl_calls_fetch_and_transform(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.data.etl_inspections as etl_insp
+
+    sample = pd.DataFrame(
+        {
+            "inspection_date": ["2024-01-15"],
+            "camis": ["12345"],
+            "grade": ["A"],
+            "critical_flag": ["Not Critical"],
+            "boro": ["1"],
+            "zipcode": ["10001"],
+            "cuisine_description": ["Chinese"],
+            "dba": ["Test Restaurant"],
+        }
+    )
+    # Prevent live HTTP call from _get_zip_to_nta
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17"})
+    monkeypatch.setattr(etl_insp, "fetch", lambda limit=0: sample)
+    result = etl_insp.run_etl(limit=5)
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+    assert "inspection_date" in result.columns
+    assert "restaurant_id" in result.columns
+
+
+# ── etl_licenses — run_etl ────────────────────────────────────────────────────
+
+
+def test_etl_licenses_run_etl_calls_fetch_and_transform(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.data.etl_licenses as etl_lic
+
+    sample = pd.DataFrame(
+        {
+            "license_creation_date": ["2024-01-01"],
+            "business_unique_id": ["dca-42"],
+            "license_status": ["Active"],
+            "nta": ["BK09"],
+            "business_category": ["Restaurant"],
+        }
+    )
+    monkeypatch.setattr(etl_lic, "fetch", lambda limit=0: sample)
+    result = etl_lic.run_etl(limit=5)
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+    assert "event_date" in result.columns
+    assert "nta_id" in result.columns
+
+
+# ── etl_permits — run_etl ─────────────────────────────────────────────────────
+
+
+def test_etl_permits_run_etl_calls_fetch_and_transform(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.data.etl_permits as etl_perm
+
+    sample = pd.DataFrame(
+        {
+            "issueddate": ["2024-01-01"],
+            "communityboard": ["101 BROOKLYN"],
+            "permitsub": ["NB"],
+        }
+    )
+    monkeypatch.setattr(etl_perm, "fetch", lambda limit=0: sample)
+    result = etl_perm.run_etl(limit=5)
+    assert isinstance(result, pd.DataFrame)
+    assert "permit_date" in result.columns
+    assert "nta_id" in result.columns
+    assert "job_count" in result.columns
+
+
+# ── etl_pluto — run_etl ───────────────────────────────────────────────────────
+
+
+def test_etl_pluto_run_etl_calls_fetch_and_transform(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.data.etl_inspections as etl_insp
+    import src.data.etl_pluto as etl_pluto
+
+    sample = pd.DataFrame(
+        {
+            "yearbuilt": ["1990"],
+            "zipcode": ["11201"],
+            "borough": ["BK"],
+            "lotarea": ["5000"],
+            "bldgarea": ["3000"],
+            "comarea": ["1000"],
+            "retailarea": ["500"],
+            "assesstot": ["800000"],
+        }
+    )
+    # Prevent live HTTP call from _get_zip_to_nta inside transform
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"11201": "BK09"})
+    monkeypatch.setattr(etl_pluto, "fetch", lambda limit=0: sample)
+    result = etl_pluto.run_etl(limit=5)
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+    assert "nta_id" in result.columns
+    assert "commercial_sqft" in result.columns
+    assert "assessed_value" in result.columns
+
+
+# ── etl_runner — strict re-raises FileNotFoundError for non-optional modules ──
+
+
+def test_etl_runner_strict_reraises_file_not_found(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.data import etl_runner
+
+    monkeypatch.setattr(
+        etl_runner,
+        "_ETL_MODULES",
+        {
+            "inspections": _make_etl_module(
+                "inspections", raises=FileNotFoundError("not found")
+            ),
+        },
+    )
+    with pytest.raises(FileNotFoundError):
+        etl_runner.run_all_etl(strict=True)
+
+
+# ── quality — prepare_training_frame empty path ───────────────────────────────
+
+
+def test_prepare_training_frame_empty_input() -> None:
+    from src.data.quality import prepare_training_frame
+
+    # Must have target column or ValueError fires before empty-frame logic
+    cleaned, report = prepare_training_frame(
+        pd.DataFrame({"target": pd.Series([], dtype=float)}),
+        target_col="target",
+    )
+    assert cleaned.empty
+    assert report.output_rows == 0

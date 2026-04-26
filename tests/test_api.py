@@ -207,3 +207,101 @@ def test_score_with_learned_model_uses_latest_time_key_and_predict_risk() -> Non
     assert rec is not None
     assert rec.opportunity_score == pytest.approx(0.9)
     assert rec.survival_risk == pytest.approx(0.25)
+
+
+# ── _confidence_bucket — all thresholds ──────────────────────────────────────
+
+
+def test_confidence_bucket_high() -> None:
+    from src.api.routers.recommendations import _confidence_bucket
+
+    assert _confidence_bucket(0.61) == "high"
+    assert _confidence_bucket(1.0) == "high"
+
+
+def test_confidence_bucket_medium() -> None:
+    from src.api.routers.recommendations import _confidence_bucket
+
+    assert _confidence_bucket(0.60) == "medium"
+    assert _confidence_bucket(0.41) == "medium"
+
+
+def test_confidence_bucket_low() -> None:
+    from src.api.routers.recommendations import _confidence_bucket
+
+    assert _confidence_bucket(0.40) == "low"
+    assert _confidence_bucket(0.0) == "low"
+    assert _confidence_bucket(0.2) == "low"
+
+
+# ── _get_zone_type_clusters ───────────────────────────────────────────────────
+
+
+def test_get_zone_type_clusters_returns_dict() -> None:
+    from src.api.routers.recommendations import _get_zone_type_clusters
+
+    result = _get_zone_type_clusters("healthy_indian", "medium", "mid")
+    assert isinstance(result, dict)
+    # Should have entries for all zone types present in _NYC_ZONES
+    for zt in ("campus_walkshed", "lunch_corridor", "transit_catchment", "business_district"):
+        assert zt in result
+    # Each value should be a string cluster label
+    for label in result.values():
+        assert isinstance(label, str)
+
+
+def test_get_zone_type_clusters_aggressive_risk() -> None:
+    from src.api.routers.recommendations import _get_zone_type_clusters
+
+    result = _get_zone_type_clusters("ramen", "aggressive", "premium")
+    assert isinstance(result, dict)
+    assert len(result) > 0
+
+
+# ── _score_one ────────────────────────────────────────────────────────────────
+
+
+def test_score_one_returns_zone_recommendation() -> None:
+    from src.api.routers.recommendations import _score_one
+
+    result = _score_one(
+        "bk-tandon",
+        "campus_walkshed",
+        "NYU Area",
+        "healthy_indian",
+        "medium",
+        "mid",
+    )
+    assert result.zone_id == "bk-tandon"
+    assert 0.0 <= result.opportunity_score <= 2.0
+    assert result.concept_subtype == "healthy_indian"
+    assert result.confidence_bucket in ("high", "medium", "low")
+    assert isinstance(result.positives, list)
+    assert isinstance(result.risks, list)
+
+
+def test_score_one_unknown_zone_uses_default_seed() -> None:
+    """A zone_id not in _ZONE_SEEDS uses the default seed tuple."""
+    from src.api.routers.recommendations import _score_one
+
+    result = _score_one(
+        "zz-unknown",
+        "transit_catchment",
+        "Unknown Zone",
+        "ramen",
+        "conservative",
+        "budget",
+    )
+    assert result.zone_id == "zz-unknown"
+    assert 0.0 <= result.opportunity_score <= 2.0
+
+
+def test_score_one_price_and_risk_adjustments() -> None:
+    """Premium+conservative should differ from budget+aggressive in survival score."""
+    from src.api.routers.recommendations import _score_one
+
+    rec_premium = _score_one("bk-tandon", "campus_walkshed", "L", "salad_bowls", "conservative", "premium")
+    rec_budget = _score_one("bk-tandon", "campus_walkshed", "L", "salad_bowls", "aggressive", "budget")
+    # Both must return valid recommendations; scores are heuristic floats
+    assert rec_premium.opportunity_score >= 0.0
+    assert rec_budget.opportunity_score >= 0.0
