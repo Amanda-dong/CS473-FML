@@ -1,6 +1,7 @@
 """Tests for pipeline orchestration helpers."""
 
 import pandas as pd
+import pytest
 
 from src.pipeline.orchestrator import ProjectPipeline
 from src.pipeline.preflight import run_processed_data_preflight
@@ -188,3 +189,79 @@ def test_preflight_build_arg_parser() -> None:
     args = parser.parse_args(["--processed-dir", "/tmp", "--json"])
     assert args.processed_dir == "/tmp"
     assert args.json is True
+
+
+# ── orchestrator — unknown stage ──────────────────────────────────────────────
+
+
+def test_pipeline_raises_on_unknown_stage() -> None:
+    pipeline = ProjectPipeline()
+    with pytest.raises(ValueError, match="Unknown stage"):
+        pipeline.run_stage("nonexistent_stage")
+
+
+# ── preflight — exception handler paths ───────────────────────────────────────
+
+
+def test_processed_preflight_corrupt_feature_matrix(tmp_path) -> None:
+    from src.pipeline.preflight import run_processed_data_preflight
+
+    (tmp_path / "feature_matrix.parquet").write_bytes(b"not parquet")
+    report = run_processed_data_preflight(tmp_path, min_scoring_rows=1, min_scoring_zones=1)
+    assert not report.passed
+    names = {c.name for c in report.failed_checks}
+    assert "scoring_training" in names
+
+
+def test_processed_preflight_corrupt_survival_artifacts(tmp_path) -> None:
+    from src.pipeline.preflight import run_processed_data_preflight
+
+    pd.DataFrame({
+        "zone_id": ["z1"], "time_key": [2024],
+        "feature_a": [1.0], "target": [0.8], "label_quality": [1.0],
+    }).to_parquet(tmp_path / "feature_matrix.parquet", index=False)
+
+    (tmp_path / "licenses.parquet").write_bytes(b"not parquet")
+    (tmp_path / "inspections.parquet").write_bytes(b"not parquet")
+
+    report = run_processed_data_preflight(
+        tmp_path,
+        min_scoring_rows=1, min_scoring_zones=1,
+        min_survival_rows=1, min_survival_events=1,
+    )
+    assert not report.passed
+    survival_check = next(c for c in report.checks if c.name == "survival_training")
+    assert not survival_check.passed
+
+
+def test_processed_preflight_corrupt_reviews(tmp_path) -> None:
+    from src.pipeline.preflight import run_processed_data_preflight
+
+    pd.DataFrame({
+        "zone_id": ["z1"], "time_key": [2024],
+        "feature_a": [1.0], "target": [0.8], "label_quality": [1.0],
+    }).to_parquet(tmp_path / "feature_matrix.parquet", index=False)
+
+    pd.DataFrame({
+        "event_date": ["2024-01-01"], "restaurant_id": ["R001"],
+        "business_unique_id": ["dca-1"], "license_status": ["Active"],
+        "nta_id": ["BK09"], "category": ["Restaurant"],
+    }).to_parquet(tmp_path / "licenses.parquet", index=False)
+
+    pd.DataFrame({
+        "inspection_date": ["2024-01-01"], "restaurant_id": ["R001"],
+        "grade": ["A"], "critical_flag": ["Not Applicable"],
+        "nta_id": ["BK09"], "cuisine_type": ["Unknown"], "zipcode": ["11201"],
+    }).to_parquet(tmp_path / "inspections.parquet", index=False)
+
+    (tmp_path / "yelp.parquet").write_bytes(b"not parquet")
+
+    report = run_processed_data_preflight(
+        tmp_path,
+        min_scoring_rows=1, min_scoring_zones=1,
+        min_survival_rows=1, min_survival_events=1,
+        min_embedding_rows=1,
+    )
+    assert not report.passed
+    embed_check = next(c for c in report.checks if c.name == "embedding_corpus")
+    assert not embed_check.passed

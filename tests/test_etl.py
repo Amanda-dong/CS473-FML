@@ -1111,3 +1111,282 @@ def test_etl_runner_non_strict_continues_on_failure(
     results, status = etl_runner.run_all_etl(strict=False)
     assert status.get("fail") in ("failed", "skipped")
     monkeypatch.setattr(etl_runner, "_ETL_MODULES", original_modules)
+
+
+# ── etl_runner — deprecated, missing-spec, ok, and generic-exception paths ────
+
+
+def _make_etl_module(
+    name: str,
+    *,
+    df: "pd.DataFrame | None" = None,
+    raises: "Exception | None" = None,
+    status: str = "planned",
+    drop_spec: bool = False,
+) -> object:
+    spec = None if drop_spec else DatasetSpec(
+        name=name, owner="t", spatial_unit="zone", time_grain="year",
+        description="t", columns=("a",), status=status,
+    )
+    _ret = df if df is not None else pd.DataFrame({"a": [1]})
+    _raises = raises
+
+    def _run(limit: int = 0) -> pd.DataFrame:
+        if _raises is not None:
+            raise _raises
+        return _ret
+
+    klass = type(name, (), {"run_etl": staticmethod(_run)})
+    if spec is not None:
+        klass.DATASET_SPEC = spec  # type: ignore[attr-defined]
+    return klass()
+
+
+def test_etl_runner_skips_deprecated_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_runner
+
+    monkeypatch.setattr(etl_runner, "_ETL_MODULES", {
+        "old": _make_etl_module("old", status="deprecated"),
+    })
+    _, status = etl_runner.run_all_etl()
+    assert status["old"] == "skipped"
+
+
+def test_etl_runner_ok_path_with_valid_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_runner
+
+    monkeypatch.setattr(etl_runner, "_ETL_MODULES", {
+        "ok_mod": _make_etl_module("ok_mod", df=pd.DataFrame({"a": [1, 2, 3]})),
+    })
+    results, status = etl_runner.run_all_etl()
+    assert status["ok_mod"] == "ok"
+    assert len(results["ok_mod"]) == 3
+
+
+def test_etl_runner_handles_missing_spec_keyerror(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_runner
+
+    monkeypatch.setattr(etl_runner, "_ETL_MODULES", {
+        "no_spec": _make_etl_module("no_spec", drop_spec=True),
+    })
+    _, status = etl_runner.run_all_etl(strict=False)
+    assert status["no_spec"] == "failed"
+
+
+def test_etl_runner_generic_exception_strict(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_runner
+
+    monkeypatch.setattr(etl_runner, "_ETL_MODULES", {
+        "boom": _make_etl_module("boom", raises=ValueError("generic error")),
+    })
+    with pytest.raises(ValueError, match="generic error"):
+        etl_runner.run_all_etl(strict=True)
+
+
+# ── etl_acs — borough key fallback and local load ─────────────────────────────
+
+
+def test_etl_acs_borough_key_unknown_prefix_returns_mn() -> None:
+    from src.data.etl_acs import _borough_key
+
+    assert _borough_key("XX99") == "MN"
+
+
+def test_etl_acs_load_local_success(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from src.data import etl_acs
+
+    csv_path = tmp_path / "acs.csv"
+    pd.DataFrame({"nta_id": ["BK09"], "median_income": [60000]}).to_csv(csv_path, index=False)
+    monkeypatch.setenv("ACS_DATA_PATH", str(csv_path))
+    result = etl_acs._load_local()
+    assert not result.empty
+
+
+def test_etl_acs_run_etl_empty_local_falls_back_to_synthetic(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_acs
+
+    monkeypatch.setattr(etl_acs, "_load_local", lambda: pd.DataFrame())
+    result = etl_acs.run_etl(limit=5)
+    assert not result.empty  # synthetic fallback
+
+
+def test_etl_acs_run_etl_success_from_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_acs
+
+    fake = pd.DataFrame({"nta_id": ["BK09"], "median_income": [60000]})
+    monkeypatch.setattr(etl_acs, "_load_local", lambda: fake)
+    result = etl_acs.run_etl(limit=10)
+    assert len(result) == 1
+
+
+# ── etl_airbnb — _read_local success and download path ───────────────────────
+
+
+def test_etl_airbnb_read_local_existing_csv(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from pathlib import Path
+    from src.data import etl_airbnb
+
+    good = tmp_path / "listings.csv"
+    pd.DataFrame({"id": ["a1"], "neighbourhood_cleansed": ["Bushwick"]}).to_csv(good, index=False)
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV", good)
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV_GZ", Path("/nonexistent.gz"))
+    result = etl_airbnb._read_local(limit=10)
+    assert result is not None
+
+
+def test_etl_airbnb_run_etl_download_then_synthetic(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import requests
+    from pathlib import Path
+    from src.data import etl_airbnb
+
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV", Path("/nonexistent/listings.csv"))
+    dl_path = tmp_path / "listings.csv"
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV_GZ", dl_path)
+
+    class MockResponse:
+        content = b"col1,col2\n1,2\n"
+        def raise_for_status(self): pass
+
+    monkeypatch.setattr(requests, "get", lambda *a, **kw: MockResponse())
+    monkeypatch.setattr(etl_airbnb, "_transform", lambda df: pd.DataFrame())
+    result = etl_airbnb.run_etl(limit=5)
+    assert isinstance(result, pd.DataFrame)  # synthetic fallback
+
+
+# ── etl_citibike — PK zip path and download mock ─────────────────────────────
+
+
+def test_etl_citibike_run_etl_with_real_zip(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    import io
+    import zipfile
+    from src.data import etl_citibike
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("trips.csv", "col1,col2\n1,2\n")
+    zip_path = tmp_path / "citibike.zip"
+    zip_path.write_bytes(buf.getvalue())
+    monkeypatch.setattr(etl_citibike, "_RAW_ZIP", zip_path)
+    result = etl_citibike.run_etl(limit=10)
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_etl_citibike_run_etl_download_mock(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import io
+    import requests
+    import zipfile
+    from pathlib import Path
+    from src.data import etl_citibike
+
+    dl_zip = tmp_path / "citibike.zip"
+    monkeypatch.setattr(etl_citibike, "_RAW_ZIP", dl_zip)
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("trips.csv", "col1,col2\n1,2\n")
+
+    class MockResponse:
+        content = buf.getvalue()
+        def raise_for_status(self): pass
+
+    monkeypatch.setattr(requests, "get", lambda *a, **kw: MockResponse())
+    result = etl_citibike.run_etl(limit=5)
+    assert isinstance(result, pd.DataFrame)
+
+
+# ── etl_inspections — _get_zip_to_nta exception path ─────────────────────────
+
+
+def test_etl_inspections_zip_to_nta_exception_returns_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import requests
+    import src.data.etl_inspections as etl_insp
+
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", None)
+    monkeypatch.setattr(
+        requests, "get",
+        lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("network error")),
+    )
+    result = etl_insp._get_zip_to_nta()
+    assert result == {}
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", None)
+
+
+# ── etl_yelp — JSON load, business exception, and business merge ──────────────
+
+
+def test_etl_yelp_load_local_json_file(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from src.data import etl_yelp
+
+    json_path = tmp_path / "reviews.json"
+    pd.DataFrame({"review_id": ["r1"], "text": ["good"]}).to_json(
+        json_path, orient="records", lines=True
+    )
+    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", json_path)
+    result = etl_yelp._load_local()
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_etl_yelp_load_business_exception(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from src.data import etl_yelp
+
+    bad = tmp_path / "business.csv"
+    bad.write_text("id,latitude,longitude\nbad_row\n")
+    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_BUSINESS_PATH", bad)
+    result = etl_yelp._load_business()
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_etl_yelp_run_etl_merges_business(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from src.data import etl_yelp
+
+    reviews = pd.DataFrame({"business_id": ["b1"], "review_text": ["salad"], "rating": [4]})
+    reviews_path = tmp_path / "reviews.csv"
+    reviews.to_csv(reviews_path, index=False)
+    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", reviews_path)
+
+    business = pd.DataFrame({"id": ["b1"], "latitude": [40.7], "longitude": [-73.9]})
+    biz_path = tmp_path / "business.csv"
+    business.to_csv(biz_path, index=False)
+    monkeypatch.setattr(etl_yelp, "_DEFAULT_FUSION_BUSINESS_PATH", biz_path)
+
+    result = etl_yelp.run_etl()
+    assert "latitude" in result.columns
+
+
+# ── quality — embedding corpus dedupe fallback and non-numeric training ────────
+
+
+def test_prepare_embedding_corpus_no_standard_cols_dedupe_fallback() -> None:
+    from src.data.quality import prepare_embedding_corpus
+
+    df = pd.DataFrame({"review_text": ["hello world", "another review"]})
+    result, report = prepare_embedding_corpus(df)
+    assert not result.empty
+
+
+def test_prepare_embedding_corpus_explicit_dedupe_missing_cols() -> None:
+    from src.data.quality import prepare_embedding_corpus
+
+    df = pd.DataFrame({"review_text": ["hello world", "another review"]})
+    result, report = prepare_embedding_corpus(df, dedupe_columns=["nonexistent_col"])
+    assert not result.empty
+
+
+def test_prepare_training_frame_raises_on_non_numeric_column() -> None:
+    from src.data.quality import prepare_training_frame
+
+    frame = pd.DataFrame({
+        "zone_id": ["z1"],
+        "time_key": [2024],
+        "target": [0.8],
+        "label_quality": [1.0],
+        "cat_feature": ["some_string"],
+    })
+    with pytest.raises(ValueError, match="non-numeric"):
+        prepare_training_frame(frame, target_col="target")

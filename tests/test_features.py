@@ -882,3 +882,41 @@ def test_build_zone_year_matrix_empty_inputs() -> None:
 
     result = build_zone_year_matrix({})
     assert isinstance(result, pd.DataFrame)
+
+
+# ── feature_matrix — build_feature_matrix with all-empty tables ───────────────
+
+
+def test_build_feature_matrix_all_empty_tables() -> None:
+    from src.features.feature_matrix import build_feature_matrix
+
+    result = build_feature_matrix({"a": pd.DataFrame(), "b": pd.DataFrame()})
+    assert list(result.columns) == ["zone_id", "time_key"]
+
+
+# ── feature_matrix — _load_gemini_review_features exception path ──────────────
+
+
+def test_load_gemini_review_features_exception_returns_empty(monkeypatch, tmp_path) -> None:
+    import src.features.feature_matrix as fm
+
+    cache_path = tmp_path / "labels.csv"
+    cache_path.write_bytes(b"\xff\xfe corrupt data\n")
+    monkeypatch.setattr(fm, "_GEMINI_CACHE", cache_path)
+    result = fm._load_gemini_review_features(pd.DataFrame(), pd.DataFrame())
+    assert result.empty
+
+
+# ── feature_matrix — _prepare_social_signals with count column ────────────────
+
+
+def test_prepare_social_signals_with_count_column() -> None:
+    from src.features.feature_matrix import _prepare_social_signals
+
+    df = pd.DataFrame({
+        "community_district": ["Brooklyn", "Brooklyn", "Manhattan"],
+        "year": [2023, 2023, 2023],
+        "count": [5, 3, 2],
+    })
+    result = _prepare_social_signals(df)
+    assert isinstance(result, pd.DataFrame)

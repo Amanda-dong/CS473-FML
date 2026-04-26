@@ -391,3 +391,64 @@ def test_train_test_split_by_cutoff_empty_test() -> None:
     )
     assert train["year"].max() == 2020
     assert test.empty
+
+
+# ── backtesting — _precision_at_k empty ranking, and run_temporal_backtest paths
+
+
+def test_precision_at_k_empty_ranking_returns_zero() -> None:
+    from src.validation.backtesting import _precision_at_k
+
+    assert _precision_at_k([], {"a", "b"}, k=5) == 0.0
+
+
+def test_run_temporal_backtest_skips_empty_fold() -> None:
+    from src.validation.backtesting import run_temporal_backtest
+
+    feature_matrix = pd.DataFrame({
+        "zone_id": ["z1", "z2"],
+        "time_key": [2020, 2021],
+        "feature_a": [1.0, 2.0],
+    })
+    ground_truth = pd.DataFrame({
+        "zone_id": ["z1", "z2"],
+        "time_key": [2020, 2021],
+        "y_composite": [0.8, 0.4],
+    })
+
+    result = run_temporal_backtest(
+        feature_matrix=feature_matrix,
+        ground_truth=ground_truth,
+        model_cls=_SimpleModel,
+        min_train_years=0,  # first iter has empty train_X → skipped
+    )
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_run_temporal_backtest_calibration_and_ece_paths() -> None:
+    from src.validation.backtesting import run_temporal_backtest
+
+    n = 6
+    feature_matrix = pd.DataFrame({
+        "zone_id": [f"z{i}" for i in range(n * 2)],
+        "time_key": [2020] * n + [2021] * n,
+        "feature_a": list(range(n * 2)),
+    })
+    ground_truth = pd.DataFrame({
+        "zone_id": [f"z{i}" for i in range(n * 2)],
+        "time_key": [2020] * n + [2021] * n,
+        "y_composite": [float(i) / (n * 2 - 1) for i in range(n * 2)],
+    })
+
+    class _VaryingModel:
+        def fit(self, X, y): return self
+        def predict(self, X): return np.linspace(0.1, 0.9, len(X))
+
+    result = run_temporal_backtest(
+        feature_matrix=feature_matrix,
+        ground_truth=ground_truth,
+        model_cls=_VaryingModel,
+        min_train_years=1,
+    )
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) >= 1

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 from types import ModuleType
 
 import numpy as np
@@ -709,3 +710,61 @@ def test_aggregate_nlp_features_runs() -> None:
         reviews_df, embeddings, cluster_labels, gemini_labels
     )
     assert isinstance(result, pd.DataFrame)
+
+
+# ── gemini_labels — _load_cache and _save_cache exception paths ───────────────
+
+
+def test_gemini_load_cache_exception_returns_none(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import src.nlp.gemini_labels as gl
+
+    corrupt = tmp_path / "labels.parquet"
+    corrupt.write_bytes(b"not a parquet file")
+    monkeypatch.setattr(gl, "_CACHE_PATH", corrupt)
+    assert gl._load_cache() is None
+
+
+def test_gemini_save_cache_exception_is_swallowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.nlp.gemini_labels as gl
+    from src.nlp.gemini_labels import GeminiReviewLabel
+
+    label = GeminiReviewLabel(
+        review_id="abc", sentiment="positive",
+        concept_subtype="healthy_bowl", confidence=0.9, rationale="good",
+    )
+    monkeypatch.setattr(gl, "_CACHE_PATH", Path("/nonexistent_dir_xyz/labels.parquet"))
+    gl._save_cache([label])  # must not raise
+
+
+# ── gemini_labels — cached-hit and all-cached-return paths ────────────────────
+
+
+def test_gemini_label_reviews_cached_hit_and_all_cached(monkeypatch) -> None:
+    import src.nlp.gemini_labels as gl
+    from src.nlp.gemini_labels import GeminiReviewLabel, _cache_key, label_reviews_with_gemini
+
+    review_text = "fresh organic salad bowl"
+    subtypes = ("healthy_bowl", "salad_bar")
+    review_id = _cache_key(review_text, subtypes)
+
+    cached_label = GeminiReviewLabel(
+        review_id=review_id, sentiment="positive",
+        concept_subtype="healthy_bowl", confidence=0.95, rationale="healthy",
+    )
+    monkeypatch.setattr(gl, "_load_cache", lambda: {review_id: cached_label})
+    monkeypatch.setattr(gl, "_save_cache", lambda labels: None)
+
+    import google.genai as genai
+
+    class _MockClient:
+        def __init__(self, api_key=None): pass
+
+    monkeypatch.setattr(genai, "Client", _MockClient)
+
+    result = label_reviews_with_gemini([review_text], subtypes=subtypes, api_key="fake-key")
+    assert len(result) == 1
+    assert result[0].sentiment == "positive"

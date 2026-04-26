@@ -961,25 +961,17 @@ def test_save_model_exception_is_swallowed(tmp_path, monkeypatch) -> None:
     ml.save_model(object(), tmp_path / "bad.joblib")  # must not raise
 
 
-def test_load_scoring_model_corrupt_file_returns_none(tmp_path) -> None:
-    from src.models.model_loader import load_scoring_model
+@pytest.mark.parametrize("fn_name,suffix", [
+    ("load_scoring_model", "joblib"),
+    ("load_survival_model", "joblib"),
+    ("load_feature_matrix", "parquet"),
+])
+def test_load_model_corrupt_file_returns_none(tmp_path, fn_name: str, suffix: str) -> None:
+    import src.models.model_loader as ml
 
-    (tmp_path / "bad.joblib").write_bytes(b"not a joblib file")
-    assert load_scoring_model(tmp_path / "bad.joblib") is None
-
-
-def test_load_survival_model_corrupt_file_returns_none(tmp_path) -> None:
-    from src.models.model_loader import load_survival_model
-
-    (tmp_path / "bad.joblib").write_bytes(b"not a joblib file")
-    assert load_survival_model(tmp_path / "bad.joblib") is None
-
-
-def test_load_feature_matrix_corrupt_file_returns_none(tmp_path) -> None:
-    from src.models.model_loader import load_feature_matrix
-
-    (tmp_path / "bad.parquet").write_bytes(b"not a parquet file")
-    assert load_feature_matrix(tmp_path / "bad.parquet") is None
+    p = tmp_path / f"bad.{suffix}"
+    p.write_bytes(b"not a valid file")
+    assert getattr(ml, fn_name)(p) is None
 
 
 # ── survival_model — partial-variance drop and Cox convergence failure ─────────
@@ -1056,7 +1048,6 @@ def test_survival_model_brier_score_no_ipcw_fallback(
     from src.models.survival_model import SurvivalModelBundle
 
     class _BadKMF:
-        def __init__(self): pass
         def fit(self, *a, **kw): raise RuntimeError("forced")
 
     monkeypatch.setattr(lifelines, "KaplanMeierFitter", _BadKMF)
