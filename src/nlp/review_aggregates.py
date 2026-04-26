@@ -198,7 +198,9 @@ def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.Data
             ]
         )
 
-    missing = [c for c in _FULL_HALAL_REQUIRED_COLUMNS if c not in review_labels.columns]
+    missing = [
+        c for c in _FULL_HALAL_REQUIRED_COLUMNS if c not in review_labels.columns
+    ]
     if missing:
         return pd.DataFrame()
 
@@ -230,7 +232,9 @@ def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.Data
         not_related_count = int((grp["halal_relevance"] == "not_related").sum())
 
         subtype_counts = halal_grp["concept_subtype"].value_counts()
-        dominant_subtype = subtype_counts.idxmax() if not subtype_counts.empty else "other"
+        dominant_subtype = (
+            subtype_counts.idxmax() if not subtype_counts.empty else "other"
+        )
         subtype_gap = (
             float((subtype_counts / len(halal_grp)).std())
             if len(halal_grp) > 0 and len(subtype_counts) > 1
