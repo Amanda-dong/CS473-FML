@@ -90,8 +90,7 @@ def _read_local(limit: int) -> pd.DataFrame | None:
 
 
 def run_etl(limit: int = 50000) -> pd.DataFrame:
-    """Load Airbnb listings. Downloads from Inside Airbnb if local file missing.
-    """
+    """Load Airbnb listings. Downloads from Inside Airbnb if local file missing."""
     df = _read_local(limit)
 
     if df is None:

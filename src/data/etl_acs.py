@@ -25,6 +25,7 @@ DATASET_SPEC = DatasetSpec(
     columns=("year", "nta_id", "median_income", "population", "rent_burden"),
 )
 
+
 def run_placeholder_etl() -> pd.DataFrame:
     return build_empty_frame(DATASET_SPEC)
 
