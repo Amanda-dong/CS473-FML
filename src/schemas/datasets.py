@@ -1,5 +1,7 @@
 """Schemas for dataset metadata and audits."""
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -10,6 +12,6 @@ class DatasetAuditRow(BaseModel):
     owner: str
     spatial_unit: str
     time_grain: str
-    earliest_year: int | None = None
+    earliest_year: Optional[int] = None
     status: str = Field(default="planned")
     notes: str = Field(default="")
