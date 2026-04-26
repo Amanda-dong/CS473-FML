@@ -903,7 +903,6 @@ def test_learned_ranker_save_and_load_roundtrip(tmp_path) -> None:
     import joblib
     from src.models.ranking_model import LearnedRanker
 
-    r = LearnedRanker()
     path = tmp_path / "ranker.joblib"
     data = {"model": None, "feature_names": ["x", "y"], "params": {}}
     joblib.dump(data, path)

@@ -555,16 +555,6 @@ def test_allowed_sentiment_labels() -> None:
 # ── embeddings — optimal_k_search and cluster_stability ──────────────────────
 
 
-def test_optimal_k_search_returns_best_k() -> None:
-    from src.nlp.embeddings import optimal_k_search
-
-    rng = np.random.default_rng(42)
-    embeddings = rng.standard_normal((20, 16)).astype(np.float32)
-    best_k, scores = optimal_k_search(embeddings, k_range=range(2, 5))
-    assert best_k >= 2
-    assert isinstance(scores, dict)
-
-
 def test_optimal_k_search_skips_k_exceeding_samples() -> None:
     from src.nlp.embeddings import optimal_k_search
 

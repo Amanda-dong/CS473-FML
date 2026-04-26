@@ -151,14 +151,14 @@ def _save_cache(labels: list[GeminiReviewLabel]) -> None:
         _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         records = [
             {
-                "review_id": l.review_id,
-                "sentiment": l.sentiment,
-                "halal_relevance": l.halal_relevance,
-                "concept_subtype": l.concept_subtype,
-                "confidence": l.confidence,
-                "rationale": l.rationale,
+                "review_id": label.review_id,
+                "sentiment": label.sentiment,
+                "halal_relevance": label.halal_relevance,
+                "concept_subtype": label.concept_subtype,
+                "confidence": label.confidence,
+                "rationale": label.rationale,
             }
-            for l in labels
+            for label in labels
         ]
         df = pd.DataFrame(records)
         df.to_parquet(_CACHE_PATH, index=False)

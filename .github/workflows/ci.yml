@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
-          enable-caching: true
+          enable-cache: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
       - run: uv tool install ruff==0.15.12
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
-          enable-caching: true
+          enable-cache: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -136,7 +136,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
-          enable-caching: true
+          enable-cache: true
           cache-dependency-glob: requirements.txt
           python-version: ${{ env.PYTHON_VERSION }}
       - run: uv tool install bandit

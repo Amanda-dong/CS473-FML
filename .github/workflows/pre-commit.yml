@@ -38,7 +38,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v7
         with:
-          enable-caching: true
+          enable-cache: true
           python-version: ${{ env.PYTHON_VERSION }}
 
       - run: uv tool install pre-commit

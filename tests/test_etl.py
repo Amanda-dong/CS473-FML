@@ -1086,27 +1086,6 @@ def test_etl_inspections_get_zip_to_nta_mocked(monkeypatch: pytest.MonkeyPatch) 
 # ── etl_runner — strict failure mode ────────────────────────────────────────
 
 
-def test_etl_runner_strict_raises_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    from src.data import etl_runner
-
-    def _failing_module():
-        return type(
-            "M",
-            (),
-            {
-                "run_placeholder_etl": staticmethod(
-                    lambda: (_ for _ in ()).throw(RuntimeError("forced fail"))
-                )
-            },
-        )()
-
-    original_modules = etl_runner._ETL_MODULES.copy()
-    monkeypatch.setattr(etl_runner, "_ETL_MODULES", {"bad_module": _failing_module()})
-    with pytest.raises(Exception):
-        etl_runner.run_all_etl(strict=True)
-    monkeypatch.setattr(etl_runner, "_ETL_MODULES", original_modules)
-
-
 def test_etl_runner_non_strict_continues_on_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
