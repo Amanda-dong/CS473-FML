@@ -55,3 +55,6 @@ htmlcov/
 # AI configs
 .claude/
 .claude_verify_results_panel.py
+
+# Generated graph output
+graphify-out/
