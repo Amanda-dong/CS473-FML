@@ -134,13 +134,15 @@ CS473-FML/
 ├── data/
 │   ├── raw/
 │   ├── processed/
-│   └── geojson/
+│   ├── geojson/
+│   └── models/
 ├── docs/
 ├── frontend/
 │   ├── app.py
 │   ├── components/
 │   └── pages/
 ├── notebooks/
+├── scripts/
 ├── src/
 │   ├── api/
 │   ├── config/
