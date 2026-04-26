@@ -243,7 +243,12 @@ def test_get_zone_type_clusters_returns_dict() -> None:
     result = _get_zone_type_clusters("healthy_indian", "medium", "mid")
     assert isinstance(result, dict)
     # Should have entries for all zone types present in _NYC_ZONES
-    for zt in ("campus_walkshed", "lunch_corridor", "transit_catchment", "business_district"):
+    for zt in (
+        "campus_walkshed",
+        "lunch_corridor",
+        "transit_catchment",
+        "business_district",
+    ):
         assert zt in result
     # Each value should be a string cluster label
     for label in result.values():
@@ -300,8 +305,12 @@ def test_score_one_price_and_risk_adjustments() -> None:
     """Premium+conservative should differ from budget+aggressive in survival score."""
     from src.api.routers.recommendations import _score_one
 
-    rec_premium = _score_one("bk-tandon", "campus_walkshed", "L", "salad_bowls", "conservative", "premium")
-    rec_budget = _score_one("bk-tandon", "campus_walkshed", "L", "salad_bowls", "aggressive", "budget")
+    rec_premium = _score_one(
+        "bk-tandon", "campus_walkshed", "L", "salad_bowls", "conservative", "premium"
+    )
+    rec_budget = _score_one(
+        "bk-tandon", "campus_walkshed", "L", "salad_bowls", "aggressive", "budget"
+    )
     # Both must return valid recommendations; scores are heuristic floats
     assert rec_premium.opportunity_score >= 0.0
     assert rec_budget.opportunity_score >= 0.0
