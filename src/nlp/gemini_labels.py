@@ -12,6 +12,11 @@ import pandas as pd
 
 
 _CACHE_PATH = Path("data/processed/gemini_labels.parquet")
+_HALAL_RELEVANCE_LABELS = ("explicit_halal", "implicit_halal", "not_related")
+_DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+_DEFAULT_PORTKEY_BASE_URL = "https://ai-gateway.apps.cloud.rt.nyu.edu/v1"
+_DEFAULT_PORTKEY_MODEL = "@vertexai/gemini-2.5-flash-lite"
+_LABEL_SCHEMA_VERSION = "halal_context_v3"
 
 
 @dataclass(frozen=True)
@@ -20,9 +25,10 @@ class GeminiReviewLabel:
 
     review_id: str
     sentiment: str
+    halal_relevance: str
     concept_subtype: str
     confidence: float
-    rationale: str
+    rationale: str = ""
 
 
 def build_label_prompt(review_text: str, subtype_candidates: tuple[str, ...]) -> str:
@@ -30,8 +36,22 @@ def build_label_prompt(review_text: str, subtype_candidates: tuple[str, ...]) ->
 
     subtype_list = ", ".join(subtype_candidates)
     return (
-        "Label the review for healthy-food demand and concept subtype.\n"
+        "Label this Yelp review for halal food demand analysis.\n"
+        "Return JSON only with keys: sentiment, halal_relevance, "
+        "concept_subtype, confidence.\n"
+        "sentiment must be one of: positive, neutral, negative.\n"
+        "halal_relevance must be one of: explicit_halal, implicit_halal, "
+        "not_related.\n"
+        "The review text may include business context such as business name "
+        "and categories. Use that context when judging halal relevance.\n"
+        "Use explicit_halal when the review text, business name, or business "
+        "categories clearly mention halal.\n"
+        "Use implicit_halal only when the review implies halal demand, such as "
+        "asking for more halal options or discussing a known halal concept.\n"
+        "Use not_related when halal demand is not clear. Be conservative and "
+        "do not guess.\n"
         f"Allowed subtypes: {subtype_list}.\n"
+        "Do not create new concept_subtype labels. If none fit, use other.\n"
         f"Review: {review_text}"
     )
 
@@ -41,12 +61,37 @@ def _build_batch_prompt(
 ) -> str:
     """Build a prompt that labels multiple reviews in one API call."""
     subtype_list = ", ".join(subtype_candidates)
-    lines = ["Label each review for healthy-food demand and concept subtype."]
-    lines.append(f"Allowed subtypes: {subtype_list}.")
+    lines = ["Label each Yelp review for halal food demand analysis."]
+    lines.append("Return JSON only.")
+    lines.append("Return a JSON array with one object per review.")
     lines.append(
-        "Return a JSON array with one object per review, each having keys: "
-        "sentiment, concept_subtype, confidence, rationale."
+        "Each object must have keys: sentiment, halal_relevance, "
+        "concept_subtype, confidence."
     )
+    lines.append("sentiment must be one of: positive, neutral, negative.")
+    lines.append(
+        "halal_relevance must be one of: explicit_halal, implicit_halal, not_related."
+    )
+    lines.append("Definitions:")
+    lines.append(
+        "- explicit_halal: the review text, business name, or business "
+        "categories clearly mention halal."
+    )
+    lines.append(
+        "- implicit_halal: the review implies halal demand, lack of halal "
+        "options, or discusses a known halal concept without saying halal."
+    )
+    lines.append("- not_related: halal demand is not clear from the review.")
+    lines.append(
+        "Each review may include business name and categories before the review "
+        "text. Use that business context when judging halal relevance."
+    )
+    lines.append(
+        "Be conservative. Do not infer halal relevance from positive sentiment alone."
+    )
+    lines.append("confidence must be a number from 0.0 to 1.0, not a word.")
+    lines.append(f"Allowed subtypes: {subtype_list}.")
+    lines.append("Do not create new concept_subtype labels. If none fit, use other.")
     lines.append("")
     for i, text in enumerate(review_texts):
         lines.append(f"Review {i}: {text}")
@@ -57,7 +102,11 @@ def _cache_key(review_text: str, subtype_candidates: tuple[str, ...]) -> str:
     """Build a stable cache key from the review content and label taxonomy."""
     normalized_text = " ".join(str(review_text).split()).strip().lower()
     normalized_subtypes = "|".join(subtype_candidates)
-    payload = f"{normalized_subtypes}\n{normalized_text}".encode("utf-8")
+    payload = (
+        f"{_LABEL_SCHEMA_VERSION}\n{normalized_subtypes}\n{normalized_text}".encode(
+            "utf-8"
+        )
+    )
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -67,19 +116,23 @@ def _load_cache() -> dict[str, GeminiReviewLabel] | None:
         return None
     try:
         df = pd.read_parquet(_CACHE_PATH)
+        if "halal_relevance" not in df.columns:
+            df["halal_relevance"] = "not_related"
         if "rationale" not in df.columns:
             df["rationale"] = ""
         cache: dict[str, GeminiReviewLabel] = {
             str(rid): GeminiReviewLabel(
                 review_id=str(rid),
                 sentiment=str(sent),
+                halal_relevance=str(rel),
                 concept_subtype=str(sub),
                 confidence=float(conf),
                 rationale=str(rat),
             )
-            for rid, sent, sub, conf, rat in zip(
+            for rid, sent, rel, sub, conf, rat in zip(
                 df["review_id"],
                 df["sentiment"],
+                df["halal_relevance"],
                 df["concept_subtype"],
                 df["confidence"],
                 df["rationale"],
@@ -98,18 +151,105 @@ def _save_cache(labels: list[GeminiReviewLabel]) -> None:
         _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         records = [
             {
-                "review_id": label.review_id,
-                "sentiment": label.sentiment,
-                "concept_subtype": label.concept_subtype,
-                "confidence": label.confidence,
-                "rationale": label.rationale,
+                "review_id": l.review_id,
+                "sentiment": l.sentiment,
+                "halal_relevance": l.halal_relevance,
+                "concept_subtype": l.concept_subtype,
+                "confidence": l.confidence,
+                "rationale": l.rationale,
             }
-            for label in labels
+            for l in labels
         ]
         df = pd.DataFrame(records)
         df.to_parquet(_CACHE_PATH, index=False)
     except Exception:
         pass
+
+
+def _parse_label_payload(raw: str) -> list[dict]:
+    """Parse model JSON output, tolerating accidental markdown fences."""
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.removeprefix("```json").removeprefix("```").strip()
+        cleaned = cleaned.removesuffix("```").strip()
+    data_list = json.loads(cleaned or "[]")
+    if not isinstance(data_list, list):
+        data_list = [data_list]
+    return data_list
+
+
+def _generate_label_payload(prompt: str, api_key: str) -> list[dict]:
+    """Call the configured labeling model through Portkey or Google GenAI."""
+    portkey_key = os.environ.get("PORTKEY_API_KEY", "").strip()
+    if portkey_key:
+        try:
+            from portkey_ai import Portkey  # type: ignore[import]
+        except ImportError:
+            raise ImportError("portkey-ai package required: pip install portkey-ai")
+
+        client = Portkey(
+            base_url=os.environ.get("PORTKEY_BASE_URL", _DEFAULT_PORTKEY_BASE_URL),
+            api_key=portkey_key,
+        )
+        response = client.chat.completions.create(
+            model=os.environ.get("PORTKEY_MODEL", _DEFAULT_PORTKEY_MODEL),
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You label Yelp reviews and return JSON only.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=1024,
+        )
+        raw = response.choices[0].message.content or "[]"
+        return _parse_label_payload(raw)
+
+    try:
+        import google.genai as genai  # type: ignore[import]
+    except ImportError:
+        raise ImportError("google-genai package required: pip install google-genai")
+
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(
+        model=os.environ.get("GEMINI_MODEL", _DEFAULT_GEMINI_MODEL),
+        contents=prompt,
+        config={"response_mime_type": "application/json"},
+    )
+    raw = response.text or "[]"
+    return _parse_label_payload(raw)
+
+
+def _coerce_confidence(value: object, default: float = 0.85) -> float:
+    """Convert model confidence output to a bounded float."""
+    if isinstance(value, str):
+        mapped = {"high": 0.9, "medium": 0.7, "low": 0.4}
+        normalized = value.strip().lower()
+        if normalized in mapped:
+            return mapped[normalized]
+    try:
+        return max(0.0, min(1.0, float(value)))
+    except (TypeError, ValueError):
+        return default
+
+
+def _coerce_subtype(value: object, subtypes: tuple[str, ...]) -> str:
+    """Normalize model subtype output to the allowed taxonomy."""
+    fallback = subtypes[0] if subtypes else "unknown"
+    subtype = str(value or fallback).strip().lower().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "food_truck": "street_food",
+        "food_trucks": "street_food",
+        "cart": "street_food",
+        "halal_cart": "street_food",
+        "restaurant": "fast_casual",
+    }
+    subtype = aliases.get(subtype, subtype)
+    if subtype in subtypes:
+        return subtype
+    if "other" in subtypes:
+        return "other"
+    return fallback
 
 
 def label_reviews_with_gemini(
@@ -132,18 +272,15 @@ def label_reviews_with_gemini(
     -------
     List of GeminiReviewLabel with one entry per review.
     """
-    resolved_key = api_key or os.environ.get("GEMINI_API_KEY")
+    resolved_key = (
+        api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("PORTKEY_API_KEY")
+    )
 
     if not resolved_key:
         raise RuntimeError(
-            "GEMINI_API_KEY env var required for review labeling. "
+            "GEMINI_API_KEY or PORTKEY_API_KEY env var required for review labeling. "
             "No synthetic fallback — real labels only."
         )
-
-    try:
-        import google.genai as genai  # type: ignore[import]
-    except ImportError:
-        raise ImportError("google-genai package required: pip install google-genai")
 
     # Check cache
     cache = _load_cache() or {}
@@ -160,8 +297,6 @@ def label_reviews_with_gemini(
     if not uncached_indices:
         return labels
 
-    client = genai.Client(api_key=resolved_key)
-
     # Batch in groups of 10
     batch_size = 10
     for batch_start in range(0, len(uncached_indices), batch_size):
@@ -170,30 +305,23 @@ def label_reviews_with_gemini(
 
         try:
             prompt = _build_batch_prompt(batch_texts, subtypes)
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-lite",
-                contents=prompt,
-                config={"response_mime_type": "application/json"},
-            )
-            raw = response.text or "[]"
-            data_list = json.loads(raw)
-            if not isinstance(data_list, list):
-                data_list = [data_list]
+            data_list = _generate_label_payload(prompt, resolved_key)
 
             for rel_idx, abs_idx in enumerate(batch_indices):
                 review_id = _cache_key(reviews[abs_idx], subtypes)
                 if rel_idx < len(data_list):
                     data = data_list[rel_idx]
+                    halal_relevance = str(data.get("halal_relevance", "not_related"))
+                    if halal_relevance not in _HALAL_RELEVANCE_LABELS:
+                        halal_relevance = "not_related"
                     label = GeminiReviewLabel(
                         review_id=review_id,
                         sentiment=str(data.get("sentiment", "neutral")),
-                        concept_subtype=str(
-                            data.get(
-                                "concept_subtype",
-                                subtypes[0] if subtypes else "unknown",
-                            )
+                        halal_relevance=halal_relevance,
+                        concept_subtype=_coerce_subtype(
+                            data.get("concept_subtype"), subtypes
                         ),
-                        confidence=float(data.get("confidence", 0.85)),
+                        confidence=_coerce_confidence(data.get("confidence", 0.85)),
                         rationale=str(data.get("rationale", "")),
                     )
                 else:
