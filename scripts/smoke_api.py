@@ -8,7 +8,9 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-def _request(method: str, url: str, payload: Dict[str, Any] | None = None) -> Tuple[int, Any]:
+def _request(
+    method: str, url: str, payload: Dict[str, Any] | None = None
+) -> Tuple[int, Any]:
     data = None
     headers = {"Content-Type": "application/json"}
     if payload is not None:
@@ -32,7 +34,9 @@ def _request(method: str, url: str, payload: Dict[str, Any] | None = None) -> Tu
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke test core API endpoints.")
-    parser.add_argument("--base-url", default="http://127.0.0.1:8000", help="API base URL")
+    parser.add_argument(
+        "--base-url", default="http://127.0.0.1:8000", help="API base URL"
+    )
     args = parser.parse_args()
 
     base = args.base_url.rstrip("/")
@@ -42,7 +46,12 @@ def main() -> int:
         (
             "POST",
             f"{base}/predict/cmf",
-            {"concept_subtype": "ramen", "limit": 3, "risk_tolerance": "balanced", "price_tier": "mid"},
+            {
+                "concept_subtype": "ramen",
+                "limit": 3,
+                "risk_tolerance": "balanced",
+                "price_tier": "mid",
+            },
         ),
         ("POST", f"{base}/predict/trajectory", {"concept_subtype": "ramen"}),
     ]
@@ -51,7 +60,7 @@ def main() -> int:
     for method, url, payload in checks:
         status, body = _request(method, url, payload)
         ok = 200 <= status < 300
-        print(f"[{ 'OK' if ok else 'FAIL' }] {method} {url} -> {status}")
+        print(f"[{'OK' if ok else 'FAIL'}] {method} {url} -> {status}")
         if not ok:
             print(f"  Body: {body}")
             failed = True
