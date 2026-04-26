@@ -109,3 +109,79 @@ def test_processed_preflight_handles_bad_survival_artifacts_without_raising(
         check for check in report.checks if check.name == "survival_training"
     )
     assert not survival_check.passed
+
+
+# ── preflight individual check functions ──────────────────────────────────────
+
+
+def test_assess_embedding_readiness_value_error() -> None:
+    from src.pipeline.preflight import assess_embedding_readiness
+
+    result = assess_embedding_readiness(pd.DataFrame({"other_col": ["x"]}))
+    assert not result.passed
+    assert result.name == "embedding_corpus"
+
+
+def test_assess_embedding_readiness_too_few_rows() -> None:
+    from src.pipeline.preflight import assess_embedding_readiness
+
+    df = pd.DataFrame({
+        "review_text": ["short review"],
+        "restaurant_id": ["r1"],
+    })
+    result = assess_embedding_readiness(df, min_rows=100)
+    assert not result.passed
+
+
+def test_assess_embedding_readiness_passes() -> None:
+    from src.pipeline.preflight import assess_embedding_readiness
+
+    df = pd.DataFrame({
+        "review_text": ["healthy salad bowl"] * 5,
+        "restaurant_id": [f"r{i}" for i in range(5)],
+    })
+    result = assess_embedding_readiness(df, min_rows=1)
+    assert result.passed
+
+
+def test_assess_scoring_readiness_value_error() -> None:
+    from src.pipeline.preflight import assess_scoring_training_readiness
+
+    result = assess_scoring_training_readiness(pd.DataFrame({"x": [1.0]}))
+    assert not result.passed
+    assert result.name == "scoring_training"
+
+
+def test_assess_survival_readiness_value_error() -> None:
+    from src.pipeline.preflight import assess_survival_training_readiness
+
+    result = assess_survival_training_readiness(pd.DataFrame({"x": [1.0]}))
+    assert not result.passed
+    assert result.name == "survival_training"
+
+
+# ── preflight CLI ─────────────────────────────────────────────────────────────
+
+
+def test_preflight_main_cli_text_output(tmp_path) -> None:
+    from src.pipeline.preflight import main
+
+    exit_code = main(argv=["--processed-dir", str(tmp_path)])
+    assert exit_code in (0, 1)
+
+
+def test_preflight_main_cli_json_output(tmp_path) -> None:
+    from src.pipeline.preflight import main
+    import json
+
+    exit_code = main(argv=["--processed-dir", str(tmp_path), "--json"])
+    assert exit_code in (0, 1)
+
+
+def test_preflight_build_arg_parser() -> None:
+    from src.pipeline.preflight import _build_arg_parser
+
+    parser = _build_arg_parser()
+    args = parser.parse_args(["--processed-dir", "/tmp", "--json"])
+    assert args.processed_dir == "/tmp"
+    assert args.json is True

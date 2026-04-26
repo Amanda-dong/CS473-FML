@@ -309,3 +309,397 @@ def test_build_zone_year_matrix_accepts_311_for_social_buzz() -> None:
     )
     result = build_zone_year_matrix({"complaints_311": complaints})
     assert isinstance(result, pd.DataFrame)
+
+
+# ── embeddings (additional) ────────────────────────────────────────────────────
+
+
+def test_embed_reviews_empty_list() -> None:
+    embeddings = embed_reviews([])
+    assert embeddings.shape == (0, 384)
+
+
+def test_embed_reviews_returns_correct_shape() -> None:
+    embeddings = embed_reviews(["fresh healthy lunch bowl"])
+    assert embeddings.ndim == 2
+    assert embeddings.shape[1] == 384
+
+
+def test_embed_reviews_multiple_texts() -> None:
+    texts = ["great salad", "ramen noodles", "healthy wrap", "veggie bowl", "tacos"]
+    embeddings = embed_reviews(texts)
+    assert embeddings.shape == (5, 384)
+    assert embeddings.dtype == np.float32
+
+
+def test_embed_reviews_partial_blanks_alignment() -> None:
+    texts = ["hello world", "   ", "another text"]
+    embeddings = embed_reviews(texts)
+    assert embeddings.shape[0] == len(texts)
+    assert embeddings.dtype == np.float32
+    # blank row should be zeros
+    assert (embeddings[1] == 0.0).all()
+
+
+def test_embed_reviews_with_custom_config() -> None:
+    from src.nlp.embeddings import EmbeddingConfig
+
+    cfg = EmbeddingConfig(model_name="all-MiniLM-L6-v2", batch_size=4, normalize_embeddings=False)
+    embeddings = embed_reviews(["test text one", "test text two"], config=cfg)
+    assert embeddings.shape == (2, 384)
+
+
+def test_embed_reviews_with_device_config() -> None:
+    from src.nlp.embeddings import EmbeddingConfig
+
+    # device setting should not crash even if unavailable
+    cfg = EmbeddingConfig(device="cpu")
+    embeddings = embed_reviews(["healthy indian lunch"], config=cfg)
+    assert embeddings.shape == (1, 384)
+
+
+def test_optimal_k_search_returns_best_k() -> None:
+    from src.nlp.embeddings import optimal_k_search
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((20, 8)).astype(np.float32)
+    best_k, scores = optimal_k_search(embeddings, k_range=range(2, 5))
+    assert 2 <= best_k <= 4
+    assert isinstance(scores, dict)
+    assert len(scores) > 0
+
+
+def test_optimal_k_search_default_range() -> None:
+    from src.nlp.embeddings import optimal_k_search
+
+    rng = np.random.default_rng(0)
+    embeddings = rng.standard_normal((10, 8)).astype(np.float32)
+    best_k, scores = optimal_k_search(embeddings)
+    assert best_k >= 2
+
+
+def test_cluster_stability() -> None:
+    from src.nlp.embeddings import cluster_stability
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((15, 8)).astype(np.float32)
+    ari = cluster_stability(embeddings, n_clusters=2, n_runs=3)
+    assert 0.0 <= ari <= 1.0
+
+
+def test_cluster_embeddings_fixed_k() -> None:
+    from src.nlp.embeddings import cluster_embeddings
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((10, 8)).astype(np.float32)
+    labels, model = cluster_embeddings(embeddings, n_clusters=3)
+    assert len(labels) == 10
+    assert len(set(labels)) <= 3
+
+
+def test_cluster_embeddings_auto_k_small() -> None:
+    from src.nlp.embeddings import cluster_embeddings
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((3, 8)).astype(np.float32)
+    labels, _ = cluster_embeddings(embeddings, n_clusters=None)
+    assert len(labels) == 3
+
+
+def test_cluster_embeddings_auto_k_large() -> None:
+    from src.nlp.embeddings import cluster_embeddings
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((20, 8)).astype(np.float32)
+    labels, _ = cluster_embeddings(embeddings, n_clusters=None)
+    assert len(labels) == 20
+
+
+def test_compute_zone_embedding_features_empty() -> None:
+    from src.nlp.embeddings import compute_zone_embedding_features
+
+    result = compute_zone_embedding_features(
+        pd.DataFrame(), np.zeros((0, 8)), np.array([])
+    )
+    assert result.empty
+
+
+def test_compute_zone_embedding_features_no_zone_id() -> None:
+    from src.nlp.embeddings import compute_zone_embedding_features
+
+    df = pd.DataFrame({"text": ["hello"]})
+    result = compute_zone_embedding_features(df, np.zeros((1, 8)), np.array([0]))
+    assert result.empty
+
+
+def test_compute_zone_embedding_features_valid() -> None:
+    from src.nlp.embeddings import compute_zone_embedding_features
+
+    rng = np.random.default_rng(42)
+    n = 8
+    embeddings = rng.standard_normal((n, 16)).astype(np.float32)
+    cluster_labels = np.array([0, 1, 0, 1, 0, 1, 0, 1])
+    df = pd.DataFrame({"zone_id": ["z1"] * 4 + ["z2"] * 4})
+    result = compute_zone_embedding_features(df, embeddings, cluster_labels)
+    assert not result.empty
+    assert "zone_id" in result.columns
+    assert "embedding_diversity" in result.columns
+
+
+def test_compute_zone_embedding_features_single_row_per_zone() -> None:
+    from src.nlp.embeddings import compute_zone_embedding_features
+
+    embeddings = np.array([[1.0, 0.0, 0.5, 0.3, 0.1, 0.2, 0.4, 0.6]], dtype=np.float32)
+    cluster_labels = np.array([0])
+    df = pd.DataFrame({"zone_id": ["z1"]})
+    result = compute_zone_embedding_features(df, embeddings, cluster_labels)
+    assert not result.empty
+
+
+# ── topic model ────────────────────────────────────────────────────────────────
+
+
+def test_starter_topic_labels() -> None:
+    from src.nlp.topic_model import starter_topic_labels
+
+    labels = starter_topic_labels()
+    assert isinstance(labels, tuple)
+    assert len(labels) >= 3
+    assert "healthy" in labels
+
+
+def test_discover_topics_without_texts() -> None:
+    from src.nlp.topic_model import discover_topics
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((10, 8)).astype(np.float32)
+    result = discover_topics(embeddings, n_topics=3)
+    assert "cluster_labels" in result
+    assert "topic_terms" in result
+    assert "centroids" in result
+    assert len(result["cluster_labels"]) == 10
+
+
+def test_discover_topics_with_texts() -> None:
+    from src.nlp.topic_model import discover_topics
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((6, 8)).astype(np.float32)
+    texts = ["healthy salad", "fresh wrap", "ramen bowl", "tacos fresh", "pizza slice", "burger"]
+    result = discover_topics(embeddings, n_topics=2, texts=texts)
+    assert "topic_terms" in result
+    assert len(result["topic_terms"]) == 2
+    for terms in result["topic_terms"].values():
+        assert isinstance(terms, list)
+
+
+def test_discover_topics_more_topics_than_samples() -> None:
+    from src.nlp.topic_model import discover_topics
+
+    rng = np.random.default_rng(0)
+    embeddings = rng.standard_normal((3, 8)).astype(np.float32)
+    result = discover_topics(embeddings, n_topics=10)
+    assert len(result["cluster_labels"]) == 3
+
+
+def test_topic_distribution_per_zone_empty() -> None:
+    from src.nlp.topic_model import topic_distribution_per_zone
+
+    result = topic_distribution_per_zone(pd.DataFrame(), np.zeros((0, 8)), np.array([]))
+    assert result.empty
+
+
+def test_topic_distribution_per_zone_no_zone_id() -> None:
+    from src.nlp.topic_model import topic_distribution_per_zone
+
+    df = pd.DataFrame({"text": ["hello"]})
+    result = topic_distribution_per_zone(df, np.zeros((1, 8)), np.array([0]))
+    assert result.empty
+
+
+def test_topic_distribution_per_zone_valid() -> None:
+    from src.nlp.topic_model import topic_distribution_per_zone
+
+    df = pd.DataFrame({"zone_id": ["z1", "z1", "z2", "z2", "z2"]})
+    embeddings = np.zeros((5, 8))
+    cluster_labels = np.array([0, 1, 0, 0, 1])
+    result = topic_distribution_per_zone(df, embeddings, cluster_labels)
+    assert not result.empty
+    assert "zone_id" in result.columns
+    # should have topic share columns
+    assert any("topic_" in c for c in result.columns)
+
+
+# ── sentiment ─────────────────────────────────────────────────────────────────
+
+
+def test_allowed_sentiment_labels() -> None:
+    from src.nlp.sentiment import allowed_sentiment_labels
+
+    labels = allowed_sentiment_labels()
+    assert "positive" in labels
+    assert "negative" in labels
+    assert "neutral" in labels
+    assert isinstance(labels, tuple)
+
+
+# ── embeddings — optimal_k_search and cluster_stability ──────────────────────
+
+
+def test_optimal_k_search_returns_best_k() -> None:
+    from src.nlp.embeddings import optimal_k_search
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((20, 16)).astype(np.float32)
+    best_k, scores = optimal_k_search(embeddings, k_range=range(2, 5))
+    assert best_k >= 2
+    assert isinstance(scores, dict)
+
+
+def test_optimal_k_search_skips_k_exceeding_samples() -> None:
+    from src.nlp.embeddings import optimal_k_search
+
+    rng = np.random.default_rng(0)
+    embeddings = rng.standard_normal((4, 8)).astype(np.float32)
+    best_k, scores = optimal_k_search(embeddings, k_range=range(2, 10))
+    assert best_k >= 2
+
+
+def test_cluster_stability_returns_float() -> None:
+    from src.nlp.embeddings import cluster_stability
+
+    rng = np.random.default_rng(1)
+    embeddings = rng.standard_normal((20, 8)).astype(np.float32)
+    score = cluster_stability(embeddings, n_clusters=3, n_runs=3)
+    assert 0.0 <= score <= 1.0
+
+
+# ── gemini labels — cache helpers ────────────────────────────────────────────
+
+
+def test_gemini_load_cache_adds_rationale_column(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from pathlib import Path
+    import src.nlp.gemini_labels as gl
+
+    cache_df = pd.DataFrame({
+        "review_id": ["r1"],
+        "sentiment": ["positive"],
+        "concept_subtype": ["salad_bowls"],
+        "confidence": [0.9],
+    })
+    cache_path = tmp_path / "gemini_cache.parquet"
+    cache_df.to_parquet(cache_path, index=False)
+    monkeypatch.setattr(gl, "_CACHE_PATH", cache_path)
+    result = gl._load_cache()
+    assert result is not None
+    assert "r1" in result or len(result) == 1
+
+
+def test_gemini_save_cache_empty_list_is_noop(monkeypatch: pytest.MonkeyPatch) -> None:
+    import src.nlp.gemini_labels as gl
+
+    wrote = []
+
+    def _mock_write(path, content):
+        wrote.append(path)
+
+    monkeypatch.setattr("pathlib.Path.write_bytes", _mock_write)
+    gl._save_cache([])
+    assert len(wrote) == 0
+
+
+# ── topic model — cluster with no members ────────────────────────────────────
+
+
+def test_discover_topics_with_real_word_texts() -> None:
+    from src.nlp.topic_model import discover_topics
+
+    rng = np.random.default_rng(99)
+    embeddings = rng.standard_normal((6, 4)).astype(np.float32)
+    texts = [
+        "fresh salad vegetable",
+        "spicy ramen noodle soup",
+        "tacos tortilla beef",
+        "pizza margherita cheese",
+        "sushi salmon rice",
+        "burger beef fries",
+    ]
+    result = discover_topics(embeddings, n_topics=3, texts=texts)
+    assert "topic_terms" in result
+    for terms in result["topic_terms"].values():
+        assert isinstance(terms, list)
+
+
+# ── review aggregates (additional) ────────────────────────────────────────────
+
+
+def test_aggregate_review_labels_missing_required_columns() -> None:
+    from src.nlp.review_aggregates import aggregate_review_labels
+
+    df = pd.DataFrame({"sentiment": ["positive"], "zone_id": ["z1"]})
+    result = aggregate_review_labels(df)
+    assert result.empty
+
+
+def test_aggregate_review_labels_all_low_confidence() -> None:
+    from src.nlp.review_aggregates import aggregate_review_labels
+
+    df = pd.DataFrame(
+        {
+            "review_id": ["1"],
+            "sentiment": ["positive"],
+            "concept_subtype": ["salad_bowls"],
+            "confidence": [0.3],
+            "zone_id": ["z1"],
+            "time_key": [2022],
+        }
+    )
+    result = aggregate_review_labels(df)
+    assert result.empty
+
+
+def test_aggregate_review_labels_include_sentiment_dist(
+    sample_review_labels: pd.DataFrame,
+) -> None:
+    from src.nlp.review_aggregates import aggregate_review_labels
+
+    result = aggregate_review_labels(sample_review_labels, include_sentiment_dist=True)
+    if not result.empty:
+        assert "frac_positive" in result.columns
+        assert "frac_negative" in result.columns
+
+
+def test_aggregate_review_labels_with_topic_distribution(
+    sample_review_labels: pd.DataFrame,
+) -> None:
+    from src.nlp.review_aggregates import aggregate_review_labels
+
+    topic_dist = pd.DataFrame(
+        {"zone_id": ["tandon-campus", "columbia-morn"], "topic_0_share": [0.6, 0.4]}
+    )
+    result = aggregate_review_labels(sample_review_labels, topic_distribution=topic_dist)
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_aggregate_nlp_features_runs() -> None:
+    from src.nlp.review_aggregates import aggregate_nlp_features
+
+    rng = np.random.default_rng(42)
+    n = 6
+    reviews_df = pd.DataFrame(
+        {"zone_id": ["z1"] * 3 + ["z2"] * 3, "review_text": ["text"] * n}
+    )
+    embeddings = rng.standard_normal((n, 8)).astype(np.float32)
+    cluster_labels = np.array([0, 1, 0, 1, 0, 1])
+    gemini_labels = pd.DataFrame(
+        {
+            "review_id": [str(i) for i in range(n)],
+            "sentiment": ["positive"] * n,
+            "concept_subtype": ["salad_bowls"] * n,
+            "confidence": [0.9] * n,
+            "zone_id": ["z1"] * 3 + ["z2"] * 3,
+            "time_key": [2023] * n,
+        }
+    )
+    result = aggregate_nlp_features(reviews_df, embeddings, cluster_labels, gemini_labels)
+    assert isinstance(result, pd.DataFrame)

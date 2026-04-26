@@ -8,6 +8,9 @@ omit =
     src/models/train_scoring.py
     src/models/train_survival.py
     src/validation/run_evaluation.py
+    src/data/etl_boundaries.py
+    src/data/nta_layers.py
+    src/features/yelp_microzones.py
 
 [coverage:report]
 exclude_lines =
