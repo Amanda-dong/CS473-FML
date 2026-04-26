@@ -217,8 +217,6 @@ def test_etl_yelp_run_placeholder() -> None:
 # ── etl_airbnb ────────────────────────────────────────────────────────────────
 
 
-
-
 def test_etl_airbnb_transform_with_lat_lon(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.data import etl_airbnb
 
@@ -255,8 +253,6 @@ def test_etl_airbnb_transform_no_room_type(monkeypatch: pytest.MonkeyPatch) -> N
     raw = pd.DataFrame({"latitude": [40.75], "longitude": [-73.99]})
     result = etl_airbnb._transform(raw)
     assert "nta_id" in result.columns
-
-
 
 
 def test_etl_airbnb_run_placeholder() -> None:
@@ -759,7 +755,11 @@ def test_etl_airbnb_run_etl_raises_when_transform_empty(
         lambda *a, **kw: type(
             "R",
             (),
-            {"status_code": 200, "content": gz_content, "raise_for_status": lambda s: None},
+            {
+                "status_code": 200,
+                "content": gz_content,
+                "raise_for_status": lambda s: None,
+            },
         )(),
     )
     with pytest.raises(RuntimeError, match="empty frame"):
@@ -1228,13 +1228,15 @@ def test_etl_acs_run_etl_raises_when_local_empty(
 def test_etl_acs_run_etl_success_from_local(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.data import etl_acs
 
-    fake = pd.DataFrame({
-        "year": [2024],
-        "nta_id": ["BK09"],
-        "median_income": [60000.0],
-        "population": [5000.0],
-        "rent_burden": [0.35],
-    })
+    fake = pd.DataFrame(
+        {
+            "year": [2024],
+            "nta_id": ["BK09"],
+            "median_income": [60000.0],
+            "population": [5000.0],
+            "rent_burden": [0.35],
+        }
+    )
     monkeypatch.setattr(etl_acs, "_load_local", lambda: fake)
     result = etl_acs.run_etl(limit=10)
     assert len(result) == 1

@@ -34,6 +34,7 @@ DATASET_SPEC = DatasetSpec(
     columns=("nta_id", "listing_count", "entire_home_ratio"),
 )
 
+
 def run_placeholder_etl() -> pd.DataFrame:
     return build_empty_frame(DATASET_SPEC)
 
@@ -107,5 +108,7 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
 
     result = _transform(df)
     if result.empty:
-        raise RuntimeError("etl_airbnb: transform returned empty frame — no valid listings")
+        raise RuntimeError(
+            "etl_airbnb: transform returned empty frame — no valid listings"
+        )
     return result
