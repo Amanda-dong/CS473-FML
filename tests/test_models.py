@@ -606,6 +606,18 @@ def test_learned_scoring_model_fit_requires_xgboost(monkeypatch) -> None:
         m.fit(pd.DataFrame({"f": [1.0]}), pd.Series([1.0]))
 
 
+def test_learned_scoring_model_fit_with_eval_set() -> None:
+    """Covers lines 177-178: eval_set is passed through to XGBRegressor.fit()."""
+    n = 10
+    X = pd.DataFrame({"a": range(n), "b": range(n)}, dtype=float)
+    y = pd.Series(range(n), dtype=float)
+    X_val = pd.DataFrame({"a": [0.0], "b": [0.0]})
+    y_val = pd.Series([0.0])
+    model = LearnedScoringModel(params={"n_estimators": 2})
+    model.fit(X, y, eval_set=[(X_val, y_val)])
+    assert model.feature_names == ["a", "b"]
+
+
 def test_learned_scoring_model_explain_requires_shap(monkeypatch) -> None:
     import src.models.cmf_score as cmf_module
 
@@ -957,16 +969,23 @@ def test_save_model_exception_is_swallowed(tmp_path, monkeypatch) -> None:
     import joblib
     import src.models.model_loader as ml
 
-    monkeypatch.setattr(joblib, "dump", lambda *a, **kw: (_ for _ in ()).throw(OSError("disk full")))
+    monkeypatch.setattr(
+        joblib, "dump", lambda *a, **kw: (_ for _ in ()).throw(OSError("disk full"))
+    )
     ml.save_model(object(), tmp_path / "bad.joblib")  # must not raise
 
 
-@pytest.mark.parametrize("fn_name,suffix", [
-    ("load_scoring_model", "joblib"),
-    ("load_survival_model", "joblib"),
-    ("load_feature_matrix", "parquet"),
-])
-def test_load_model_corrupt_file_returns_none(tmp_path, fn_name: str, suffix: str) -> None:
+@pytest.mark.parametrize(
+    "fn_name,suffix",
+    [
+        ("load_scoring_model", "joblib"),
+        ("load_survival_model", "joblib"),
+        ("load_feature_matrix", "parquet"),
+    ],
+)
+def test_load_model_corrupt_file_returns_none(
+    tmp_path, fn_name: str, suffix: str
+) -> None:
     import src.models.model_loader as ml
 
     p = tmp_path / f"bad.{suffix}"
@@ -980,12 +999,14 @@ def test_load_model_corrupt_file_returns_none(tmp_path, fn_name: str, suffix: st
 def test_survival_model_drops_near_zero_variance_cols() -> None:
     from src.models.survival_model import SurvivalModelBundle
 
-    df = pd.DataFrame({
-        "duration_days": [100, 200, 300, 400, 500],
-        "event_observed": [1, 0, 1, 0, 1],
-        "feature_constant": [1.0, 1.0, 1.0, 1.0, 1.0],
-        "feature_var": [0.1, 0.5, 0.9, 0.3, 0.7],
-    })
+    df = pd.DataFrame(
+        {
+            "duration_days": [100, 200, 300, 400, 500],
+            "event_observed": [1, 0, 1, 0, 1],
+            "feature_constant": [1.0, 1.0, 1.0, 1.0, 1.0],
+            "feature_var": [0.1, 0.5, 0.9, 0.3, 0.7],
+        }
+    )
     bundle = SurvivalModelBundle()
     bundle.fit(df)
     assert "feature_var" in bundle.feature_columns_
@@ -996,15 +1017,20 @@ def test_survival_model_cox_convergence_failure(monkeypatch) -> None:
     import src.models.survival_model as sm_module
 
     class _FailCox:
-        def __init__(self, **kwargs): pass
-        def fit(self, *a, **kw): raise RuntimeError("convergence failure")
+        def __init__(self, **kwargs):
+            pass
+
+        def fit(self, *a, **kw):
+            raise RuntimeError("convergence failure")
 
     monkeypatch.setattr(sm_module, "CoxPHFitter", _FailCox)
-    df = pd.DataFrame({
-        "duration_days": [100, 200, 300],
-        "event_observed": [1, 0, 1],
-        "feature_var": [0.1, 0.5, 0.9],
-    })
+    df = pd.DataFrame(
+        {
+            "duration_days": [100, 200, 300],
+            "event_observed": [1, 0, 1],
+            "feature_var": [0.1, 0.5, 0.9],
+        }
+    )
     bundle = sm_module.SurvivalModelBundle()
     bundle.fit(df)
     assert bundle.uses_heuristic_
@@ -1029,11 +1055,13 @@ def test_survival_model_brier_score_heuristic_path(
 def test_survival_model_brier_score_zero_informative() -> None:
     from src.models.survival_model import SurvivalModelBundle
 
-    df = pd.DataFrame({
-        "duration_days": [10, 20],
-        "event_observed": [0, 0],
-        "rent_pressure": [0.5, 0.3],
-    })
+    df = pd.DataFrame(
+        {
+            "duration_days": [10, 20],
+            "event_observed": [0, 0],
+            "rent_pressure": [0.5, 0.3],
+        }
+    )
     bundle = SurvivalModelBundle(baseline="heuristic")
     bundle.fit(df)
     result = bundle.brier_score(df, times=[9999])
@@ -1048,7 +1076,8 @@ def test_survival_model_brier_score_no_ipcw_fallback(
     from src.models.survival_model import SurvivalModelBundle
 
     class _BadKMF:
-        def fit(self, *a, **kw): raise RuntimeError("forced")
+        def fit(self, *a, **kw):
+            raise RuntimeError("forced")
 
     monkeypatch.setattr(lifelines, "KaplanMeierFitter", _BadKMF)
     bundle = SurvivalModelBundle(baseline="heuristic")
@@ -1074,11 +1103,13 @@ def test_survival_model_calibration_data_heuristic_path(
 def test_survival_model_calibration_data_empty_informative() -> None:
     from src.models.survival_model import SurvivalModelBundle
 
-    df = pd.DataFrame({
-        "duration_days": [10],
-        "event_observed": [0],
-        "rent_pressure": [0.5],
-    })
+    df = pd.DataFrame(
+        {
+            "duration_days": [10],
+            "event_observed": [0],
+            "rent_pressure": [0.5],
+        }
+    )
     bundle = SurvivalModelBundle(baseline="heuristic")
     bundle.fit(df)
     result = bundle.calibration_data(df, horizon_days=9999)

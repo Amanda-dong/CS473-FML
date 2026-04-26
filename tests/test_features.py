@@ -741,6 +741,46 @@ def test_aggregate_nta_to_zone_with_weights() -> None:
     assert not result.empty
 
 
+def test_aggregate_nta_to_zone_weighted_sum_and_skip_missing() -> None:
+    """Covers weighted-agg 'sum' path (line 150) and missing-col skip (line 146)."""
+    from src.features.zone_crosswalk import aggregate_nta_to_zone
+
+    df = pd.DataFrame(
+        {
+            "nta_id": ["BK09", "BK09"],
+            "value": [10.0, 20.0],
+            "pop": [100.0, 200.0],
+        }
+    )
+    result = aggregate_nta_to_zone(
+        df,
+        zone_col="nta_id",
+        agg_rules={"value": "sum", "nonexistent_col": "mean"},
+        weights_col="pop",
+    )
+    assert not result.empty
+
+
+def test_aggregate_nta_to_zone_weighted_else_path() -> None:
+    """Covers else branch in weighted agg (line 152) for non-mean/non-sum funcs."""
+    from src.features.zone_crosswalk import aggregate_nta_to_zone
+
+    df = pd.DataFrame(
+        {
+            "nta_id": ["BK09", "BK09"],
+            "value": [10.0, 20.0],
+            "pop": [100.0, 200.0],
+        }
+    )
+    result = aggregate_nta_to_zone(
+        df,
+        zone_col="nta_id",
+        agg_rules={"value": "max"},
+        weights_col="pop",
+    )
+    assert not result.empty
+
+
 def test_aggregate_nta_to_zone_sum_agg() -> None:
     from src.features.zone_crosswalk import aggregate_nta_to_zone
 
@@ -897,7 +937,9 @@ def test_build_feature_matrix_all_empty_tables() -> None:
 # ── feature_matrix — _load_gemini_review_features exception path ──────────────
 
 
-def test_load_gemini_review_features_exception_returns_empty(monkeypatch, tmp_path) -> None:
+def test_load_gemini_review_features_exception_returns_empty(
+    monkeypatch, tmp_path
+) -> None:
     import src.features.feature_matrix as fm
 
     cache_path = tmp_path / "labels.csv"
@@ -913,10 +955,25 @@ def test_load_gemini_review_features_exception_returns_empty(monkeypatch, tmp_pa
 def test_prepare_social_signals_with_count_column() -> None:
     from src.features.feature_matrix import _prepare_social_signals
 
-    df = pd.DataFrame({
-        "community_district": ["Brooklyn", "Brooklyn", "Manhattan"],
-        "year": [2023, 2023, 2023],
-        "count": [5, 3, 2],
-    })
+    df = pd.DataFrame(
+        {
+            "community_district": ["Brooklyn", "Brooklyn", "Manhattan"],
+            "year": [2023, 2023, 2023],
+            "count": [5, 3, 2],
+        }
+    )
+    result = _prepare_social_signals(df)
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_prepare_social_signals_no_count_column() -> None:
+    from src.features.feature_matrix import _prepare_social_signals
+
+    df = pd.DataFrame(
+        {
+            "community_district": ["Brooklyn", "Manhattan"],
+            "year": [2023, 2023],
+        }
+    )
     result = _prepare_social_signals(df)
     assert isinstance(result, pd.DataFrame)

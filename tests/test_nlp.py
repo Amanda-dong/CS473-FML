@@ -512,6 +512,39 @@ def test_discover_topics_more_topics_than_samples() -> None:
     assert len(result["cluster_labels"]) == 3
 
 
+def test_discover_topics_zero_n_topics_clamps_to_one() -> None:
+    """Covers line 40: n_topics = 1 when min(0, N) < 1."""
+    from src.nlp.topic_model import discover_topics
+
+    rng = np.random.default_rng(7)
+    embeddings = rng.standard_normal((5, 4)).astype(np.float32)
+    result = discover_topics(embeddings, n_topics=0)
+    assert len(result["cluster_labels"]) == 5
+    assert len(result["topic_terms"]) == 1
+
+
+def test_discover_topics_empty_cluster_mask(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Covers lines 57-58: empty mask for a cluster_id when all samples in one cluster."""
+    import numpy as np
+    from sklearn import cluster as sklearn_cluster
+    from src.nlp.topic_model import discover_topics
+
+    class _FakeKMeans:
+        def __init__(self, n_clusters: int = 2, **kwargs: object) -> None:
+            self.n_clusters = n_clusters
+            self.cluster_centers_ = np.zeros((n_clusters, 4))
+
+        def fit_predict(self, X: np.ndarray) -> np.ndarray:
+            return np.zeros(len(X), dtype=int)
+
+    monkeypatch.setattr(sklearn_cluster, "KMeans", _FakeKMeans)
+
+    embeddings = np.random.default_rng(3).standard_normal((3, 4)).astype(np.float32)
+    texts = ["apple", "banana", "cherry"]
+    result = discover_topics(embeddings, n_topics=2, texts=texts)
+    assert result["topic_terms"][1] == []
+
+
 def test_topic_distribution_per_zone_empty() -> None:
     from src.nlp.topic_model import topic_distribution_per_zone
 
@@ -554,6 +587,16 @@ def test_allowed_sentiment_labels() -> None:
 
 
 # ── embeddings — optimal_k_search and cluster_stability ──────────────────────
+
+
+def test_optimal_k_search_returns_best_k_wide_embedding() -> None:
+    from src.nlp.embeddings import optimal_k_search
+
+    rng = np.random.default_rng(42)
+    embeddings = rng.standard_normal((20, 16)).astype(np.float32)
+    best_k, scores = optimal_k_search(embeddings, k_range=range(2, 5))
+    assert best_k >= 2
+    assert isinstance(scores, dict)
 
 
 def test_optimal_k_search_skips_k_exceeding_samples() -> None:
@@ -733,8 +776,11 @@ def test_gemini_save_cache_exception_is_swallowed(
     from src.nlp.gemini_labels import GeminiReviewLabel
 
     label = GeminiReviewLabel(
-        review_id="abc", sentiment="positive",
-        concept_subtype="healthy_bowl", confidence=0.9, rationale="good",
+        review_id="abc",
+        sentiment="positive",
+        concept_subtype="healthy_bowl",
+        confidence=0.9,
+        rationale="good",
     )
     monkeypatch.setattr(gl, "_CACHE_PATH", Path("/nonexistent_dir_xyz/labels.parquet"))
     gl._save_cache([label])  # must not raise
@@ -745,15 +791,22 @@ def test_gemini_save_cache_exception_is_swallowed(
 
 def test_gemini_label_reviews_cached_hit_and_all_cached(monkeypatch) -> None:
     import src.nlp.gemini_labels as gl
-    from src.nlp.gemini_labels import GeminiReviewLabel, _cache_key, label_reviews_with_gemini
+    from src.nlp.gemini_labels import (
+        GeminiReviewLabel,
+        _cache_key,
+        label_reviews_with_gemini,
+    )
 
     review_text = "fresh organic salad bowl"
     subtypes = ("healthy_bowl", "salad_bar")
     review_id = _cache_key(review_text, subtypes)
 
     cached_label = GeminiReviewLabel(
-        review_id=review_id, sentiment="positive",
-        concept_subtype="healthy_bowl", confidence=0.95, rationale="healthy",
+        review_id=review_id,
+        sentiment="positive",
+        concept_subtype="healthy_bowl",
+        confidence=0.95,
+        rationale="healthy",
     )
     monkeypatch.setattr(gl, "_load_cache", lambda: {review_id: cached_label})
     monkeypatch.setattr(gl, "_save_cache", lambda labels: None)
@@ -761,10 +814,13 @@ def test_gemini_label_reviews_cached_hit_and_all_cached(monkeypatch) -> None:
     import google.genai as genai
 
     class _MockClient:
-        def __init__(self, api_key=None): pass
+        def __init__(self, api_key=None):
+            pass
 
     monkeypatch.setattr(genai, "Client", _MockClient)
 
-    result = label_reviews_with_gemini([review_text], subtypes=subtypes, api_key="fake-key")
+    result = label_reviews_with_gemini(
+        [review_text], subtypes=subtypes, api_key="fake-key"
+    )
     assert len(result) == 1
     assert result[0].sentiment == "positive"
