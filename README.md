@@ -111,10 +111,6 @@ Conditional enrichment sources:
 - Reddit neighborhood mentions at Community District level
 - NYC 311 complaints as the documented fallback if Reddit is sparse
 
-Explicitly dropped:
-
-- Google Trends via `pytrends`
-
 ## Repository Status
 
 The repository is currently a scaffold. Most modules are placeholders, which is acceptable at this stage. The implementation order should be:
