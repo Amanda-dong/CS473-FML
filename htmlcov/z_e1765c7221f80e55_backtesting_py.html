@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Coverage for src/validation/backtesting.py: 97%</title>
+    <title>Coverage for src/validation/backtesting.py: 100%</title>
     <link rel="icon" sizes="32x32" href="favicon_32_cb_c827f16f.png">
     <link rel="stylesheet" href="style_cb_9ff733b0.css" type="text/css">
     <script src="coverage_html_cb_dd2e7eb5.js" defer></script>
@@ -12,7 +12,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>src&#8201;/&#8201;validation&#8201;/&#8201;backtesting.py</b>:
-            <span class="pc_cov">97%</span>
+            <span class="pc_cov">100%</span>
         </h1>
         <aside id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -55,8 +55,8 @@
         </aside>
         <h2>
             <span class="text">149 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">144<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">5<span class="text"> missing</span></button>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">149<span class="text"> run</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">0<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="index.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-04-26 17:11 +0000
+            created at 2026-04-26 17:58 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -328,7 +328,7 @@
     <p class="run"><span class="n"><a id="t246" href="#t246">246</a></span><span class="t"><span class="key">def</span> <span class="nam">_precision_at_k</span><span class="op">(</span><span class="nam">predicted_ranking</span><span class="op">:</span> <span class="nam">list</span><span class="op">[</span><span class="nam">str</span><span class="op">]</span><span class="op">,</span> <span class="nam">true_top</span><span class="op">:</span> <span class="nam">set</span><span class="op">[</span><span class="nam">str</span><span class="op">]</span><span class="op">,</span> <span class="nam">k</span><span class="op">:</span> <span class="nam">int</span><span class="op">)</span> <span class="op">-></span> <span class="nam">float</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t247" href="#t247">247</a></span><span class="t">    <span class="nam">top_k</span> <span class="op">=</span> <span class="nam">predicted_ranking</span><span class="op">[</span><span class="op">:</span><span class="nam">k</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t248" href="#t248">248</a></span><span class="t">    <span class="key">if</span> <span class="key">not</span> <span class="nam">top_k</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t249" href="#t249">249</a></span><span class="t">        <span class="key">return</span> <span class="num">0.0</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t249" href="#t249">249</a></span><span class="t">        <span class="key">return</span> <span class="num">0.0</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t250" href="#t250">250</a></span><span class="t">    <span class="key">return</span> <span class="nam">len</span><span class="op">(</span><span class="nam">set</span><span class="op">(</span><span class="nam">top_k</span><span class="op">)</span> <span class="op">&amp;</span> <span class="nam">true_top</span><span class="op">)</span> <span class="op">/</span> <span class="nam">k</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t251" href="#t251">251</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t252" href="#t252">252</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -391,7 +391,7 @@
     <p class="run run2"><span class="n"><a id="t309" href="#t309">309</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t310" href="#t310">310</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t311" href="#t311">311</a></span><span class="t">        <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">train_X</span><span class="op">)</span> <span class="op">==</span> <span class="num">0</span> <span class="key">or</span> <span class="nam">len</span><span class="op">(</span><span class="nam">test_X</span><span class="op">)</span> <span class="op">==</span> <span class="num">0</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t312" href="#t312">312</a></span><span class="t">            <span class="key">continue</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t312" href="#t312">312</a></span><span class="t">            <span class="key">continue</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t313" href="#t313">313</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t314" href="#t314">314</a></span><span class="t">        <span class="nam">model</span> <span class="op">=</span> <span class="nam">model_cls</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t315" href="#t315">315</a></span><span class="t">        <span class="nam">model</span><span class="op">.</span><span class="nam">fit</span><span class="op">(</span><span class="nam">train_X</span><span class="op">,</span> <span class="nam">train_y</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -423,8 +423,8 @@
     <p class="pln"><span class="n"><a id="t341" href="#t341">341</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t342" href="#t342">342</a></span><span class="t">        <span class="com"># Calibration error: mean absolute diff between bin means</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t343" href="#t343">343</a></span><span class="t">        <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">pred_arr</span><span class="op">)</span> <span class="op">>=</span> <span class="num">5</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t344" href="#t344">344</a></span><span class="t">            <span class="nam">cal</span> <span class="op">=</span> <span class="nam">calibration_analysis</span><span class="op">(</span><span class="nam">pred_arr</span><span class="op">,</span> <span class="nam">true_arr</span><span class="op">,</span> <span class="nam">n_bins</span><span class="op">=</span><span class="nam">min</span><span class="op">(</span><span class="num">5</span><span class="op">,</span> <span class="nam">len</span><span class="op">(</span><span class="nam">pred_arr</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t345" href="#t345">345</a></span><span class="t">            <span class="nam">cal_err</span> <span class="op">=</span> <span class="nam">float</span><span class="op">(</span><span class="op">(</span><span class="nam">cal</span><span class="op">[</span><span class="str">"mean_predicted"</span><span class="op">]</span> <span class="op">-</span> <span class="nam">cal</span><span class="op">[</span><span class="str">"mean_actual"</span><span class="op">]</span><span class="op">)</span><span class="op">.</span><span class="nam">abs</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">mean</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t344" href="#t344">344</a></span><span class="t">            <span class="nam">cal</span> <span class="op">=</span> <span class="nam">calibration_analysis</span><span class="op">(</span><span class="nam">pred_arr</span><span class="op">,</span> <span class="nam">true_arr</span><span class="op">,</span> <span class="nam">n_bins</span><span class="op">=</span><span class="nam">min</span><span class="op">(</span><span class="num">5</span><span class="op">,</span> <span class="nam">len</span><span class="op">(</span><span class="nam">pred_arr</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t345" href="#t345">345</a></span><span class="t">            <span class="nam">cal_err</span> <span class="op">=</span> <span class="nam">float</span><span class="op">(</span><span class="op">(</span><span class="nam">cal</span><span class="op">[</span><span class="str">"mean_predicted"</span><span class="op">]</span> <span class="op">-</span> <span class="nam">cal</span><span class="op">[</span><span class="str">"mean_actual"</span><span class="op">]</span><span class="op">)</span><span class="op">.</span><span class="nam">abs</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">mean</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t346" href="#t346">346</a></span><span class="t">        <span class="key">else</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t347" href="#t347">347</a></span><span class="t">            <span class="nam">cal_err</span> <span class="op">=</span> <span class="nam">float</span><span class="op">(</span><span class="nam">np</span><span class="op">.</span><span class="nam">abs</span><span class="op">(</span><span class="nam">pred_arr</span><span class="op">.</span><span class="nam">mean</span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="nam">true_arr</span><span class="op">.</span><span class="nam">mean</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t348" href="#t348">348</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -434,7 +434,7 @@
     <p class="run"><span class="n"><a id="t352" href="#t352">352</a></span><span class="t">        <span class="nam">p_range</span> <span class="op">=</span> <span class="nam">pred_norm</span><span class="op">.</span><span class="nam">max</span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="nam">pred_norm</span><span class="op">.</span><span class="nam">min</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t353" href="#t353">353</a></span><span class="t">        <span class="nam">t_range</span> <span class="op">=</span> <span class="nam">true_norm</span><span class="op">.</span><span class="nam">max</span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="nam">true_norm</span><span class="op">.</span><span class="nam">min</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t354" href="#t354">354</a></span><span class="t">        <span class="key">if</span> <span class="nam">p_range</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t355" href="#t355">355</a></span><span class="t">            <span class="nam">pred_norm</span> <span class="op">=</span> <span class="op">(</span><span class="nam">pred_norm</span> <span class="op">-</span> <span class="nam">pred_norm</span><span class="op">.</span><span class="nam">min</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="nam">p_range</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t355" href="#t355">355</a></span><span class="t">            <span class="nam">pred_norm</span> <span class="op">=</span> <span class="op">(</span><span class="nam">pred_norm</span> <span class="op">-</span> <span class="nam">pred_norm</span><span class="op">.</span><span class="nam">min</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="nam">p_range</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t356" href="#t356">356</a></span><span class="t">        <span class="key">if</span> <span class="nam">t_range</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t357" href="#t357">357</a></span><span class="t">            <span class="nam">true_norm</span> <span class="op">=</span> <span class="op">(</span><span class="nam">true_norm</span> <span class="op">-</span> <span class="nam">true_norm</span><span class="op">.</span><span class="nam">min</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="nam">t_range</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t358" href="#t358">358</a></span><span class="t">        <span class="nam">ece</span> <span class="op">=</span> <span class="nam">expected_calibration_error</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
@@ -467,7 +467,7 @@
             <a class="nav" href="index.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-04-26 17:11 +0000
+            created at 2026-04-26 17:58 +0000
         </p>
     </div>
 </footer>

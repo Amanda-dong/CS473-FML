@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Coverage for src/features/feature_matrix.py: 91%</title>
+    <title>Coverage for src/features/feature_matrix.py: 94%</title>
     <link rel="icon" sizes="32x32" href="favicon_32_cb_c827f16f.png">
     <link rel="stylesheet" href="style_cb_9ff733b0.css" type="text/css">
     <script src="coverage_html_cb_dd2e7eb5.js" defer></script>
@@ -12,7 +12,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>src&#8201;/&#8201;features&#8201;/&#8201;feature_matrix.py</b>:
-            <span class="pc_cov">91%</span>
+            <span class="pc_cov">94%</span>
         </h1>
         <aside id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -55,8 +55,8 @@
         </aside>
         <h2>
             <span class="text">205 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">187<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">18<span class="text"> missing</span></button>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">193<span class="text"> run</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">12<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_e3d496e5189f5be2_ground_truth_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-04-26 17:11 +0000
+            created at 2026-04-26 17:58 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -138,7 +138,7 @@
     <p class="pln"><span class="n"><a id="t56" href="#t56">56</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t57" href="#t57">57</a></span><span class="t">    <span class="nam">tables</span> <span class="op">=</span> <span class="op">[</span><span class="nam">frame</span> <span class="key">for</span> <span class="nam">frame</span> <span class="key">in</span> <span class="nam">feature_tables</span><span class="op">.</span><span class="nam">values</span><span class="op">(</span><span class="op">)</span> <span class="key">if</span> <span class="key">not</span> <span class="nam">frame</span><span class="op">.</span><span class="nam">empty</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t58" href="#t58">58</a></span><span class="t">    <span class="key">if</span> <span class="key">not</span> <span class="nam">tables</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t59" href="#t59">59</a></span><span class="t">        <span class="key">return</span> <span class="nam">pd</span><span class="op">.</span><span class="nam">DataFrame</span><span class="op">(</span><span class="nam">columns</span><span class="op">=</span><span class="op">[</span><span class="str">"zone_id"</span><span class="op">,</span> <span class="str">"time_key"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t59" href="#t59">59</a></span><span class="t">        <span class="key">return</span> <span class="nam">pd</span><span class="op">.</span><span class="nam">DataFrame</span><span class="op">(</span><span class="nam">columns</span><span class="op">=</span><span class="op">[</span><span class="str">"zone_id"</span><span class="op">,</span> <span class="str">"time_key"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t60" href="#t60">60</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t61" href="#t61">61</a></span><span class="t">    <span class="nam">merged</span> <span class="op">=</span> <span class="nam">tables</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">.</span><span class="nam">copy</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t62" href="#t62">62</a></span><span class="t">    <span class="key">for</span> <span class="nam">frame</span> <span class="key">in</span> <span class="nam">tables</span><span class="op">[</span><span class="num">1</span><span class="op">:</span><span class="op">]</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
@@ -503,8 +503,8 @@
     <p class="run run2"><span class="n"><a id="t421" href="#t421">421</a></span><span class="t">            <span class="op">]</span><span class="op">.</span><span class="nam">sum</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t422" href="#t422">422</a></span><span class="t">            <span class="nam">agg</span> <span class="op">=</span> <span class="nam">agg</span><span class="op">.</span><span class="nam">rename</span><span class="op">(</span><span class="nam">columns</span><span class="op">=</span><span class="op">{</span><span class="nam">count_col</span><span class="op">:</span> <span class="str">"complaint_count"</span><span class="op">}</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t423" href="#t423">423</a></span><span class="t">        <span class="key">else</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t424" href="#t424">424</a></span><span class="t">            <span class="nam">agg</span> <span class="op">=</span> <span class="nam">df</span><span class="op">.</span><span class="nam">groupby</span><span class="op">(</span><span class="op">[</span><span class="str">"community_district"</span><span class="op">,</span> <span class="str">"time_key"</span><span class="op">]</span><span class="op">,</span> <span class="nam">as_index</span><span class="op">=</span><span class="key">False</span><span class="op">)</span><span class="op">.</span><span class="nam">size</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t425" href="#t425">425</a></span><span class="t">            <span class="nam">agg</span> <span class="op">=</span> <span class="nam">agg</span><span class="op">.</span><span class="nam">rename</span><span class="op">(</span><span class="nam">columns</span><span class="op">=</span><span class="op">{</span><span class="str">"size"</span><span class="op">:</span> <span class="str">"complaint_count"</span><span class="op">}</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t424" href="#t424">424</a></span><span class="t">            <span class="nam">agg</span> <span class="op">=</span> <span class="nam">df</span><span class="op">.</span><span class="nam">groupby</span><span class="op">(</span><span class="op">[</span><span class="str">"community_district"</span><span class="op">,</span> <span class="str">"time_key"</span><span class="op">]</span><span class="op">,</span> <span class="nam">as_index</span><span class="op">=</span><span class="key">False</span><span class="op">)</span><span class="op">.</span><span class="nam">size</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t425" href="#t425">425</a></span><span class="t">            <span class="nam">agg</span> <span class="op">=</span> <span class="nam">agg</span><span class="op">.</span><span class="nam">rename</span><span class="op">(</span><span class="nam">columns</span><span class="op">=</span><span class="op">{</span><span class="str">"size"</span><span class="op">:</span> <span class="str">"complaint_count"</span><span class="op">}</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t426" href="#t426">426</a></span><span class="t">        <span class="nam">agg</span><span class="op">[</span><span class="str">"social_buzz"</span><span class="op">]</span> <span class="op">=</span> <span class="op">(</span><span class="nam">agg</span><span class="op">[</span><span class="str">"complaint_count"</span><span class="op">]</span> <span class="op">/</span> <span class="num">20.0</span><span class="op">)</span><span class="op">.</span><span class="nam">clip</span><span class="op">(</span><span class="nam">upper</span><span class="op">=</span><span class="num">1.0</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t427" href="#t427">427</a></span><span class="t">        <span class="nam">agg</span><span class="op">[</span><span class="str">"zone_id"</span><span class="op">]</span> <span class="op">=</span> <span class="nam">agg</span><span class="op">[</span><span class="str">"community_district"</span><span class="op">]</span><span class="op">.</span><span class="nam">map</span><span class="op">(</span><span class="nam">_CD_TO_ZONE</span><span class="op">.</span><span class="nam">get</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t428" href="#t428">428</a></span><span class="t">        <span class="nam">agg</span> <span class="op">=</span> <span class="nam">agg</span><span class="op">.</span><span class="nam">dropna</span><span class="op">(</span><span class="nam">subset</span><span class="op">=</span><span class="op">[</span><span class="str">"zone_id"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -534,11 +534,11 @@
     <p class="run"><span class="n"><a id="t452" href="#t452">452</a></span><span class="t">        <span class="key">if</span> <span class="str">"time_key"</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">labels_df</span><span class="op">.</span><span class="nam">columns</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t453" href="#t453">453</a></span><span class="t">            <span class="nam">labels_df</span><span class="op">[</span><span class="str">"time_key"</span><span class="op">]</span> <span class="op">=</span> <span class="nam">_GEMINI_FALLBACK_TIME_KEY</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t454" href="#t454">454</a></span><span class="t">        <span class="key">return</span> <span class="nam">aggregate_review_labels</span><span class="op">(</span><span class="nam">labels_df</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t455" href="#t455">455</a></span><span class="t">    <span class="key">except</span> <span class="nam">Exception</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t456" href="#t456">456</a></span><span class="t">        <span class="nam">logger</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t457" href="#t457">457</a></span><span class="t">            <span class="str">"feature_matrix: failed to load Gemini review features"</span><span class="op">,</span> <span class="nam">exc_info</span><span class="op">=</span><span class="key">True</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis mis2 show_mis"><span class="n"><a id="t458" href="#t458">458</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t459" href="#t459">459</a></span><span class="t">        <span class="key">return</span> <span class="nam">pd</span><span class="op">.</span><span class="nam">DataFrame</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t455" href="#t455">455</a></span><span class="t">    <span class="key">except</span> <span class="nam">Exception</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t456" href="#t456">456</a></span><span class="t">        <span class="nam">logger</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t457" href="#t457">457</a></span><span class="t">            <span class="str">"feature_matrix: failed to load Gemini review features"</span><span class="op">,</span> <span class="nam">exc_info</span><span class="op">=</span><span class="key">True</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t458" href="#t458">458</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t459" href="#t459">459</a></span><span class="t">        <span class="key">return</span> <span class="nam">pd</span><span class="op">.</span><span class="nam">DataFrame</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -548,7 +548,7 @@
             <a class="nav" href="z_e3d496e5189f5be2_ground_truth_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-04-26 17:11 +0000
+            created at 2026-04-26 17:58 +0000
         </p>
     </div>
 </footer>
