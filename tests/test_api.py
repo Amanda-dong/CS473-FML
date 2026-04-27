@@ -212,26 +212,22 @@ def test_score_with_learned_model_uses_latest_time_key_and_predict_risk() -> Non
 # ── _confidence_bucket — all thresholds ──────────────────────────────────────
 
 
-def test_confidence_bucket_high() -> None:
+@pytest.mark.parametrize(
+    "score,expected",
+    [
+        (0.61, "high"),
+        (1.0, "high"),
+        (0.60, "medium"),
+        (0.41, "medium"),
+        (0.40, "low"),
+        (0.2, "low"),
+        (0.0, "low"),
+    ],
+)
+def test_confidence_bucket(score: float, expected: str) -> None:
     from src.api.routers.recommendations import _confidence_bucket
 
-    assert _confidence_bucket(0.61) == "high"
-    assert _confidence_bucket(1.0) == "high"
-
-
-def test_confidence_bucket_medium() -> None:
-    from src.api.routers.recommendations import _confidence_bucket
-
-    assert _confidence_bucket(0.60) == "medium"
-    assert _confidence_bucket(0.41) == "medium"
-
-
-def test_confidence_bucket_low() -> None:
-    from src.api.routers.recommendations import _confidence_bucket
-
-    assert _confidence_bucket(0.40) == "low"
-    assert _confidence_bucket(0.0) == "low"
-    assert _confidence_bucket(0.2) == "low"
+    assert _confidence_bucket(score) == expected
 
 
 # ── _get_zone_type_clusters ───────────────────────────────────────────────────
@@ -302,7 +298,7 @@ def test_score_one_unknown_zone_uses_default_seed() -> None:
 
 
 def test_score_one_price_and_risk_adjustments() -> None:
-    """Premium+conservative should differ from budget+aggressive in survival score."""
+    """Conservative+premium suppresses survival → higher risk than aggressive+budget."""
     from src.api.routers.recommendations import _score_one
 
     rec_premium = _score_one(
@@ -311,6 +307,6 @@ def test_score_one_price_and_risk_adjustments() -> None:
     rec_budget = _score_one(
         "bk-tandon", "campus_walkshed", "L", "salad_bowls", "aggressive", "budget"
     )
-    # Both must return valid recommendations; scores are heuristic floats
-    assert rec_premium.opportunity_score >= 0.0
-    assert rec_budget.opportunity_score >= 0.0
+    # _RISK_ADJUST[conservative]=-0.06, _PRICE_ADJUST[premium]=-0.04 → lower survival_score
+    # _RISK_ADJUST[aggressive]=+0.06, _PRICE_ADJUST[budget]=+0.04 → higher survival_score
+    assert rec_premium.survival_risk > rec_budget.survival_risk

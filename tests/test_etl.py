@@ -1460,24 +1460,23 @@ def test_etl_yelp_build_headers() -> None:
     assert headers["Authorization"] == "Bearer my-api-key"
 
 
-def test_etl_yelp_build_params() -> None:
+@pytest.mark.parametrize(
+    "lat,lon,term,offset",
+    [
+        (40.7, -73.9, "healthy food", 0),
+        (40.8, -74.0, "halal", 50),
+    ],
+)
+def test_etl_yelp_build_params(lat: float, lon: float, term: str, offset: int) -> None:
     from src.data.etl_yelp import _build_params
 
-    anchor = {"latitude": 40.7, "longitude": -73.9, "anchor_name": "test"}
-    params = _build_params(anchor, "healthy food", 0)
-    assert params["term"] == "healthy food"
-    assert params["latitude"] == 40.7
-    assert params["offset"] == 0
+    anchor = {"latitude": lat, "longitude": lon, "anchor_name": "test"}
+    params = _build_params(anchor, term, offset)
+    assert params["term"] == term
+    assert params["latitude"] == lat
+    assert params["longitude"] == lon
+    assert params["offset"] == offset
     assert params["categories"] == "restaurants"
-
-
-def test_etl_yelp_build_params_nonzero_offset() -> None:
-    from src.data.etl_yelp import _build_params
-
-    anchor = {"latitude": 40.8, "longitude": -74.0, "anchor_name": "grid_r01_c00"}
-    params = _build_params(anchor, "halal", 50)
-    assert params["offset"] == 50
-    assert params["longitude"] == -74.0
 
 
 def test_etl_yelp_extract_businesses_basic() -> None:
