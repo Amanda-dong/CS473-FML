@@ -1156,3 +1156,167 @@ def test_trajectory_model_sweep_k_auto_range(
     result = model.sweep_k(sample_restaurant_history)
     assert isinstance(result, pd.DataFrame)
     assert "k" in result.columns
+
+
+# ── survival_model — coverage gaps ──────────────────────────────────────────
+
+
+def test_survival_model_rsf_fallback_to_cox(sample_restaurant_history, monkeypatch):
+    from src.models import survival_model
+    from src.models.survival_model import SurvivalModelBundle
+
+    monkeypatch.setattr(survival_model, "HAS_SKSURV", False)
+    monkeypatch.setattr(survival_model, "HAS_LIFELINES", True)
+
+    model = SurvivalModelBundle(baseline="rsf")
+    model.fit(sample_restaurant_history)
+
+    assert model.fitted_
+    assert model.uses_heuristic_ is False
+    assert model.cox_model_ is not None
+
+
+def test_survival_model_fit_heuristic_no_lifelines(
+    sample_restaurant_history, monkeypatch
+):
+    from src.models import survival_model
+    from src.models.survival_model import SurvivalModelBundle
+
+    monkeypatch.setattr(survival_model, "HAS_LIFELINES", False)
+
+    model = SurvivalModelBundle(baseline="cox")
+    model.fit(sample_restaurant_history)
+
+    assert model.fitted_
+    assert model.uses_heuristic_
+
+
+def test_survival_model_fit_cox_early_return(monkeypatch):
+    from src.models import survival_model
+    from src.models.survival_model import SurvivalModelBundle
+
+    monkeypatch.setattr(survival_model, "HAS_LIFELINES", False)
+
+    model = SurvivalModelBundle()
+    model.feature_columns_ = ["feat"]
+    frame = pd.DataFrame({"duration_days": [10], "event_observed": [1], "feat": [1]})
+    model._fit_cox(frame)
+
+    assert model.uses_heuristic_
+
+
+def test_survival_model_fit_rsf_mocked(monkeypatch):
+    from src.models import survival_model
+    from src.models.survival_model import SurvivalModelBundle
+
+    class FakeRSF:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.fitted = False
+
+        def fit(self, X, y):
+            self.fitted = True
+
+    monkeypatch.setattr(survival_model, "HAS_SKSURV", True)
+    monkeypatch.setattr(survival_model, "RandomSurvivalForest", FakeRSF, raising=False)
+
+    model = SurvivalModelBundle(baseline="rsf")
+    model.feature_columns_ = ["rent_pressure", "competition_score"]
+    model_frame = pd.DataFrame(
+        {
+            "duration_days": [10, 20],
+            "event_observed": [1, 0],
+            "rent_pressure": [0.5, 0.6],
+            "competition_score": [0.3, 0.4],
+        }
+    )
+
+    model._fit_rsf(model_frame)
+    assert model.rsf_model_ is not None
+    assert model.rsf_model_.fitted
+
+
+def test_survival_model_predict_risk_rsf_mocked():
+    from src.models.survival_model import SurvivalModelBundle
+
+    class MockFunc:
+        def __init__(self, y):
+            self.y = y
+
+    class MockRSF:
+        def predict_cumulative_hazard_function(self, X):
+            return [MockFunc(np.array([0.0, 0.3, 0.8]))]
+
+    model = SurvivalModelBundle()
+    model.fitted_ = True
+    model.uses_heuristic_ = False
+    model.feature_columns_ = ["rent_pressure"]
+    model.rsf_model_ = MockRSF()
+
+    candidate = pd.DataFrame({"rent_pressure": [0.5]})
+    risk = model.predict_risk(candidate)
+
+    assert 0.0 <= float(risk.iloc[0]) <= 1.0
+
+
+def test_survival_model_predict_median_survival_rsf_mocked():
+    from src.models.survival_model import SurvivalModelBundle
+
+    class MockFunc:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+    class MockRSF:
+        def predict_survival_function(self, X):
+            return [MockFunc(np.array([30, 365, 730]), np.array([0.9, 0.4, 0.1]))]
+
+    model = SurvivalModelBundle()
+    model.fitted_ = True
+    model.uses_heuristic_ = False
+    model.feature_columns_ = ["rent_pressure"]
+    model.rsf_model_ = MockRSF()
+
+    candidate = pd.DataFrame({"rent_pressure": [0.5]})
+    median = model.predict_median_survival(candidate)
+
+    assert float(median.iloc[0]) == 365.0
+
+
+def test_trajectory_model_sweep_k_single_cluster():
+    from src.models.trajectory_model import TrajectoryClusteringModel
+
+    data = pd.DataFrame({"x": [1.0, 1.0, 1.0, 1.0]})
+    model = TrajectoryClusteringModel(n_clusters=1)
+    sweep = model.sweep_k(data, k_range=range(1, 2))
+
+    assert (sweep["silhouette"] == -1.0).any()
+
+
+def test_build_real_restaurant_history_zone_features_join():
+    from src.models.survival_model import build_real_restaurant_history
+
+    licenses = pd.DataFrame(
+        {
+            "event_date": pd.to_datetime(["2020-01-01"]),
+            "business_unique_id": ["BU1"],
+            "license_status": ["Active"],
+            "nta_id": ["BK09"],
+        }
+    )
+    zone_features = pd.DataFrame(
+        {
+            "zone_id": ["BK09"],
+            "rent_pressure": [0.4],
+            "competition_score": [0.3],
+            "transit_access": [0.6],
+        }
+    )
+
+    result = build_real_restaurant_history(
+        licenses, pd.DataFrame(), zone_features=zone_features
+    )
+    assert "rent_pressure" in result.columns
+    assert result.iloc[0]["rent_pressure"] == 0.4
+    assert result.iloc[0]["competition_score"] == 0.3
+    assert result.iloc[0]["transit_access"] == 0.6

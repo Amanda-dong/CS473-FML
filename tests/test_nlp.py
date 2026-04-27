@@ -981,3 +981,166 @@ def test_aggregate_full_halal_review_features_only_implicit_halal() -> None:
     result = aggregate_full_halal_review_features(df)
     # explicit_count = 0, implicit_count = 2 → ratio = float(2)
     assert result["implicit_to_explicit_ratio"].iloc[0] == pytest.approx(2.0)
+
+# ── Coverage Gap Fillers ─────────────────────────────────────────────────────
+
+
+def test_embed_reviews_tfidf_fallback(monkeypatch) -> None:
+    import sys
+    import numpy as np
+    from src.nlp.embeddings import embed_reviews
+
+    # Force ImportError for sentence_transformers
+    monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+    
+    texts = ["healthy food bowl", "ramen noodles"]
+    result = embed_reviews(texts)
+    
+    assert isinstance(result, np.ndarray)
+    assert result.shape == (2, 384)
+    # Check that it's not all zeros (except possibly padding if TF-IDF was very small)
+    assert np.any(result != 0)
+
+
+def test_cluster_embeddings_n_clusters_zero() -> None:
+    import numpy as np
+    from src.nlp.embeddings import cluster_embeddings
+    
+    embeddings = np.array([[1.0, 0.0], [0.0, 1.0]])
+    labels, _ = cluster_embeddings(embeddings, n_clusters=0)
+    
+    assert len(labels) == 2
+    # Guard should set n_clusters=1, so all labels should be 0
+    assert np.all(labels == 0)
+
+
+def test_parse_label_payload_markdown_fences() -> None:
+    from src.nlp.gemini_labels import _parse_label_payload
+    
+    raw = "```json\n[{\"sentiment\": \"positive\"}]\n```"
+    result = _parse_label_payload(raw)
+    assert len(result) == 1
+    assert result[0]["sentiment"] == "positive"
+
+
+def test_parse_label_payload_wrap_dict() -> None:
+    from src.nlp.gemini_labels import _parse_label_payload
+    
+    raw = "{\"sentiment\": \"neutral\"}"
+    result = _parse_label_payload(raw)
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0]["sentiment"] == "neutral"
+
+
+@pytest.mark.parametrize("input_val,expected", [
+    ("high", 0.9),
+    ("medium", 0.7),
+    ("low", 0.4),
+])
+def test_coerce_confidence_keywords(input_val, expected) -> None:
+    from src.nlp.gemini_labels import _coerce_confidence
+    assert _coerce_confidence(input_val) == expected
+
+
+@pytest.mark.parametrize("input_val", [None, "INVALID"])
+def test_coerce_confidence_default(input_val) -> None:
+    from src.nlp.gemini_labels import _coerce_confidence
+    assert _coerce_confidence(input_val) == 0.85
+
+
+def test_coerce_subtype_other_in_subtypes() -> None:
+    from src.nlp.gemini_labels import _coerce_subtype
+    subtypes = ("healthy_indian", "ramen", "other")
+    result = _coerce_subtype("garbage_xyz", subtypes)
+    assert result == "other"
+
+
+def test_coerce_subtype_fallback_no_other() -> None:
+    from src.nlp.gemini_labels import _coerce_subtype
+    subtypes = ("healthy_indian", "ramen")
+    result = _coerce_subtype("garbage_xyz", subtypes)
+    assert result == "healthy_indian"
+
+
+def test_generate_label_payload_portkey(monkeypatch) -> None:
+    import sys
+    from unittest.mock import MagicMock
+    import src.nlp.gemini_labels as gl
+
+    monkeypatch.setenv("PORTKEY_API_KEY", "fake_key")
+    
+    mock_portkey = MagicMock()
+    mock_response = MagicMock()
+    mock_response.choices[0].message.content = '[{"sentiment":"positive","halal_relevance":"not_related","concept_subtype":"healthy_indian","confidence":0.9}]'
+    mock_portkey.chat.completions.create.return_value = mock_response
+    
+    mock_module = MagicMock()
+    mock_module.Portkey.return_value = mock_portkey
+    monkeypatch.setitem(sys.modules, "portkey_ai", mock_module)
+    
+    result = gl._generate_label_payload("test prompt", "unused_key")
+    assert result[0]["sentiment"] == "positive"
+
+
+def test_label_reviews_invalid_halal_relevance_coerced(monkeypatch) -> None:
+    import src.nlp.gemini_labels as gl
+    from src.nlp.gemini_labels import label_reviews_with_gemini
+
+    monkeypatch.setattr(gl, "_load_cache", lambda: {})
+    monkeypatch.setattr(gl, "_save_cache", lambda labels: None)
+    monkeypatch.setattr(gl, "_generate_label_payload", 
+                        lambda p, k: [{"sentiment": "positive", "halal_relevance": "INVALID_LABEL", "concept_subtype": "other", "confidence": 0.9}])
+    
+    result = label_reviews_with_gemini(["test review"], subtypes=("other",), api_key="fake")
+    assert result[0].halal_relevance == "not_related"
+
+
+def test_label_reviews_fewer_labels_raises(monkeypatch) -> None:
+    import src.nlp.gemini_labels as gl
+    from src.nlp.gemini_labels import label_reviews_with_gemini
+
+    monkeypatch.setattr(gl, "_load_cache", lambda: {})
+    monkeypatch.setattr(gl, "_generate_label_payload", lambda p, k: [])
+    
+    with pytest.raises(RuntimeError, match="returned fewer labels"):
+        label_reviews_with_gemini(["rev1", "rev2"], subtypes=("other",), api_key="fake")
+
+
+def test_label_reviews_json_decode_error_wraps(monkeypatch) -> None:
+    import json
+    import src.nlp.gemini_labels as gl
+    from src.nlp.gemini_labels import label_reviews_with_gemini
+
+    monkeypatch.setattr(gl, "_load_cache", lambda: {})
+    def mock_raise(p, k):
+        raise json.JSONDecodeError("msg", "doc", 0)
+    monkeypatch.setattr(gl, "_generate_label_payload", mock_raise)
+    
+    with pytest.raises(RuntimeError, match="Gemini labeling failed"):
+        label_reviews_with_gemini(["rev1"], subtypes=("other",), api_key="fake")
+
+
+def test_aggregate_full_halal_empty_after_dropna_zone(sample_review_labels) -> None:
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features, _FULL_HALAL_REQUIRED_COLUMNS
+    
+    # Build valid schema but all zone_id=NaN
+    df = pd.DataFrame({col: [None] * 5 for col in _FULL_HALAL_REQUIRED_COLUMNS})
+    # Fill required non-NA columns if needed for schema but keep zone_id NA
+    for col in _FULL_HALAL_REQUIRED_COLUMNS:
+        if col != "zone_id":
+            df[col] = "test"
+    
+    result = aggregate_full_halal_review_features(df)
+    assert result.empty
+
+
+def test_aggregate_full_halal_empty_after_dropna_time(sample_review_labels) -> None:
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features, _FULL_HALAL_REQUIRED_COLUMNS
+    
+    df = pd.DataFrame({col: ["test"] * 5 for col in _FULL_HALAL_REQUIRED_COLUMNS})
+    df["zone_id"] = "BK09"
+    df["time_key"] = np.nan
+    
+    result = aggregate_full_halal_review_features(df)
+    assert result.empty

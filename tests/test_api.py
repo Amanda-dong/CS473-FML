@@ -310,3 +310,149 @@ def test_score_one_price_and_risk_adjustments() -> None:
     # _RISK_ADJUST[conservative]=-0.06, _PRICE_ADJUST[premium]=-0.04 → lower survival_score
     # _RISK_ADJUST[aggressive]=+0.06, _PRICE_ADJUST[budget]=+0.04 → higher survival_score
     assert rec_premium.survival_risk > rec_budget.survival_risk
+
+
+def test_get_app_settings() -> None:
+    from src.api.deps import get_app_settings
+    from src.config import Settings
+
+    settings = get_app_settings()
+    assert isinstance(settings, Settings)
+
+
+def test_score_with_learned_model_index_lookup() -> None:
+    from src.api.routers.recommendations import _score_with_learned_model
+
+    class DummyScoringModel:
+        def predict(self, frame: pd.DataFrame) -> list[float]:
+            return [0.75]
+
+    feature_matrix = pd.DataFrame(
+        {"feat1": [0.5]}, index=pd.Index(["bk-tandon"], name="zone_id")
+    )
+    rec = _score_with_learned_model(
+        "bk-tandon", "Label", "subtype", feature_matrix, DummyScoringModel(), None
+    )
+    assert rec is not None
+    assert rec.zone_id == "bk-tandon"
+
+
+def test_score_with_learned_model_missing_zone() -> None:
+    from src.api.routers.recommendations import _score_with_learned_model
+
+    feature_matrix = pd.DataFrame({"zone_id": ["other"], "feat1": [0.5]})
+    rec = _score_with_learned_model(
+        "missing", "Label", "subtype", feature_matrix, None, None
+    )
+    assert rec is None
+
+
+def test_score_with_learned_model_predict_fallback() -> None:
+    import numpy as np
+    from src.api.routers.recommendations import _score_with_learned_model
+
+    class DummyScoringModel:
+        def predict(self, frame: pd.DataFrame) -> list[float]:
+            return [0.5]
+
+    class DummySurvivalModel:
+        def predict(self, frame: pd.DataFrame) -> np.ndarray:
+            return np.array([0.8])
+
+    feature_matrix = pd.DataFrame({"zone_id": ["bk-tandon"], "feat1": [0.5]})
+    rec = _score_with_learned_model(
+        "bk-tandon",
+        "Label",
+        "subtype",
+        feature_matrix,
+        DummyScoringModel(),
+        DummySurvivalModel(),
+    )
+    assert rec.survival_risk == pytest.approx(0.2)
+
+
+def test_score_with_learned_model_shap_tree_explainer() -> None:
+    import numpy as np
+    import xgboost as xgb
+    from src.api.routers.recommendations import _score_with_learned_model
+
+    X = pd.DataFrame({"f1": [1, 2, 3, 4], "f2": [4, 3, 2, 1]})
+    y = np.array([1, 0, 1, 0])
+    model = xgb.XGBRegressor(n_estimators=2, max_depth=1)
+    model.fit(X, y)
+
+    class Wrapper:
+        def __init__(self, m):
+            self.model = m
+
+        def predict(self, frame):
+            return self.model.predict(frame)
+
+    feature_matrix = pd.DataFrame({"zone_id": ["bk-tandon"], "f1": [1.0], "f2": [2.0]})
+    rec = _score_with_learned_model(
+        "bk-tandon", "Label", "subtype", feature_matrix, Wrapper(model), None
+    )
+    assert "f1" in rec.feature_contributions
+
+
+def test_predict_cmf_sync_borough_fallback(monkeypatch) -> None:
+    from src.api.routers.recommendations import predict_cmf_sync
+    from src.schemas.requests import RecommendationRequest
+
+    import src.api.routers.recommendations as rec_mod
+
+    monkeypatch.setattr(rec_mod, "_SCORING_MODEL", None)
+    monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", None)
+
+    req = RecommendationRequest(concept_subtype="ramen", borough="XYZNOTREAL", limit=2)
+    resp = predict_cmf_sync(req)
+    assert len(resp.recommendations) > 0
+
+
+def test_predict_cmf_sync_heuristic_path(monkeypatch) -> None:
+    from src.api.routers.recommendations import predict_cmf_sync
+    from src.schemas.requests import RecommendationRequest
+
+    import src.api.routers.recommendations as rec_mod
+
+    monkeypatch.setattr(rec_mod, "_SCORING_MODEL", None)
+    monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", None)
+
+    req = RecommendationRequest(concept_subtype="ramen", limit=1)
+    resp = predict_cmf_sync(req)
+    assert resp.recommendations[0].scoring_path == "heuristic"
+
+
+def test_predict_cmf_sync_heuristic_fallback_mixed(monkeypatch) -> None:
+    from src.api.routers.recommendations import predict_cmf_sync
+    from src.schemas.requests import RecommendationRequest
+
+    import src.api.routers.recommendations as rec_mod
+
+    class DummyScorer:
+        def predict(self, frame):
+            return [0.5]
+
+    feature_matrix = pd.DataFrame({"zone_id": ["bk-tandon"], "demand": [0.5]})
+
+    monkeypatch.setattr(rec_mod, "_SCORING_MODEL", DummyScorer())
+    monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", feature_matrix)
+
+    req = RecommendationRequest(concept_subtype="ramen", limit=20)
+    resp = predict_cmf_sync(req)
+    paths = [r.scoring_path for r in resp.recommendations]
+    assert "heuristic_fallback" in paths
+
+
+@pytest.mark.asyncio
+async def test_predict_trajectory_nonexistent_zone_type() -> None:
+    from httpx import ASGITransport, AsyncClient
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.post(
+            "/predict/trajectory", json={"zone_type": "ZZNONEXISTENT"}
+        )
+    assert resp.status_code == 200
+    assert "trajectory_cluster" in resp.json()
