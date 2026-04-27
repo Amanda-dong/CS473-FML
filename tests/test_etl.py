@@ -1703,6 +1703,7 @@ def test_prepare_training_frame_empty_input() -> None:
     assert cleaned.empty
     assert report.output_rows == 0
 
+
 # ── etl_yelp — collect_yelp_businesses ───────────────────────────────────────
 
 
@@ -1835,11 +1836,15 @@ def test_etl_acs_transform_nyc_profile_extract(monkeypatch: pytest.MonkeyPatch) 
     from src.data.etl_acs import _transform
 
     monkeypatch.setenv("ACS_YEAR", "2024")
-    df = pd.DataFrame(
-        {"GeoID": ["BK09"], "Pop16plE": ["5000"], "MdHHIncE": ["75000"]}
-    )
+    df = pd.DataFrame({"GeoID": ["BK09"], "Pop16plE": ["5000"], "MdHHIncE": ["75000"]})
     result = _transform(df)
-    assert list(result.columns) == ["year", "nta_id", "median_income", "population", "rent_burden"]
+    assert list(result.columns) == [
+        "year",
+        "nta_id",
+        "median_income",
+        "population",
+        "rent_burden",
+    ]
     assert result.iloc[0]["nta_id"] == "BK09"
     assert result.iloc[0]["population"] == 5000
     assert result.iloc[0]["median_income"] == 75000
@@ -1871,7 +1876,9 @@ def test_etl_airbnb_read_local_unreadable_file(
 # ── etl_citibike — LFS pointer detection ─────────────────────────────────────
 
 
-def test_etl_citibike_run_etl_lfs_pointer(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+def test_etl_citibike_run_etl_lfs_pointer(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
     from src.data import etl_citibike
 
     lfs_file = tmp_path / "citibike.zip"
@@ -1913,7 +1920,9 @@ def test_etl_licenses_transform_adds_business_unique_id_na() -> None:
 # ── etl_pluto — _get_zip_to_nta exception ────────────────────────────────────
 
 
-def test_etl_pluto_transform_zip_to_nta_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_etl_pluto_transform_zip_to_nta_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from src.data import etl_pluto
 
     def mock_get_zip_to_nta():
@@ -1943,7 +1952,15 @@ def test_etl_pluto_transform_zip_to_nta_exception(monkeypatch: pytest.MonkeyPatc
 def test_prepare_embedding_corpus_dedupe_fallback_after_filtering() -> None:
     from src.data.quality import prepare_embedding_corpus
 
-    df = pd.DataFrame({"review_text": ["long enough review", "long enough review", "another long review"]})
+    df = pd.DataFrame(
+        {
+            "review_text": [
+                "long enough review",
+                "long enough review",
+                "another long review",
+            ]
+        }
+    )
     # dedupe_columns=['nonexistent'] should filter to [] and then fallback to ['review_text']
     result, report = prepare_embedding_corpus(df, dedupe_columns=["nonexistent"])
     assert len(result) == 2
@@ -1953,5 +1970,6 @@ def test_prepare_embedding_corpus_dedupe_fallback_after_filtering() -> None:
 
 def test_etl_acs_transform_invalid_schema():
     from src.data.etl_acs import _transform
-    with pytest.raises(ValueError, match='does not match expected schema'):
-        _transform(pd.DataFrame({'wrong_col': [1]}))
+
+    with pytest.raises(ValueError, match="does not match expected schema"):
+        _transform(pd.DataFrame({"wrong_col": [1]}))

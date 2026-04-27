@@ -440,7 +440,7 @@ def _load_gemini_review_features(
     if not _GEMINI_CACHE.exists():
         return pd.DataFrame()
     try:
-        from src.nlp.review_aggregates import aggregate_review_labels, aggregate_full_halal_review_features
+        from src.nlp.review_aggregates import aggregate_full_halal_review_features
 
         labels_df = pd.read_csv(_GEMINI_CACHE)
         if "zone_id" not in labels_df.columns and not restaurant_locations.empty:
