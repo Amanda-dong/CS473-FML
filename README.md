@@ -11,7 +11,7 @@
 | src/api/routers/\_\_init\_\_.py     |        0 |        0 |    100% |           |
 | src/api/routers/datasets.py         |        7 |        0 |    100% |           |
 | src/api/routers/health.py           |        5 |        0 |    100% |           |
-| src/api/routers/recommendations.py  |      156 |       40 |     74% |46, 210-229, 281, 293-307, 346, 348, 374-376, 387-389, 430, 457-467, 469-480, 527 |
+| src/api/routers/recommendations.py  |      156 |       18 |     88% |46, 346, 348, 374-376, 387-389, 430, 457-467, 469-480, 527 |
 | src/config/\_\_init\_\_.py          |        3 |        0 |    100% |           |
 | src/config/constants.py             |        6 |        0 |    100% |           |
 | src/config/settings.py              |       27 |        0 |    100% |           |
@@ -19,15 +19,15 @@
 | src/data/audit.py                   |        5 |        0 |    100% |           |
 | src/data/base.py                    |       25 |        0 |    100% |           |
 | src/data/etl\_311.py                |       31 |        0 |    100% |           |
-| src/data/etl\_acs.py                |       39 |       10 |     74% |54, 56, 73-80 |
-| src/data/etl\_airbnb.py             |       57 |        3 |     95% |87-88, 112 |
+| src/data/etl\_acs.py                |       43 |        3 |     93% |     63-75 |
+| src/data/etl\_airbnb.py             |       54 |        3 |     94% |87-88, 114 |
 | src/data/etl\_citibike.py           |       64 |        1 |     98% |       100 |
-| src/data/etl\_inspections.py        |       54 |        2 |     96% |   149-150 |
-| src/data/etl\_licenses.py           |       33 |        3 |     91% | 74, 89-90 |
-| src/data/etl\_permits.py            |       45 |        2 |     96% |   114-115 |
-| src/data/etl\_pluto.py              |       43 |        4 |     91% |56-57, 101-102 |
-| src/data/etl\_runner.py             |       61 |        1 |     98% |       110 |
-| src/data/etl\_yelp.py               |      123 |       50 |     59% |145, 151, 167-188, 192-252 |
+| src/data/etl\_inspections.py        |       54 |        0 |    100% |           |
+| src/data/etl\_licenses.py           |       33 |        1 |     97% |        74 |
+| src/data/etl\_permits.py            |       45 |        0 |    100% |           |
+| src/data/etl\_pluto.py              |       43 |        2 |     95% |     56-57 |
+| src/data/etl\_runner.py             |       61 |        0 |    100% |           |
+| src/data/etl\_yelp.py               |      123 |       42 |     66% |   192-252 |
 | src/data/quality.py                 |       75 |        1 |     99% |        71 |
 | src/data/registry.py                |       11 |        0 |    100% |           |
 | src/features/\_\_init\_\_.py        |        4 |        0 |    100% |           |
@@ -51,9 +51,9 @@
 | src/models/trajectory\_model.py     |      135 |        2 |     99% |  116, 208 |
 | src/nlp/\_\_init\_\_.py             |        3 |        0 |    100% |           |
 | src/nlp/embeddings.py               |      123 |       20 |     84% |70-98, 122, 166 |
-| src/nlp/gemini\_labels.py           |      157 |       30 |     81% |165-166, 173-174, 177, 185-206, 210-211, 226-229, 232-233, 250-252, 293, 298, 316, 328, 334-335 |
+| src/nlp/gemini\_labels.py           |      157 |       26 |     83% |173-174, 177, 185-206, 210-211, 226-229, 232-233, 250-252, 316, 328, 334-335 |
 | src/nlp/neighborhood\_mentions.py   |        4 |        0 |    100% |           |
-| src/nlp/review\_aggregates.py       |       77 |       32 |     58% |   172-292 |
+| src/nlp/review\_aggregates.py       |       77 |        2 |     97% |  210, 217 |
 | src/nlp/sentiment.py                |        2 |        0 |    100% |           |
 | src/nlp/subtype\_classifier.py      |       32 |        0 |    100% |           |
 | src/nlp/topic\_model.py             |       45 |        0 |    100% |           |
@@ -73,7 +73,7 @@
 | src/validation/\_\_init\_\_.py      |        2 |        0 |    100% |           |
 | src/validation/ablation.py          |       75 |        0 |    100% |           |
 | src/validation/backtesting.py       |      149 |        0 |    100% |           |
-| **TOTAL**                           | **2939** |  **258** | **91%** |           |
+| **TOTAL**                           | **2940** |  **178** | **94%** |           |
 
 
 ## Setup coverage badge
