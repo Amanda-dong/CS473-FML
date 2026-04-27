@@ -456,3 +456,65 @@ async def test_predict_trajectory_nonexistent_zone_type() -> None:
         )
     assert resp.status_code == 200
     assert "trajectory_cluster" in resp.json()
+
+def test_score_with_learned_model_survival_predict(monkeypatch) -> None:
+    from src.api.routers.recommendations import _score_with_learned_model
+    import numpy as np
+    import pandas as pd
+
+    class FakeScoring:
+        def predict(self, X):
+            return np.array([0.75])
+        @property
+        def feature_names(self):
+            return ["feat1"]
+
+    class FakeSurvival:
+        def predict(self, X):
+            return np.array([0.8])
+
+    feature_matrix = pd.DataFrame({
+        "zone_id": ["Z1"],
+        "feat1": [1.0],
+        "time_key": [2024]
+    })
+
+    # Target 8: line 388-389 in recommendations.py
+    # survival_risk = float(1.0 - survival_model.predict(feature_row)[0])
+    res = _score_with_learned_model(
+        zone_id="Z1",
+        zone_label="Zone 1",
+        concept_subtype="healthy_indian",
+        feature_matrix=feature_matrix,
+        scoring_model=FakeScoring(),
+        survival_model=FakeSurvival()
+    )
+
+    assert res is not None
+    assert res.survival_risk == pytest.approx(0.2) # 1.0 - 0.8
+
+def test_score_with_learned_model_survival_exception_swallowed() -> None:
+    from src.api.routers.recommendations import _score_with_learned_model
+
+    class FakeScoring:
+        def predict(self, X):
+            return [0.5]
+        @property
+        def feature_names(self):
+            return ["f1"]
+
+    class FakeSurvivalError:
+        def predict(self, X):
+            raise RuntimeError("Fake Error")
+
+    feature_matrix = pd.DataFrame({"zone_id": ["Z1"], "f1": [1.0], "time_key": [2024]})
+    res = _score_with_learned_model("Z1", "L1", "S1", feature_matrix, FakeScoring(), FakeSurvivalError())
+    assert res is not None
+    assert res.survival_risk == 0.0
+
+
+@pytest.mark.asyncio
+async def test_lifespan_runs():
+    from src.api.main import lifespan, app
+    async with lifespan(app):
+        pass

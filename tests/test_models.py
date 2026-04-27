@@ -1320,3 +1320,41 @@ def test_build_real_restaurant_history_zone_features_join():
     assert result.iloc[0]["rent_pressure"] == 0.4
     assert result.iloc[0]["competition_score"] == 0.3
     assert result.iloc[0]["transit_access"] == 0.6
+
+def test_survival_model_rsf_fit_monkeypatch(monkeypatch, sample_restaurant_history) -> None:
+    from src.models.survival_model import SurvivalModelBundle
+
+    class FakeRSF:
+        def __init__(self, **kw):
+            self.kw = kw
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+    monkeypatch.setattr("src.models.survival_model.RandomSurvivalForest", FakeRSF, raising=False)
+    monkeypatch.setattr("src.models.survival_model.HAS_SKSURV", True)
+
+    bundle = SurvivalModelBundle(baseline="rsf")
+    bundle.fit(sample_restaurant_history)
+
+    assert bundle.rsf_model_ is not None
+
+def test_trajectory_find_best_k_degenerate(monkeypatch) -> None:
+    from src.models.trajectory_model import TrajectoryClusteringModel
+    import sklearn.cluster
+
+    # Monkeypatch fit_predict to return all zeros (degenerate clusters)
+    def fake_fit_predict(self, X):
+        return np.zeros(X.shape[0], dtype=int)
+
+    monkeypatch.setattr(sklearn.cluster.KMeans, "fit_predict", fake_fit_predict)
+
+    model = TrajectoryClusteringModel(algorithm="kmeans", n_clusters=None)
+    data = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+    # _find_best_k is internal, but we can call it or call fit()
+    # n_clusters=None triggers _find_best_k in fit()
+    model.fit(data)
+    # If all k in k_range [2, 3] (default) fail silhouette_score because labels same,
+    # it continues and returns 2.
+    # Note: silhouette_score raises ValueError if len(set(labels)) < 2, 
+    # but the code has a check for that.

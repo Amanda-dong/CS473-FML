@@ -1174,3 +1174,81 @@ def test_aggregate_full_halal_empty_after_dropna_time(sample_review_labels) -> N
 
     result = aggregate_full_halal_review_features(df)
     assert result.empty
+
+def test_embed_reviews_tfidf_fallback_guards(monkeypatch) -> None:
+    import sys
+    # 1. monkeypatch sentence_transformers to None in sys.modules to force fallback
+    monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+    
+    from src.nlp.embeddings import embed_reviews
+    
+    # Target 3: Single text forces n_components=min(384, 0, 1000)=0 -> set to 1
+    # Also if text has 2+ words, tfidf.shape[1] might be 2 -> actual_components=min(1, 1)=1
+    result = embed_reviews(["hello world"])
+    assert result.shape == (1, 384)
+
+def test_optimal_k_search_degenerate(monkeypatch) -> None:
+    from src.nlp.embeddings import optimal_k_search
+    import sklearn.cluster
+
+    def fake_fit_predict(self, X):
+        return np.zeros(X.shape[0], dtype=int)
+
+    monkeypatch.setattr(sklearn.cluster.KMeans, "fit_predict", fake_fit_predict)
+
+    embeddings = np.random.rand(5, 10)
+    # Target 4: All k values produce degenerate labels -> line 122 fires
+    best_k, scores = optimal_k_search(embeddings, k_range=range(2, 4))
+    
+    assert best_k == 2
+    assert scores == {}
+
+def test_generate_label_payload_import_errors(monkeypatch) -> None:
+    from src.nlp.gemini_labels import _generate_label_payload
+    import sys
+
+    # Target 5: portkey_ai missing
+    monkeypatch.setenv("PORTKEY_API_KEY", "fake_key")
+    monkeypatch.setitem(sys.modules, "portkey_ai", None)
+    with pytest.raises(ImportError, match="portkey-ai package required"):
+        _generate_label_payload("prompt", "api_key")
+
+    # Target 6: google.genai missing
+    monkeypatch.delenv("PORTKEY_API_KEY", raising=False)
+    monkeypatch.setitem(sys.modules, "google.genai", None)
+    with pytest.raises(ImportError, match="google-genai package required"):
+        _generate_label_payload("prompt", "api_key")
+
+def test_aggregate_halal_metrics_empty_after_dropna() -> None:
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features, _FULL_HALAL_REQUIRED_COLUMNS
+    
+    df = pd.DataFrame({
+        "restaurant_id": ["R1"],
+        "time_key": ["not_a_number"], # Coerces to NaN
+        "zone_id": ["BK09"],
+        "rating": [5],
+        "sentiment": ["positive"],
+        "halal_relevance": ["explicit_halal"],
+        "concept_subtype": ["indian"],
+        "confidence": [0.9]
+    })
+    
+    # Ensure all required columns are present
+    for col in _FULL_HALAL_REQUIRED_COLUMNS:
+        if col not in df.columns:
+            df[col] = "missing"
+            
+    # Target 7: line 217 (or 216) fires after dropna on time_key
+    result = aggregate_full_halal_review_features(df)
+    assert result.empty
+
+def test_embed_reviews_actual_components_guard(monkeypatch):
+    import sys
+    monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+    from src.nlp.embeddings import embed_reviews
+    # TF-IDF on ["word", "word"] yields 1 feature ("word"). 
+    # n_components = min(384, 2-1, 1000) = 1.
+    # actual_components = min(1, 1-1) = 0.
+    # Then it should be clamped to 1.
+    result = embed_reviews(["word", "word"])
+    assert result.shape == (2, 384)

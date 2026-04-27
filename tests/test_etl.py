@@ -1702,3 +1702,256 @@ def test_prepare_training_frame_empty_input() -> None:
     )
     assert cleaned.empty
     assert report.output_rows == 0
+
+# ── etl_yelp — collect_yelp_businesses ───────────────────────────────────────
+
+
+def test_collect_yelp_businesses_no_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_yelp
+
+    monkeypatch.delenv("YELP_API_KEY", raising=False)
+    with pytest.raises(SystemExit) as excinfo:
+        etl_yelp.collect_yelp_businesses()
+    assert excinfo.value.code == 1
+
+
+def test_collect_yelp_businesses_request_exception(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import requests
+    from src.data import etl_yelp
+
+    monkeypatch.setenv("YELP_API_KEY", "fake_key")
+    monkeypatch.setattr(
+        etl_yelp,
+        "ANCHOR_POINTS",
+        [{"latitude": 40.7, "longitude": -73.9, "anchor_name": "test"}],
+    )
+    monkeypatch.setattr(etl_yelp, "SEARCH_TERMS", ["food"])
+    monkeypatch.setattr(etl_yelp, "OFFSETS", [0])
+    monkeypatch.setattr(etl_yelp, "OUTPUT_PATH", str(tmp_path / "out.csv"))
+    monkeypatch.setattr(
+        etl_yelp, "SNAPSHOT_PATH_TEMPLATE", str(tmp_path / "snap_{date}.csv")
+    )
+
+    def mock_get(*args, **kwargs):
+        raise requests.RequestException("API error")
+
+    monkeypatch.setattr(requests, "get", mock_get)
+
+    result = etl_yelp.collect_yelp_businesses()
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
+
+
+def test_collect_yelp_businesses_empty_payload(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import requests
+    from src.data import etl_yelp
+
+    monkeypatch.setenv("YELP_API_KEY", "fake_key")
+    monkeypatch.setattr(
+        etl_yelp,
+        "ANCHOR_POINTS",
+        [{"latitude": 40.7, "longitude": -73.9, "anchor_name": "test"}],
+    )
+    monkeypatch.setattr(etl_yelp, "SEARCH_TERMS", ["food"])
+    monkeypatch.setattr(etl_yelp, "OFFSETS", [0])
+    monkeypatch.setattr(etl_yelp, "OUTPUT_PATH", str(tmp_path / "out.csv"))
+    monkeypatch.setattr(
+        etl_yelp, "SNAPSHOT_PATH_TEMPLATE", str(tmp_path / "snap_{date}.csv")
+    )
+
+    class MockResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"businesses": []}
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: MockResponse())
+
+    result = etl_yelp.collect_yelp_businesses()
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
+
+
+def test_collect_yelp_businesses_success(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import requests
+    from src.data import etl_yelp
+
+    monkeypatch.setenv("YELP_API_KEY", "fake_key")
+    monkeypatch.setattr(
+        etl_yelp,
+        "ANCHOR_POINTS",
+        [{"latitude": 40.7, "longitude": -73.9, "anchor_name": "test"}],
+    )
+    monkeypatch.setattr(etl_yelp, "SEARCH_TERMS", ["food"])
+    monkeypatch.setattr(etl_yelp, "OFFSETS", [0])
+    monkeypatch.setattr(etl_yelp, "OUTPUT_PATH", str(tmp_path / "out.csv"))
+    monkeypatch.setattr(
+        etl_yelp, "SNAPSHOT_PATH_TEMPLATE", str(tmp_path / "snap_{date}.csv")
+    )
+
+    class MockResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {
+                "businesses": [
+                    {
+                        "id": "b1",
+                        "name": "Test Restaurant",
+                        "categories": [{"title": "Indian"}],
+                        "rating": 4.2,
+                        "review_count": 50,
+                        "price": "$$",
+                        "is_closed": False,
+                        "coordinates": {"latitude": 40.7, "longitude": -73.9},
+                    }
+                ]
+            }
+
+    monkeypatch.setattr(requests, "get", lambda *a, **k: MockResponse())
+    monkeypatch.setattr(etl_yelp, "REQUEST_SLEEP_SECONDS", 0)
+
+    result = etl_yelp.collect_yelp_businesses()
+    assert isinstance(result, pd.DataFrame)
+    assert not result.empty
+    assert "id" in result.columns
+    assert "name" in result.columns
+    assert "rating" in result.columns
+    assert result.iloc[0]["id"] == "b1"
+
+
+# ── etl_acs — NYC NTA profile extract ────────────────────────────────────────
+
+
+def test_etl_acs_transform_nyc_profile_extract(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data.etl_acs import _transform
+
+    monkeypatch.setenv("ACS_YEAR", "2024")
+    df = pd.DataFrame(
+        {"GeoID": ["BK09"], "Pop16plE": ["5000"], "MdHHIncE": ["75000"]}
+    )
+    result = _transform(df)
+    assert list(result.columns) == ["year", "nta_id", "median_income", "population", "rent_burden"]
+    assert result.iloc[0]["nta_id"] == "BK09"
+    assert result.iloc[0]["population"] == 5000
+    assert result.iloc[0]["median_income"] == 75000
+    assert pd.isna(result.iloc[0]["rent_burden"])
+
+
+# ── etl_airbnb — _read_local exception ───────────────────────────────────────
+
+
+def test_etl_airbnb_read_local_unreadable_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    from src.data import etl_airbnb
+
+    bad_file = tmp_path / "corrupt.csv"
+    bad_file.write_bytes(b"\x00\x01\x02")
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV", bad_file)
+    monkeypatch.setattr(etl_airbnb, "_RAW_CSV_GZ", tmp_path / "nonexistent.csv.gz")
+
+    def mock_read_csv(*args, **kwargs):
+        raise pd.errors.ParserError("Corrupt file")
+
+    monkeypatch.setattr(pd, "read_csv", mock_read_csv)
+
+    result = etl_airbnb._read_local(limit=50000)
+    assert result is None
+
+
+# ── etl_citibike — LFS pointer detection ─────────────────────────────────────
+
+
+def test_etl_citibike_run_etl_lfs_pointer(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from src.data import etl_citibike
+
+    lfs_file = tmp_path / "citibike.zip"
+    lfs_file.write_bytes(b"version https://git-lfs.github.com/spec/v1\n")
+    monkeypatch.setattr(etl_citibike, "_RAW_ZIP", lfs_file)
+
+    # Mock requests.get to raise RuntimeError to abort the download path
+    def mock_get(*args, **kwargs):
+        raise RuntimeError("Abort download after LFS detection")
+
+    monkeypatch.setattr("requests.get", mock_get)
+
+    # We expect the RuntimeError we raised to be caught by etl_citibike and return placeholder
+    # OR we can explicitly check that line 100 was hit by catching the RuntimeError if it bubbled up.
+    # Looking at etl_citibike.py, it catches Exception and returns run_placeholder_etl().
+    result = etl_citibike.run_etl()
+    assert result.empty  # Placeholder returns empty frame
+
+
+# ── etl_licenses — business_unique_id fallback ───────────────────────────────
+
+
+def test_etl_licenses_transform_adds_business_unique_id_na() -> None:
+    from src.data.etl_licenses import transform
+
+    df = pd.DataFrame(
+        {
+            "license_creation_date": ["2024-01-01"],
+            "nta": ["BK09"],
+            "business_category": ["Restaurant"],
+            "license_status": ["Active"],
+        }
+    )
+    result = transform(df)
+    assert "business_unique_id" in result.columns
+    assert result.iloc[0]["business_unique_id"] == "UNKNOWN"
+
+
+# ── etl_pluto — _get_zip_to_nta exception ────────────────────────────────────
+
+
+def test_etl_pluto_transform_zip_to_nta_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_pluto
+
+    def mock_get_zip_to_nta():
+        raise RuntimeError("Mocked exception")
+
+    monkeypatch.setattr("src.data.etl_inspections._get_zip_to_nta", mock_get_zip_to_nta)
+
+    df = pd.DataFrame(
+        {
+            "yearbuilt": ["1990"],
+            "zipcode": ["11201"],
+            "comarea": ["5000"],
+            "retailarea": ["1000"],
+            "lotarea": ["10000"],
+            "bldgarea": ["8000"],
+            "assesstot": ["1000000"],
+        }
+    )
+    result = etl_pluto.transform(df)
+    # Since zip_nta is empty and borough is missing, nta_id should be NaN or empty
+    assert result["nta_id"].isna().all()
+
+
+# ── quality — dedupe_columns fallback ────────────────────────────────────────
+
+
+def test_prepare_embedding_corpus_dedupe_fallback_after_filtering() -> None:
+    from src.data.quality import prepare_embedding_corpus
+
+    df = pd.DataFrame({"review_text": ["long enough review", "long enough review", "another long review"]})
+    # dedupe_columns=['nonexistent'] should filter to [] and then fallback to ['review_text']
+    result, report = prepare_embedding_corpus(df, dedupe_columns=["nonexistent"])
+    assert len(result) == 2
+    assert "long enough review" in result["review_text"].values
+    assert "another long review" in result["review_text"].values
+
+
+def test_etl_acs_transform_invalid_schema():
+    from src.data.etl_acs import _transform
+    with pytest.raises(ValueError, match='does not match expected schema'):
+        _transform(pd.DataFrame({'wrong_col': [1]}))

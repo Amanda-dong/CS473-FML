@@ -83,10 +83,12 @@ def embed_reviews(
 
     actual_components = min(n_components, tfidf.shape[1] - 1)
     if actual_components < 1:
-        actual_components = 1
-
-    svd = TruncatedSVD(n_components=actual_components, random_state=42)
-    reduced = svd.fit_transform(tfidf)
+        # If we have only 1 feature, we can't reduce it further with SVD
+        # (SVD requires n_components < n_features). Just use the TF-IDF as-is.
+        reduced = tfidf.toarray()
+    else:
+        svd = TruncatedSVD(n_components=actual_components, random_state=42)
+        reduced = svd.fit_transform(tfidf)
 
     # Pad to _EMBEDDING_DIM if needed
     if reduced.shape[1] < _EMBEDDING_DIM:

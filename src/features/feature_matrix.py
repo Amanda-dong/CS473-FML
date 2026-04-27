@@ -440,7 +440,7 @@ def _load_gemini_review_features(
     if not _GEMINI_CACHE.exists():
         return pd.DataFrame()
     try:
-        from src.nlp.review_aggregates import aggregate_review_labels
+        from src.nlp.review_aggregates import aggregate_review_labels, aggregate_full_halal_review_features
 
         labels_df = pd.read_csv(_GEMINI_CACHE)
         if "zone_id" not in labels_df.columns and not restaurant_locations.empty:
@@ -451,7 +451,7 @@ def _load_gemini_review_features(
             )
         if "time_key" not in labels_df.columns:
             labels_df["time_key"] = _GEMINI_FALLBACK_TIME_KEY
-        return aggregate_review_labels(labels_df)
+        return aggregate_full_halal_review_features(labels_df)
     except Exception:
         logger.warning(
             "feature_matrix: failed to load Gemini review features", exc_info=True
