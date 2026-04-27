@@ -62,7 +62,9 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
             "community_board": "community_district",
         }
     )
-    df["_created_date"] = pd.to_datetime(df["_created_date"], errors="coerce")
+    df["_created_date"] = pd.to_datetime(
+        df["_created_date"], format="mixed", errors="coerce"
+    )
     df = df.dropna(subset=["_created_date"])
     df["month"] = df["_created_date"].dt.strftime("%Y-%m")
     df["community_district"] = df["community_district"].fillna("Unknown")
