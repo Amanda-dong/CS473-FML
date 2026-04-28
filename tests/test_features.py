@@ -1161,22 +1161,25 @@ def test_prepare_social_signals_agg_empty() -> None:
     df = pd.DataFrame({"community_district": ["Invalid"], "year": [2024]})
     assert _prepare_social_signals(df).empty
 
+
 def test_load_gemini_review_features_success(monkeypatch, tmp_path):
     import src.features.feature_matrix as fm
     from src.features.feature_matrix import _load_gemini_review_features
-    
+
     cache_path = tmp_path / "gemini_labels.csv"
-    pd.DataFrame({
-        "restaurant_id": ["r1"],
-        "time_key": [2024],
-        "zone_id": ["bk-tandon"],
-        "rating": [5],
-        "sentiment": ["positive"],
-        "halal_relevance": ["explicit_halal"],
-        "concept_subtype": ["indian"],
-        "confidence": [0.9]
-    }).to_csv(cache_path, index=False)
-    
+    pd.DataFrame(
+        {
+            "restaurant_id": ["r1"],
+            "time_key": [2024],
+            "zone_id": ["bk-tandon"],
+            "rating": [5],
+            "sentiment": ["positive"],
+            "halal_relevance": ["explicit_halal"],
+            "concept_subtype": ["indian"],
+            "confidence": [0.9],
+        }
+    ).to_csv(cache_path, index=False)
+
     monkeypatch.setattr(fm, "_GEMINI_CACHE", cache_path)
     # This should hit lines in _load_gemini_review_features
     res = _load_gemini_review_features(pd.DataFrame(), pd.DataFrame())

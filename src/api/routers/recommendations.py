@@ -40,6 +40,7 @@ def _safe_float(value: object, fallback: float) -> float:
     except (ValueError, TypeError):
         return fallback
 
+
 # ---------------------------------------------------------------------------
 # Lazy-loaded trained models (None = fall back to heuristic)
 # ---------------------------------------------------------------------------

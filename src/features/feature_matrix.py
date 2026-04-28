@@ -274,7 +274,9 @@ def build_zone_year_matrix(
     if airbnb_static is not None and not merged.empty:
         merged = merged.merge(airbnb_static, on="zone_id", how="left")
     elif airbnb_static is not None:
-        merged = merged.merge(airbnb_static, on="zone_id", how="outer")  # pragma: no cover
+        merged = merged.merge(
+            airbnb_static, on="zone_id", how="outer"
+        )  # pragma: no cover
 
     # --- Upgrade healthy_review_share with Gemini labels if cache exists ---
     gemini_features = _load_gemini_review_features(yelp_df, review_locations)
