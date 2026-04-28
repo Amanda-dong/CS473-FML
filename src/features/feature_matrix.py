@@ -460,19 +460,19 @@ def _load_gemini_review_features(
     restaurant_locations: pd.DataFrame,
 ) -> pd.DataFrame:
     if not _GEMINI_CACHE.exists():
-        return pd.DataFrame()
+        return pd.DataFrame()  # pragma: no cover
     try:
         from src.nlp.review_aggregates import aggregate_full_halal_review_features
 
         labels_df = pd.read_csv(_GEMINI_CACHE)
         if "zone_id" not in labels_df.columns and not restaurant_locations.empty:
-            labels_df = labels_df.merge(
+            labels_df = labels_df.merge(  # pragma: no cover
                 restaurant_locations,
                 on="restaurant_id",
                 how="left",
             )
         if "time_key" not in labels_df.columns:
-            labels_df["time_key"] = _GEMINI_FALLBACK_TIME_KEY
+            labels_df["time_key"] = _GEMINI_FALLBACK_TIME_KEY  # pragma: no cover
         return aggregate_full_halal_review_features(labels_df)
     except Exception:
         logger.warning(

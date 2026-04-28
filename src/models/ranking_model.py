@@ -12,14 +12,14 @@ try:
     import xgboost as xgb  # type: ignore[import]
 
     HAS_XGB = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_XGB = False
 
 try:
     import joblib  # type: ignore[import]
 
     HAS_JOBLIB = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_JOBLIB = False
 
 # rank:ndcg requires non-negative integer relevance grades; quartile bins

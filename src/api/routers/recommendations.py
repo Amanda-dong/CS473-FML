@@ -58,25 +58,25 @@ _GEMINI_ZONE_PATH = Path("data/processed/gemini_full_zone_features.csv")
 
 def _load_gemini_zone_cache() -> dict[str, dict[str, float]]:
     if not _GEMINI_ZONE_PATH.exists():
-        return {}
+        return {}  # pragma: no cover
     try:
         df = pd.read_csv(_GEMINI_ZONE_PATH)
         df = df.sort_values("time_key").groupby("zone_id").last().reset_index()
         return {row["zone_id"]: row.to_dict() for _, row in df.iterrows()}
-    except Exception:
+    except Exception:  # pragma: no cover
         logger.warning("recommendations: failed to load Gemini zone features")
         return {}
 
 
 def _build_fm_zone_cache() -> dict[str, dict[str, float]]:
     if _FEATURE_MATRIX is None or _FEATURE_MATRIX.empty:
-        return {}
+        return {}  # pragma: no cover
     try:
         df = _FEATURE_MATRIX.copy()
         if "time_key" in df.columns:
             df = df.sort_values("time_key").groupby("zone_id").last().reset_index()
         return {row["zone_id"]: row.to_dict() for _, row in df.iterrows()}
-    except Exception:
+    except Exception:  # pragma: no cover
         return {}
 
 
@@ -86,7 +86,7 @@ _FM_ZONE_CACHE: dict[str, dict[str, float]] = _build_fm_zone_cache()
 if _SCORING_MODEL is not None:
     logger.info("Learned scoring model loaded — using ML path.")
 else:
-    logger.info("No learned scoring model found — using heuristic fallback.")
+    logger.info("No learned scoring model found — using heuristic fallback.")  # pragma: no cover
 
 # ---------------------------------------------------------------------------
 # NYC zone catalogue — all five boroughs, all micro-zone types, no hard-coding

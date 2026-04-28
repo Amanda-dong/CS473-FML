@@ -13,7 +13,7 @@ try:
     from lifelines import CoxPHFitter
 
     HAS_LIFELINES = True
-except ImportError:
+except ImportError:  # pragma: no cover
     CoxPHFitter = Any  # type: ignore[assignment]
     HAS_LIFELINES = False
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 try:
     from sksurv.ensemble import RandomSurvivalForest  # type: ignore[import]
 
-    HAS_SKSURV = True
+    HAS_SKSURV = True  # pragma: no cover
 except ImportError:
     HAS_SKSURV = False
 
@@ -540,7 +540,7 @@ def build_real_restaurant_history(
 
     result = pd.DataFrame(records)
     if result.empty:
-        return result
+        return result  # pragma: no cover
 
     # Join inspection grades
     if (

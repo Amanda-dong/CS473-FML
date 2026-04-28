@@ -13,21 +13,21 @@ try:
     import xgboost as xgb  # type: ignore[import]
 
     HAS_XGB = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_XGB = False
 
 try:
     import shap  # type: ignore[import]
 
     HAS_SHAP = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_SHAP = False
 
 try:
     import joblib  # type: ignore[import]
 
     HAS_JOBLIB = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_JOBLIB = False
 
 

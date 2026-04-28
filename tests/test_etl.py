@@ -1982,3 +1982,15 @@ def test_prepare_embedding_corpus_else_branch_dedupe():
     # Hits line 71: dedupe_columns is NOT None
     res, rep = prepare_embedding_corpus(df, dedupe_columns=["col1"])
     assert len(res) == 2
+
+
+def test_etl_airbnb_run_etl_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_airbnb
+
+    good_result = pd.DataFrame(
+        {"nta_id": ["MN01"], "listing_count": [5], "entire_home_ratio": [0.6]}
+    )
+    monkeypatch.setattr(etl_airbnb, "_read_local", lambda limit: pd.DataFrame({"latitude": [40.7], "longitude": [-74.0]}))
+    monkeypatch.setattr(etl_airbnb, "_transform", lambda df: good_result)
+    result = etl_airbnb.run_etl(limit=5)
+    assert list(result["nta_id"]) == ["MN01"]

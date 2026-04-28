@@ -571,3 +571,18 @@ async def test_lifespan_runs():
 
     async with lifespan(app):
         pass
+
+
+# ── _safe_float ───────────────────────────────────────────────────────────────
+
+
+def test_safe_float_none_returns_fallback():
+    from src.api.routers.recommendations import _safe_float
+
+    assert _safe_float(None, 0.5) == 0.5
+
+
+def test_safe_float_non_numeric_returns_fallback():
+    from src.api.routers.recommendations import _safe_float
+
+    assert _safe_float(object(), 0.5) == 0.5
