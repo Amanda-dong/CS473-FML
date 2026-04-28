@@ -1121,3 +1121,63 @@ def test_agg_to_zone_direct() -> None:
     # It's nested in build_zone_year_matrix. This is tricky.
     # I'll just make sure my other tests hit the cases.
     pass
+
+
+def test_prepare_social_signals_empty_cases() -> None:
+    from src.features.feature_matrix import _prepare_social_signals
+
+    # 453: return _empty
+    assert _prepare_social_signals(pd.DataFrame()).empty
+    assert _prepare_social_signals(None).empty
+    assert _prepare_social_signals(pd.DataFrame({"a": [1]})).empty
+
+
+def test_prepare_review_signals_no_ids() -> None:
+    from src.features.feature_matrix import _prepare_review_signals
+
+    # 349: no zone_id or nta_id
+    df = pd.DataFrame({"review_text": ["good"], "review_date": ["2024-01-01"]})
+    assert _prepare_review_signals(df).empty
+
+
+def test_feature_matrix_airbnb_only() -> None:
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    # Hits the new logic: only airbnb_static present
+    etl_outputs = {
+        "airbnb": pd.DataFrame(
+            {"nta_id": ["BK09"], "listing_count": [10], "entire_home_ratio": [0.5]}
+        )
+    }
+    result = build_zone_year_matrix(etl_outputs)
+    assert "listing_count" in result.columns
+    assert "time_key" in result.columns
+
+
+def test_prepare_social_signals_agg_empty() -> None:
+    from src.features.feature_matrix import _prepare_social_signals
+
+    # 447, 448: agg.dropna(subset=["zone_id"]) makes it empty
+    df = pd.DataFrame({"community_district": ["Invalid"], "year": [2024]})
+    assert _prepare_social_signals(df).empty
+
+def test_load_gemini_review_features_success(monkeypatch, tmp_path):
+    import src.features.feature_matrix as fm
+    from src.features.feature_matrix import _load_gemini_review_features
+    
+    cache_path = tmp_path / "gemini_labels.csv"
+    pd.DataFrame({
+        "restaurant_id": ["r1"],
+        "time_key": [2024],
+        "zone_id": ["bk-tandon"],
+        "rating": [5],
+        "sentiment": ["positive"],
+        "halal_relevance": ["explicit_halal"],
+        "concept_subtype": ["indian"],
+        "confidence": [0.9]
+    }).to_csv(cache_path, index=False)
+    
+    monkeypatch.setattr(fm, "_GEMINI_CACHE", cache_path)
+    # This should hit lines in _load_gemini_review_features
+    res = _load_gemini_review_features(pd.DataFrame(), pd.DataFrame())
+    assert not res.empty

@@ -108,7 +108,5 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
 
     result = _transform(df)
     if result.empty:
-        raise RuntimeError(
-            "etl_airbnb: transform returned empty frame — no valid listings"
-        )  # pragma: no cover
+        raise RuntimeError("etl_airbnb: transform returned empty frame — no valid listings")  # pragma: no cover
     return result

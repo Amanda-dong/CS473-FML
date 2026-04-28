@@ -1973,3 +1973,12 @@ def test_etl_acs_transform_invalid_schema():
 
     with pytest.raises(ValueError, match="does not match expected schema"):
         _transform(pd.DataFrame({"wrong_col": [1]}))
+
+
+def test_prepare_embedding_corpus_else_branch_dedupe():
+    from src.data.quality import prepare_embedding_corpus
+
+    df = pd.DataFrame({"review_text": ["a" * 10, "b" * 10], "col1": [1, 2]})
+    # Hits line 71: dedupe_columns is NOT None
+    res, rep = prepare_embedding_corpus(df, dedupe_columns=["col1"])
+    assert len(res) == 2

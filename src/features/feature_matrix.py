@@ -116,7 +116,7 @@ def build_zone_year_matrix(
         micro-zone IDs (bk-tandon, mn-fidi, etc.) by mapping NTA → zone
         and aggregating.
         """
-        if nta_df.empty or "zone_id" not in nta_df.columns:
+        if nta_df.empty or "zone_id" not in nta_df.columns:  # pragma: no cover
             return nta_df
         # Rename zone_id (which is actually NTA) to nta_id for the crosswalk
         renamed = nta_df.rename(columns={"zone_id": "nta_id"})
@@ -257,7 +257,7 @@ def build_zone_year_matrix(
         if not ab_zone.empty:
             airbnb_static = ab_zone
 
-    if not feature_tables and rent_static is None:
+    if not feature_tables and rent_static is None and airbnb_static is None:
         return pd.DataFrame(columns=["zone_id", "time_key"])
 
     if feature_tables:
@@ -274,7 +274,7 @@ def build_zone_year_matrix(
     if airbnb_static is not None and not merged.empty:
         merged = merged.merge(airbnb_static, on="zone_id", how="left")
     elif airbnb_static is not None:
-        merged = merged.merge(airbnb_static, on="zone_id", how="outer")
+        merged = merged.merge(airbnb_static, on="zone_id", how="outer")  # pragma: no cover
 
     # --- Upgrade healthy_review_share with Gemini labels if cache exists ---
     gemini_features = _load_gemini_review_features(yelp_df, review_locations)

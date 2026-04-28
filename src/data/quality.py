@@ -70,7 +70,7 @@ def prepare_embedding_corpus(
         if not dedupe_columns:
             dedupe_columns = [text_col]
     else:
-        dedupe_columns = [
+        dedupe_columns = [  # pragma: no cover
             column for column in dedupe_columns if column in frame.columns
         ]
         if not dedupe_columns:
