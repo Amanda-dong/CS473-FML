@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import logging
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -28,6 +29,17 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["recommendations"])
 
+
+def _safe_float(value: object, fallback: float) -> float:
+    """Return fallback when value is None, NaN, or non-numeric."""
+    if value is None:
+        return fallback
+    try:
+        f = float(value)  # type: ignore[arg-type]
+        return fallback if np.isnan(f) else f
+    except (ValueError, TypeError):
+        return fallback
+
 # ---------------------------------------------------------------------------
 # Lazy-loaded trained models (None = fall back to heuristic)
 # ---------------------------------------------------------------------------
@@ -39,6 +51,36 @@ _FEATURE_MATRIX = load_feature_matrix(
         "data/models/feature_matrix.parquet",
     )
 )
+
+_GEMINI_ZONE_PATH = Path("data/processed/gemini_full_zone_features.csv")
+
+
+def _load_gemini_zone_cache() -> dict[str, dict[str, float]]:
+    if not _GEMINI_ZONE_PATH.exists():
+        return {}
+    try:
+        df = pd.read_csv(_GEMINI_ZONE_PATH)
+        df = df.sort_values("time_key").groupby("zone_id").last().reset_index()
+        return {row["zone_id"]: row.to_dict() for _, row in df.iterrows()}
+    except Exception:
+        logger.warning("recommendations: failed to load Gemini zone features")
+        return {}
+
+
+def _build_fm_zone_cache() -> dict[str, dict[str, float]]:
+    if _FEATURE_MATRIX is None or _FEATURE_MATRIX.empty:
+        return {}
+    try:
+        df = _FEATURE_MATRIX.copy()
+        if "time_key" in df.columns:
+            df = df.sort_values("time_key").groupby("zone_id").last().reset_index()
+        return {row["zone_id"]: row.to_dict() for _, row in df.iterrows()}
+    except Exception:
+        return {}
+
+
+_GEMINI_ZONE_CACHE: dict[str, dict[str, float]] = _load_gemini_zone_cache()
+_FM_ZONE_CACHE: dict[str, dict[str, float]] = _build_fm_zone_cache()
 
 if _SCORING_MODEL is not None:
     logger.info("Learned scoring model loaded — using ML path.")
@@ -246,6 +288,19 @@ def _build_features(
     )
     demand, gap, surv, rent, comp, review, vel, transit, income = seed
 
+    # Override with real Gemini halal demand features where available
+    gz = _GEMINI_ZONE_CACHE.get(zone_id, {})
+    if gz:
+        demand = _safe_float(gz.get("halal_related_share"), demand)
+        gap = _safe_float(gz.get("subtype_gap"), gap)
+        review = _safe_float(gz.get("overall_positive_rate"), review)
+
+    # Override with real feature matrix values where available
+    fm = _FM_ZONE_CACHE.get(zone_id, {})
+    if fm:
+        vel = _safe_float(fm.get("license_velocity"), vel)
+        rent = _safe_float(fm.get("rent_pressure"), rent)
+
     cuisine_bias = _CUISINE_GAP_BIAS.get(zone_type, {}).get(concept_subtype, 0.0)
     risk_adj = _RISK_ADJUST.get(risk_tolerance, 0.0)
     # Price tier adjusts income alignment: premium needs high income, budget needs low
@@ -271,6 +326,12 @@ def _build_features(
         "income_alignment": final_income,
         "healthy_supply_ratio": 1.0 - final_gap,
         "healthy_gap_score": max(0.0, final_gap * demand - comp * 0.3),
+        "halal_related_share": _safe_float(gz.get("halal_related_share"), demand)
+        if gz
+        else demand,
+        "explicit_halal_share": _safe_float(gz.get("explicit_halal_share"), 0.0)
+        if gz
+        else 0.0,
     }
 
 
