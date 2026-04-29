@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pandas as pd
 
 # Maps each of the 27 micro-zone IDs to 2020 NYC NTA codes.
-ZONE_TO_NTA: dict[str, list[str]] = {
+_BASE_ZONE_TO_NTA: dict[str, list[str]] = {
     # Brooklyn
     "bk-tandon": ["BK09"],  # Downtown Brooklyn-DUMBO-Boerum Hill
     "bk-downtownbk": ["BK09"],  # Downtown Brooklyn-DUMBO-Boerum Hill
@@ -30,15 +33,66 @@ ZONE_TO_NTA: dict[str, list[str]] = {
     "qn-jackson-hts": ["QN57"],  # Jackson Heights
     "qn-forest-hills": ["QN17"],  # Forest Hills
     "qn-jamaica": ["QN61"],  # Jamaica
+    # Queens expansion zones (higher-coverage neighborhood buckets)
+    "qn-college-point-whitestone": ["QN49"],  # College Point / Whitestone adj.
+    "qn-murray-hill-flushing": ["QN50"],  # Murray Hill / Flushing adj.
+    "qn-elmhurst-corona": ["QN27", "QN26"],  # Elmhurst + Corona
+    "qn-rego-middle": ["QN18"],  # Rego Park / Middle Village
     # Bronx
     "bx-fordham": ["BX06"],  # Fordham
     "bx-mott-haven": ["BX01"],  # Mott Haven-Port Morris
     "bx-co-op-city": ["BX44"],  # Co-op City
     "bx-tremont": ["BX09"],  # East Tremont
+    # Bronx expansion zones
+    "bx-south-hub": ["BX03", "BX05"],  # Morrisania / Melrose / Hunts Point adj.
+    "bx-west-corridor": ["BX07", "BX08"],  # Kingsbridge Heights / Riverdale adj.
+    "bx-east-corridor": ["BX26", "BX46"],  # Parkchester / Throgs Neck adj.
     # Staten Island
     "si-st-george": ["SI07"],  # St. George
     "si-new-spring": ["SI11"],  # New Springville-Bloomfield-Travis
+    # Brooklyn expansion zones
+    "bk-bushwick-ridgewood": ["BK77"],  # Bushwick North / East Williamsburg adj.
+    "bk-bayridge-benson": ["BK31", "BK32"],  # Bay Ridge / Bensonhurst adj.
+    "bk-flatbush-midwood": ["BK41", "BK43"],  # Flatbush / Midwood adj.
 }
+
+
+def _generic_zone_id(nta_code: str) -> str:
+    """Create a stable synthetic zone id for full-NTA fallback coverage."""
+    return f"nta-{nta_code.strip().lower()}"
+
+
+def _load_all_nta_codes() -> list[str]:
+    """Load all NYC 2010 NTA codes from local GeoJSON when available."""
+    geojson_path = Path("data/raw/nta_nyc_2010.geojson")
+    if not geojson_path.exists():
+        return []
+    try:
+        payload = json.loads(geojson_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    features = payload.get("features", [])
+    codes: set[str] = set()
+    for feature in features:
+        props = feature.get("properties", {}) if isinstance(feature, dict) else {}
+        nta = str(props.get("nta", "")).strip().upper()
+        if nta:
+            codes.add(nta)
+    return sorted(codes)
+
+
+def _build_zone_to_nta() -> dict[str, list[str]]:
+    """Return crosswalk that preserves base zones and fills all remaining NTAs."""
+    mapping = {zone_id: list(ntas) for zone_id, ntas in _BASE_ZONE_TO_NTA.items()}
+    covered = {nta for ntas in mapping.values() for nta in ntas}
+    for nta in _load_all_nta_codes():
+        if nta in covered:
+            continue
+        mapping[_generic_zone_id(nta)] = [nta]
+    return mapping
+
+
+ZONE_TO_NTA: dict[str, list[str]] = _build_zone_to_nta()
 
 # Reverse lookup: NTA code -> list of zone IDs
 NTA_TO_ZONES: dict[str, list[str]] = {}
