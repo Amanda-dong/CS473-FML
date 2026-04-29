@@ -40,9 +40,12 @@ def main() -> int:
     args = parser.parse_args()
 
     base = args.base_url.rstrip("/")
+
+    # (method, url, payload, required_keys)
+    # required_keys: dot-path strings; "query.train_window" means body["query"]["train_window"]
     checks = [
-        ("GET", f"{base}/health", None),
-        ("GET", f"{base}/datasets", None),
+        ("GET", f"{base}/health", None, []),
+        ("GET", f"{base}/datasets", None, []),
         (
             "POST",
             f"{base}/predict/cmf",
@@ -52,18 +55,37 @@ def main() -> int:
                 "risk_tolerance": "balanced",
                 "price_tier": "mid",
             },
+            ["query.train_window", "query.model_version", "recommendations"],
         ),
-        ("POST", f"{base}/predict/trajectory", {"concept_subtype": "ramen"}),
+        (
+            "POST",
+            f"{base}/predict/trajectory",
+            {"concept_subtype": "ramen"},
+            ["train_window", "model_version", "trajectory_cluster"],
+        ),
     ]
 
     failed = False
-    for method, url, payload in checks:
+    for method, url, payload, required_keys in checks:
         status, body = _request(method, url, payload)
         ok = 200 <= status < 300
         print(f"[{'OK' if ok else 'FAIL'}] {method} {url} -> {status}")
         if not ok:
             print(f"  Body: {body}")
             failed = True
+            continue
+        for key_path in required_keys:
+            parts = key_path.split(".")
+            node = body
+            missing = False
+            for part in parts:
+                if not isinstance(node, dict) or part not in node:
+                    missing = True
+                    break
+                node = node[part]
+            if missing:
+                print(f"  [FAIL] missing field: {key_path}")
+                failed = True
 
     if failed:
         return 1
