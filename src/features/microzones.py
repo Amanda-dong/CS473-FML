@@ -24,14 +24,20 @@ def default_microzones() -> list[MicrozoneDefinition]:
             "tandon-campus", "campus_walkshed", "NYU Tandon / MetroTech", "frontend"
         ),
         MicrozoneDefinition(
-            "bushwick-campus", "campus_walkshed", "Pratt Institute / Bushwick", "frontend"
+            "bushwick-campus",
+            "campus_walkshed",
+            "Pratt Institute / Bushwick",
+            "frontend",
         ),
         # lunch_corridor
         MicrozoneDefinition(
             "midtown-lunch", "lunch_corridor", "Midtown East Lunch Corridor", "frontend"
         ),
         MicrozoneDefinition(
-            "flatiron-lunch", "lunch_corridor", "Flatiron / Madison Square Park", "frontend"
+            "flatiron-lunch",
+            "lunch_corridor",
+            "Flatiron / Madison Square Park",
+            "frontend",
         ),
         # transit_catchment
         MicrozoneDefinition(
@@ -45,6 +51,9 @@ def default_microzones() -> list[MicrozoneDefinition]:
             "dumbo-biz", "business_district", "DUMBO / Brooklyn Tech Triangle", "data"
         ),
         MicrozoneDefinition(
-            "hudson-yards-biz", "business_district", "Hudson Yards / West Chelsea", "frontend"
+            "hudson-yards-biz",
+            "business_district",
+            "Hudson Yards / West Chelsea",
+            "frontend",
         ),
     ]
