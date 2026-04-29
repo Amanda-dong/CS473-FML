@@ -280,10 +280,30 @@ def build_zone_year_matrix(
 
     # --- Upgrade healthy_review_share with Gemini labels if cache exists ---
     gemini_features = _load_gemini_review_features(yelp_df, review_locations)
-    if not gemini_features.empty and "healthy_review_share" in gemini_features.columns:
-        gemini_zone = _agg_to_zone(gemini_features)
+    if not gemini_features.empty and "zone_id" in gemini_features.columns:
+        gemini_ids = set(gemini_features["zone_id"].dropna().astype(str))
+        gemini_zone = (
+            gemini_features
+            if gemini_ids.intersection(crosswalk.keys())
+            else _agg_to_zone(gemini_features)
+        )
         if not gemini_zone.empty:
-            feature_tables["gemini_nlp"] = gemini_zone
+            join_keys = [
+                column
+                for column in ("zone_id", "time_key")
+                if column in merged.columns and column in gemini_zone.columns
+            ]
+            if merged.empty or not join_keys:
+                merged = gemini_zone
+            else:
+                overlap_cols = [
+                    column
+                    for column in gemini_zone.columns
+                    if column not in join_keys and column in merged.columns
+                ]
+                if overlap_cols:
+                    merged = merged.drop(columns=overlap_cols)
+                merged = merged.merge(gemini_zone, on=join_keys, how="outer")
 
     return merged
 
