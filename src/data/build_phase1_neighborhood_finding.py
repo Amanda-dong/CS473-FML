@@ -20,6 +20,10 @@ YELP_FILL_ZERO_COLUMNS = [
     "avg_rating",
     "total_review_count",
 ]
+CITIBIKE_FILL_ZERO_COLUMNS = [
+    "trip_count",
+    "unique_start_station_count",
+]
 
 
 def load_frame(path: Path) -> pd.DataFrame:
@@ -54,6 +58,8 @@ def main() -> None:
     phase1 = phase1.merge(yelp, on="nta", how="left")
 
     for column in YELP_FILL_ZERO_COLUMNS:
+        phase1[column] = phase1[column].fillna(0)
+    for column in CITIBIKE_FILL_ZERO_COLUMNS:
         phase1[column] = phase1[column].fillna(0)
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -18,24 +18,35 @@ CITIBIKE_GLOB = "citibike_202603/*.csv"
 
 
 def load_manhattan_ntas() -> gpd.GeoDataFrame:
-    """Public entry: Manhattan NTA polygons with ACS ``nta`` codes (for spatial joins)."""
+    """Backward-compatible entry returning Manhattan NTAs only."""
 
-    return _load_manhattan_ntas()
+    return _load_ntas(borough="manhattan")
 
 
-def _load_manhattan_ntas() -> gpd.GeoDataFrame:
+def _load_ntas(*, borough: str | None = None) -> gpd.GeoDataFrame:
     new_nta = gpd.read_file(NTA_GEOJSON_PATH)
     new_nta["boroname"] = new_nta["boroname"].astype(str)
-    new_manhattan = new_nta[new_nta["boroname"].str.lower() == "manhattan"].copy()
-    new_manhattan = new_manhattan[["nta2020", "ntaname", "geometry"]]
+    if borough:
+        new_nta = new_nta[new_nta["boroname"].str.lower() == borough.lower()].copy()
+    new_nta = new_nta[["nta2020", "ntaname", "geometry"]]
+
+    # Preferred path: map 2020 NTAs to legacy ACS NTAs via centroid spatial join.
+    # Some local setups do not include the old ACS geodatabase; in that case,
+    # gracefully fall back to using NTA2020 codes directly as ``nta``.
+    if not OLD_NTA_GDB_PATH.exists():
+        fallback = new_nta.copy()
+        fallback["nta"] = fallback["nta2020"]
+        fallback["nta_name"] = fallback["ntaname"]
+        return fallback[["nta2020", "nta", "nta_name", "geometry"]]
 
     old_nta = gpd.read_file(OLD_NTA_GDB_PATH, layer="NTA_ACS_Demographics")
     old_nta["BoroName"] = old_nta["BoroName"].astype(str)
-    old_manhattan = old_nta[old_nta["BoroName"].str.lower() == "manhattan"].copy()
-    old_manhattan = old_manhattan[["NTACode", "NTAName", "geometry"]]
+    if borough:
+        old_nta = old_nta[old_nta["BoroName"].str.lower() == borough.lower()].copy()
+    old_nta = old_nta[["NTACode", "NTAName", "geometry"]]
 
-    new_proj = new_manhattan.to_crs(2263)
-    old_proj = old_manhattan.to_crs(2263)
+    new_proj = new_nta.to_crs(2263)
+    old_proj = old_nta.to_crs(2263)
     centroid_points = gpd.GeoDataFrame(
         new_proj[["nta2020", "ntaname"]].copy(),
         geometry=new_proj.geometry.centroid,
@@ -48,10 +59,16 @@ def _load_manhattan_ntas() -> gpd.GeoDataFrame:
         predicate="within",
     )[["nta2020", "ntaname", "NTACode", "NTAName"]]
 
-    merged = new_manhattan.merge(crosswalk, on=["nta2020", "ntaname"], how="left")
+    merged = new_nta.merge(crosswalk, on=["nta2020", "ntaname"], how="left")
     merged = merged.rename(columns={"NTACode": "nta", "NTAName": "nta_name"})
     merged = merged.dropna(subset=["nta"]).copy()
     return merged[["nta2020", "nta", "nta_name", "geometry"]]
+
+
+def load_ntas() -> gpd.GeoDataFrame:
+    """Public entry: all NYC NTA polygons with ACS ``nta`` codes."""
+
+    return _load_ntas()
 
 
 def _spatial_join_points(
@@ -117,7 +134,6 @@ def build_hygiene_features() -> pd.DataFrame:
     hygiene["inspection_date"] = pd.to_datetime(
         hygiene["INSPECTION DATE"], errors="coerce"
     )
-    hygiene = hygiene[hygiene["BORO"].fillna("").str.lower() == "manhattan"].copy()
     hygiene["nta"] = hygiene["NTA"].fillna("").astype(str).str.strip()
     hygiene = hygiene[hygiene["nta"] != ""].copy()
     hygiene["SCORE"] = pd.to_numeric(hygiene["SCORE"], errors="coerce")
@@ -140,8 +156,7 @@ def build_hygiene_features() -> pd.DataFrame:
 
 def build_census_features() -> pd.DataFrame:
     census = pd.read_csv(CENSUS_PATH)
-    census = census[census["Borough"].fillna("").str.lower() == "manhattan"].copy()
-    nta_crosswalk = _load_manhattan_ntas()[["nta2020", "nta"]].drop_duplicates()
+    nta_crosswalk = load_ntas()[["nta2020", "nta"]].drop_duplicates()
     census = census.merge(
         nta_crosswalk, left_on="GeoID", right_on="nta2020", how="left"
     )
@@ -194,6 +209,10 @@ def build_citibike_features(nta_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
                 "unique_start_station_count": len(station_sets.get(nta, set())),
             }
         )
+    if not rows:
+        return pd.DataFrame(
+            columns=["nta", "trip_count", "unique_start_station_count"]
+        )
     return pd.DataFrame(rows)
 
 
@@ -206,7 +225,7 @@ def write_output(frame: pd.DataFrame, output_path: Path) -> None:
 
 
 def main() -> None:
-    nta_gdf = load_manhattan_ntas()
+    nta_gdf = load_ntas()
 
     yelp_features = build_yelp_features(nta_gdf)
     write_output(yelp_features, PROCESSED_DIR / "yelp_nta_features.csv")
