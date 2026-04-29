@@ -20,7 +20,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--dataset", required=True, help="Input CSV or parquet file.")
     parser.add_argument("--time-col", required=True, help="Time column for splits.")
-    parser.add_argument("--treatment-col", required=True, help="Binary treatment column.")
+    parser.add_argument(
+        "--treatment-col", required=True, help="Binary treatment column."
+    )
     parser.add_argument("--outcome-col", required=True, help="Outcome column.")
     parser.add_argument(
         "--feature-cols",
@@ -35,7 +37,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--outcome-definition", default="outcome")
     parser.add_argument("--min-train-periods", type=int, default=3)
     parser.add_argument("--test-size", type=int, default=1)
-    parser.add_argument("--window-type", choices=["expanding", "rolling"], default="expanding")
+    parser.add_argument(
+        "--window-type", choices=["expanding", "rolling"], default="expanding"
+    )
     parser.add_argument("--top-fraction", type=float, default=0.1)
     parser.add_argument("--random-state", type=int, default=42)
     parser.add_argument("--experiment-name", default="causal_uplift_model_v1")

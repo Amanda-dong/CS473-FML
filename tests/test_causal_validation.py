@@ -134,7 +134,9 @@ def test_run_causal_temporal_backtest_writes_required_outputs(tmp_path: Path) ->
 
     assert not summary.empty
     assert len(folds) == len(summary)
-    assert {"qini_coefficient", "ate", "uplift_top_decile", "policy_risk"}.issubset(summary.columns)
+    assert {"qini_coefficient", "ate", "uplift_top_decile", "policy_risk"}.issubset(
+        summary.columns
+    )
 
     output_dir = Path(config.output_dir)
     assert (output_dir / "time_series_performance.csv").exists()

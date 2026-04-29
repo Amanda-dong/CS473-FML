@@ -112,10 +112,14 @@ class TLearnerUpliftModel:
         self.control_model.fit(X_numeric.loc[control_mask], outcome.loc[control_mask])
 
         treated_importance = getattr(
-            self.treated_model, "feature_importances_", np.zeros(len(self.feature_names_))
+            self.treated_model,
+            "feature_importances_",
+            np.zeros(len(self.feature_names_)),
         )
         control_importance = getattr(
-            self.control_model, "feature_importances_", np.zeros(len(self.feature_names_))
+            self.control_model,
+            "feature_importances_",
+            np.zeros(len(self.feature_names_)),
         )
         avg_importance = (treated_importance + control_importance) / 2.0
         self.feature_importance_ = {
@@ -124,13 +128,19 @@ class TLearnerUpliftModel:
         }
 
     def predict_uplift(self, X: pd.DataFrame) -> np.ndarray:
-        X_numeric = _as_numeric_frame(X).reindex(columns=self.feature_names_, fill_value=0.0)
+        X_numeric = _as_numeric_frame(X).reindex(
+            columns=self.feature_names_, fill_value=0.0
+        )
         mu1 = self.treated_model.predict(X_numeric)
         mu0 = self.control_model.predict(X_numeric)
         return np.asarray(mu1 - mu0, dtype=float)
 
-    def predict_potential_outcomes(self, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
-        X_numeric = _as_numeric_frame(X).reindex(columns=self.feature_names_, fill_value=0.0)
+    def predict_potential_outcomes(
+        self, X: pd.DataFrame
+    ) -> tuple[np.ndarray, np.ndarray]:
+        X_numeric = _as_numeric_frame(X).reindex(
+            columns=self.feature_names_, fill_value=0.0
+        )
         mu1 = np.asarray(self.treated_model.predict(X_numeric), dtype=float)
         mu0 = np.asarray(self.control_model.predict(X_numeric), dtype=float)
         return mu1, mu0
@@ -170,12 +180,16 @@ def estimate_propensity_scores(
 
     X_numeric = _as_numeric_frame(X)
     treatment = pd.Series(treatment).astype(int)
-    propensity_model = clone(model) if model is not None else LogisticRegression(max_iter=1000)
+    propensity_model = (
+        clone(model) if model is not None else LogisticRegression(max_iter=1000)
+    )
     propensity_model.fit(X_numeric, treatment)
     if hasattr(propensity_model, "predict_proba"):
         propensity = propensity_model.predict_proba(X_numeric)[:, 1]
     else:
-        decision = np.asarray(propensity_model.decision_function(X_numeric), dtype=float)
+        decision = np.asarray(
+            propensity_model.decision_function(X_numeric), dtype=float
+        )
         propensity = 1.0 / (1.0 + np.exp(-decision))
     return np.clip(propensity, clip_min, clip_max)
 
@@ -197,11 +211,19 @@ def compute_standardized_mean_differences(
         control_values = control[column].to_numpy(dtype=float)
         treated_mean = _safe_mean(treated_values)
         control_mean = _safe_mean(control_values)
-        treated_var = float(np.var(treated_values, ddof=1)) if len(treated_values) > 1 else 0.0
-        control_var = float(np.var(control_values, ddof=1)) if len(control_values) > 1 else 0.0
+        treated_var = (
+            float(np.var(treated_values, ddof=1)) if len(treated_values) > 1 else 0.0
+        )
+        control_var = (
+            float(np.var(control_values, ddof=1)) if len(control_values) > 1 else 0.0
+        )
         pooled_sd = math.sqrt(max((treated_var + control_var) / 2.0, 0.0))
         if pooled_sd == 0:
-            smd = 0.0 if treated_mean == control_mean else math.copysign(float("inf"), treated_mean - control_mean)
+            smd = (
+                0.0
+                if treated_mean == control_mean
+                else math.copysign(float("inf"), treated_mean - control_mean)
+            )
         else:
             smd = (treated_mean - control_mean) / pooled_sd
         rows.append(
@@ -213,7 +235,11 @@ def compute_standardized_mean_differences(
                 "abs_smd": float(abs(smd)),
             }
         )
-    return pd.DataFrame(rows).sort_values("abs_smd", ascending=False).reset_index(drop=True)
+    return (
+        pd.DataFrame(rows)
+        .sort_values("abs_smd", ascending=False)
+        .reset_index(drop=True)
+    )
 
 
 def estimate_ate(
@@ -228,12 +254,18 @@ def estimate_ate(
     naive_ate = _safe_mean(y[t == 1]) - _safe_mean(y[t == 0])
 
     if propensity is None:
-        propensity = np.full_like(y, fill_value=np.clip(t.mean(), 0.05, 0.95), dtype=float)
+        propensity = np.full_like(
+            y, fill_value=np.clip(t.mean(), 0.05, 0.95), dtype=float
+        )
     propensity = np.clip(np.asarray(propensity, dtype=float), 0.05, 0.95)
 
     influence = (t * y / propensity) - ((1 - t) * y / (1 - propensity))
     ipw_ate = float(np.mean(influence))
-    se = float(np.std(influence, ddof=1) / math.sqrt(len(influence))) if len(influence) > 1 else 0.0
+    se = (
+        float(np.std(influence, ddof=1) / math.sqrt(len(influence)))
+        if len(influence) > 1
+        else 0.0
+    )
     z_score = 0.0 if se == 0 else ipw_ate / se
     p_value = float(math.erfc(abs(z_score) / math.sqrt(2.0)))
     ci_delta = 1.96 * se
@@ -273,8 +305,7 @@ def compute_uplift_curve(
         df["cum_control"].to_numpy(dtype=float),
     )
     df["incremental_gain"] = (
-        df["cum_treated_outcome"]
-        - df["cum_control_outcome"] * ratio
+        df["cum_treated_outcome"] - df["cum_control_outcome"] * ratio
     )
     total_gain = float(df["incremental_gain"].iloc[-1]) if not df.empty else 0.0
     df["random_baseline"] = df["population_fraction"] * total_gain
@@ -307,9 +338,9 @@ def compute_uplift_at_fraction(
     if frame.empty:
         return 0.0
     top_n = max(1, int(math.ceil(len(frame) * fraction)))
-    ranked = frame.assign(predicted_uplift=np.asarray(predicted_uplift, dtype=float)).nlargest(
-        top_n, "predicted_uplift"
-    )
+    ranked = frame.assign(
+        predicted_uplift=np.asarray(predicted_uplift, dtype=float)
+    ).nlargest(top_n, "predicted_uplift")
     treated_mean = _safe_mean(ranked.loc[ranked[treatment_col] == 1, outcome_col])
     control_mean = _safe_mean(ranked.loc[ranked[treatment_col] == 0, outcome_col])
     return float(treated_mean - control_mean)
@@ -330,9 +361,7 @@ def evaluate_policy_value(
     policy = (np.asarray(predicted_uplift, dtype=float) > 0).astype(int)
 
     policy_value = float(
-        np.mean(
-            (policy * t * y / p) + ((1 - policy) * (1 - t) * y / (1 - p))
-        )
+        np.mean((policy * t * y / p) + ((1 - policy) * (1 - t) * y / (1 - p)))
     )
     if baseline_policy == "treat_all":
         baseline = float(np.mean(t * y / p))
@@ -416,7 +445,9 @@ def evaluate_causal_split(
             train_frame[config.treatment_col].astype(int),
         )
         propensity = np.clip(
-            propensity_model.predict_proba(_as_numeric_frame(test_frame[config.feature_cols]))[:, 1],
+            propensity_model.predict_proba(
+                _as_numeric_frame(test_frame[config.feature_cols])
+            )[:, 1],
             0.05,
             0.95,
         )
@@ -637,7 +668,9 @@ def run_causal_temporal_backtest(
 
     for split_index, split in enumerate(splits, start=1):
         train_frame, test_frame = apply_temporal_split(frame, config.time_col, split)
-        model, metrics, artifacts = evaluate_causal_split(train_frame, test_frame, config)
+        model, metrics, artifacts = evaluate_causal_split(
+            train_frame, test_frame, config
+        )
         recommendation = _recommendation_from_metrics(metrics)
         recommendations.append(
             f"Fold {split_index} ({_format_periods(split.test_periods)}): {recommendation}"
@@ -765,11 +798,17 @@ def run_causal_temporal_backtest(
             ),
         }
         registry_path = output_dir / "final_recommendation_summary.json"
-        registry_path.write_text(json.dumps(registry_decision, indent=2), encoding="utf-8")
+        registry_path.write_text(
+            json.dumps(registry_decision, indent=2), encoding="utf-8"
+        )
 
         report_path = output_dir / "backtesting_report.html"
         recommendation_lines = recommendations + [registry_decision["recommendation"]]
-        _write_html_report(summary=summary, recommendations=recommendation_lines, output_path=report_path)
+        _write_html_report(
+            summary=summary,
+            recommendations=recommendation_lines,
+            output_path=report_path,
+        )
     return summary, folds
 
 
@@ -787,7 +826,9 @@ def load_causal_frame(
     else:
         raise ValueError("Supported dataset formats are .csv and .parquet only.")
 
-    if time_col in frame.columns and np.issubdtype(frame[time_col].dtype, np.datetime64):
+    if time_col in frame.columns and np.issubdtype(
+        frame[time_col].dtype, np.datetime64
+    ):
         frame = frame.sort_values(time_col).reset_index(drop=True)
     else:
         frame = frame.sort_values(time_col).reset_index(drop=True)
