@@ -34,8 +34,10 @@ data/processed/*
 !data/processed/census_nta_features.csv
 !data/processed/citibike_nta_features.csv
 !data/processed/*.parquet
+!data/processed/acs_nta_canonical.csv
 data/geojson/*
 !data/geojson/.gitkeep
+!data/geojson/nta_boundaries.geojson
 
 # Notebook checkpoints
 .ipynb_checkpoints/
