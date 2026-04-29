@@ -24,10 +24,10 @@
 | src/data/etl\_citibike.py           |       64 |        0 |    100% |           |
 | src/data/etl\_inspections.py        |       54 |        0 |    100% |           |
 | src/data/etl\_licenses.py           |       33 |        0 |    100% |           |
-| src/data/etl\_permits.py            |       45 |        0 |    100% |           |
+| src/data/etl\_permits.py            |       63 |        2 |     97% |    42, 46 |
 | src/data/etl\_pluto.py              |       43 |        0 |    100% |           |
 | src/data/etl\_runner.py             |       61 |        0 |    100% |           |
-| src/data/etl\_yelp.py               |      123 |        0 |    100% |           |
+| src/data/etl\_yelp.py               |      141 |        8 |     94% |40-43, 50-53 |
 | src/data/quality.py                 |       74 |        1 |     99% |        71 |
 | src/data/registry.py                |       11 |        0 |    100% |           |
 | src/features/\_\_init\_\_.py        |        4 |        0 |    100% |           |
@@ -40,7 +40,7 @@
 | src/features/merchant\_viability.py |        8 |        0 |    100% |           |
 | src/features/microzones.py          |       10 |        0 |    100% |           |
 | src/features/rent\_trajectory.py    |       13 |        0 |    100% |           |
-| src/features/zone\_crosswalk.py     |       60 |        0 |    100% |           |
+| src/features/zone\_crosswalk.py     |       89 |       16 |     82% |62, 70-81, 89-91 |
 | src/models/\_\_init\_\_.py          |        4 |        0 |    100% |           |
 | src/models/baselines.py             |        9 |        0 |    100% |           |
 | src/models/cmf\_score.py            |      108 |        6 |     94% |16-17, 23-24, 30-31 |
@@ -73,7 +73,7 @@
 | src/validation/\_\_init\_\_.py      |        2 |        0 |    100% |           |
 | src/validation/ablation.py          |       75 |        0 |    100% |           |
 | src/validation/backtesting.py       |      149 |        0 |    100% |           |
-| **TOTAL**                           | **3034** |   **41** | **99%** |           |
+| **TOTAL**                           | **3099** |   **67** | **98%** |           |
 
 
 ## Setup coverage badge
