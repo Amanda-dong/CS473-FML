@@ -6,7 +6,7 @@
 - Tony Zhao (`sz3822`) - [GitHub](https://github.com/Tonyzsp)
 - Harsh Agarwal (`ha2957`) - [GitHub](https://github.com/harshagarwalnyu)
 - Siqi Zhu (`sz3950`) - [GitHub](https://github.com/HelenZhutt)
-- Catherine Yi (`cgy2014`)
+- Catherine Yi (`cgy2014`)- [GitHub](https://github.com/catherinegyi)
 
 Updated: April 26, 2026<br>
 Course project · Spring 2026<br>
