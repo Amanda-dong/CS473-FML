@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-_ROOT = Path(__file__).resolve().parents[3]
+_ROOT = Path(__file__).resolve().parents[2]
 _DATA = _ROOT / "data"
 _PROCESSED = _DATA / "processed"
 _MODELS = _DATA / "models"
