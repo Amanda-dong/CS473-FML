@@ -71,7 +71,9 @@ Field notes:
   "query": {
     "concept_subtype": "ramen",
     "zone_type": "all",
-    "borough": "Any"
+    "borough": "Any",
+    "train_window": "2016-2024",
+    "model_version": "xgbregressor"
   },
   "recommendations": [
     {
@@ -100,6 +102,8 @@ Notes:
 
 - `opportunity_score` and `survival_risk` are in `[0, 1]`
 - `scoring_path` is one of `learned`, `heuristic`, `heuristic_fallback`
+- `query.train_window`: year range of the feature matrix used (e.g. `"2016-2024"`); `"unknown"` if no feature matrix loaded
+- `query.model_version`: derived from `.meta.json` sidecar if present; otherwise inner model class name; `"heuristic"` when no model is loaded
 
 Errors:
 
@@ -125,7 +129,9 @@ Request:
 {
   "concept_subtype": "ramen",
   "zone_type": "campus_walkshed",
-  "trajectory_cluster": "emerging"
+  "trajectory_cluster": "emerging",
+  "train_window": "2016-2024",
+  "model_version": "kmeans_v1"
 }
 ```
 

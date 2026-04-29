@@ -33,6 +33,13 @@ def run_placeholder_etl() -> pd.DataFrame:
 _DATASET_ID = "ipu4-2q9a"
 _CB_PREFIX = {"1": "MN", "2": "BX", "3": "BK", "4": "QN", "5": "SI"}
 _VALID_PREFIXES = {"MN", "BK", "QN", "BX", "SI"}
+_BORO_NAME_MAP = {
+    "MANHATTAN": "MN",
+    "BRONX": "BX",
+    "BROOKLYN": "BK",
+    "QUEENS": "QN",
+    "STATEN ISLAND": "SI",
+}
 
 
 def _normalize_nta_like(value: object) -> str:
@@ -44,6 +51,13 @@ def _normalize_nta_like(value: object) -> str:
     # Already normalized forms like BK09, QN70, BK0101
     if re.fullmatch(r"[A-Z]{2}\d{2,4}", text):
         return text
+
+    # "01 MANHATTAN", "10 STATEN ISLAND" — NYC DOB API format
+    m = re.fullmatch(r"(\d{1,2})\s+(.+)", text)
+    if m:
+        boro_code = _BORO_NAME_MAP.get(m.group(2).strip())
+        if boro_code:
+            return f"{boro_code}{int(m.group(1)):02d}"
 
     # Numeric community district codes (e.g., 401, 212, 105) -> QN01, BX12, MN05
     digits = re.sub(r"\D", "", text)

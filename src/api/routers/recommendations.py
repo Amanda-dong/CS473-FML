@@ -14,6 +14,7 @@ from fastapi import APIRouter
 from src.models.cmf_score import compute_opening_score
 from src.models.explainability import top_positive_drivers, top_risks
 from src.models.model_loader import (
+    get_model_version,
     load_feature_matrix,
     load_scoring_model,
     load_survival_model,
@@ -44,7 +45,8 @@ def _safe_float(value: object, fallback: float) -> float:
 # ---------------------------------------------------------------------------
 # Lazy-loaded trained models (None = fall back to heuristic)
 # ---------------------------------------------------------------------------
-_SCORING_MODEL = load_scoring_model("data/models/scoring_model.joblib")
+_SCORING_MODEL_PATH = "data/models/scoring_model.joblib"
+_SCORING_MODEL = load_scoring_model(_SCORING_MODEL_PATH)
 _SURVIVAL_MODEL = load_survival_model("data/models/survival_model.joblib")
 _FEATURE_MATRIX = load_feature_matrix(
     (
@@ -52,6 +54,20 @@ _FEATURE_MATRIX = load_feature_matrix(
         "data/models/feature_matrix.parquet",
     )
 )
+
+
+def _resolve_scoring_version(model: object, path: str) -> str:
+    """Return a version string from model sidecar; fall back to inner type name."""
+    if model is None:
+        return "heuristic"
+    v = get_model_version(path)
+    if v != "unknown":
+        return v
+    inner = getattr(model, "model", model)
+    return type(inner).__name__.lower()
+
+
+_SCORING_MODEL_VERSION = _resolve_scoring_version(_SCORING_MODEL, _SCORING_MODEL_PATH)
 
 _GEMINI_ZONE_PATH = Path("data/processed/gemini_full_zone_features.csv")
 
@@ -666,9 +682,7 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
             "zone_type": zone_type_filter or "all",
             "borough": borough_filter,
             "train_window": _training_window(),
-            "model_version": "xgboost_v1"
-            if _SCORING_MODEL is not None
-            else "heuristic",
+            "model_version": _SCORING_MODEL_VERSION,
         },
         recommendations=top_n,
     )

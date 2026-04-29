@@ -8,4 +8,4 @@ HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-8000}"
 
 echo "Starting API at http://${HOST}:${PORT}"
-python -m uvicorn src.api.main:app --host "$HOST" --port "$PORT" --reload
+uv run python -m uvicorn src.api.main:app --host "$HOST" --port "$PORT" --reload
