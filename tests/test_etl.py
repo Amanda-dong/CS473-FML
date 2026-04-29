@@ -1990,7 +1990,11 @@ def test_etl_airbnb_run_etl_success(monkeypatch: pytest.MonkeyPatch) -> None:
     good_result = pd.DataFrame(
         {"nta_id": ["MN01"], "listing_count": [5], "entire_home_ratio": [0.6]}
     )
-    monkeypatch.setattr(etl_airbnb, "_read_local", lambda limit: pd.DataFrame({"latitude": [40.7], "longitude": [-74.0]}))
+    monkeypatch.setattr(
+        etl_airbnb,
+        "_read_local",
+        lambda limit: pd.DataFrame({"latitude": [40.7], "longitude": [-74.0]}),
+    )
     monkeypatch.setattr(etl_airbnb, "_transform", lambda df: good_result)
     result = etl_airbnb.run_etl(limit=5)
     assert list(result["nta_id"]) == ["MN01"]

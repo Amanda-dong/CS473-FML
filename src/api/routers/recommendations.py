@@ -86,7 +86,9 @@ _FM_ZONE_CACHE: dict[str, dict[str, float]] = _build_fm_zone_cache()
 if _SCORING_MODEL is not None:
     logger.info("Learned scoring model loaded — using ML path.")
 else:
-    logger.info("No learned scoring model found — using heuristic fallback.")  # pragma: no cover
+    logger.info(
+        "No learned scoring model found — using heuristic fallback."
+    )  # pragma: no cover
 
 # ---------------------------------------------------------------------------
 # NYC zone catalogue — all five boroughs, all micro-zone types, no hard-coding
