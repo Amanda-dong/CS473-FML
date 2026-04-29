@@ -121,16 +121,22 @@ Conditional enrichment sources:
 
 ## Repository Status
 
-The repository is currently a scaffold. Most modules are placeholders, which is acceptable at this stage. The implementation order should be:
+The implementation is complete. All eight planned stages have been delivered:
 
-1. data source audit
-2. canonical neighborhood feature matrix
-3. micro-zone layer for campus and lunch corridors
-4. phase discovery
-5. survival modeling
-6. NLP labeling and aggregation
-7. healthy-food white-space ranking and explanation outputs
-8. API and Streamlit integration
+1. **Data source audit** — 10 ETL modules with real NYC Open Data integrations (permits, licenses, inspections, ACS, PLUTO, Citi Bike, Airbnb, Yelp, 311, boundaries)
+2. **Canonical neighborhood feature matrix** — 773 zone-year rows, 33 features across all data sources
+3. **Micro-zone layer** — 8 campus, lunch-corridor, transit-catchment, and business-district zones across all 5 boroughs
+4. **Phase discovery** — k-means and GMM trajectory clustering (k=3 and k=4 evaluated); NTA halal-story cluster assignments
+5. **Survival modeling** — Cox PH + Random Survival Forest; `survival_model.joblib` trained and evaluated
+6. **NLP labeling and aggregation** — Gemini Flash silver labels on full Yelp corpus; zone-level healthy-demand features in `gemini_full_zone_features.csv`
+7. **Healthy-food white-space ranking** — XGBoost scoring model + LambdaMART ranker; interpretable CMF score with subtype-gap, survival-risk, and positive-driver explanations
+8. **API and Streamlit integration** — FastAPI backend (`/predict/cmf`, `/predict/trajectory`), Streamlit frontend with recommendation cards, map view, and scenario panel
+
+Model artifacts: `data/models/scoring_model.joblib`, `survival_model.joblib`, `ranking_model.joblib`
+
+Evaluation artifacts: `data/processed/backtest_results.parquet`, `ablation_results.parquet`, `docs/EvaluationResults.md`, `docs/CausalMLEvaluationReport.md`
+
+Test suite: 520 tests, all passing (`uv run pytest`)
 
 ## Repository Structure
 
@@ -175,12 +181,12 @@ Recommended local workflow uses `uv`.
 3. Activate it:
    - `source .venv/bin/activate` on macOS/Linux
    - `.venv\\Scripts\\activate` on Windows
-4. Install dependencies from the current scaffold:
+4. Install dependencies:
    - `uv pip install -r requirements.txt`
-5. Run the placeholder test suite:
+5. Run the test suite:
    - `uv run pytest`
 
-Note: API keys are not required for the current scaffold. Add secrets only once the Yelp or Reddit collection work is implemented.
+Note: A `GEMINI_API_KEY` is required for live NLP labeling (`src/nlp/gemini_labels.py`). All other features run without API keys.
 
 ## Backend Quick Start
 

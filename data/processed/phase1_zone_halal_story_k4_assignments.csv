@@ -1,0 +1,28 @@
+zone_id,trajectory_cluster,cluster_name
+bx-tremont,cluster_0,Low-Signal Outlier
+bk-crown-hts,cluster_2,Active Halal Opportunity
+bk-downtownbk,cluster_2,Active Halal Opportunity
+bk-fort-greene,cluster_2,Active Halal Opportunity
+bk-navy-yard,cluster_2,Active Halal Opportunity
+bk-sunset-pk,cluster_2,Active Halal Opportunity
+bk-tandon,cluster_2,Active Halal Opportunity
+bk-williamsburg,cluster_2,Active Halal Opportunity
+bx-co-op-city,cluster_2,Active Halal Opportunity
+bx-fordham,cluster_2,Active Halal Opportunity
+bx-mott-haven,cluster_2,Active Halal Opportunity
+mn-chelsea,cluster_2,Active Halal Opportunity
+mn-columbia,cluster_2,Active Halal Opportunity
+mn-harlem,cluster_2,Active Halal Opportunity
+mn-nyu-wash-sq,cluster_2,Active Halal Opportunity
+mn-ues-hosp,cluster_2,Active Halal Opportunity
+qn-astoria,cluster_2,Active Halal Opportunity
+qn-flushing,cluster_2,Active Halal Opportunity
+qn-forest-hills,cluster_2,Active Halal Opportunity
+qn-jackson-hts,cluster_2,Active Halal Opportunity
+qn-jamaica,cluster_2,Active Halal Opportunity
+qn-lic,cluster_2,Active Halal Opportunity
+si-new-spring,cluster_2,Active Halal Opportunity
+si-st-george,cluster_2,Active Halal Opportunity
+mn-fidi,cluster_3,High-Traffic Premium Core
+mn-lic-adj,cluster_3,High-Traffic Premium Core
+mn-midtown-e,cluster_3,High-Traffic Premium Core

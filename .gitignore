@@ -26,6 +26,7 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 !data/processed/phase1_neighborhood_finding.csv
+!data/processed/phase1_zone_halal_story_k4_assignments.csv
 !data/processed/yelp_reviews_with_zones.csv
 !data/processed/yelp_business_zones.csv
 !data/processed/yelp_nta_features.csv
