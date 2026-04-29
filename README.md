@@ -11,7 +11,7 @@
 | src/api/routers/\_\_init\_\_.py     |        0 |        0 |    100% |           |
 | src/api/routers/datasets.py         |        7 |        0 |    100% |           |
 | src/api/routers/health.py           |        5 |        0 |    100% |           |
-| src/api/routers/recommendations.py  |      246 |       19 |     92% |40-41, 61, 66-68, 73, 79-80, 89, 251-253, 269-273, 286 |
+| src/api/routers/recommendations.py  |      250 |       23 |     91% |40-41, 61, 66-68, 73, 79-80, 89, 251-255, 271-278, 291 |
 | src/config/\_\_init\_\_.py          |        3 |        0 |    100% |           |
 | src/config/constants.py             |        6 |        0 |    100% |           |
 | src/config/settings.py              |       27 |        0 |    100% |           |
@@ -73,7 +73,7 @@
 | src/validation/\_\_init\_\_.py      |        2 |        0 |    100% |           |
 | src/validation/ablation.py          |       75 |        0 |    100% |           |
 | src/validation/backtesting.py       |      149 |        0 |    100% |           |
-| **TOTAL**                           | **3099** |   **67** | **98%** |           |
+| **TOTAL**                           | **3103** |   **71** | **98%** |           |
 
 
 ## Setup coverage badge
