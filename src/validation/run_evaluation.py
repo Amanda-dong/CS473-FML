@@ -11,7 +11,7 @@ Stages
 4. Survival model concordance-index evaluation.
 5. Aggregate summary written to data/processed/evaluation_summary.json.
 
-Every stage is wrapped in try/except 鈥?the script never crashes even when
+Every stage is wrapped in try/except - the script never crashes even when
 upstream data files are absent.
 """
 
@@ -158,14 +158,14 @@ class ProductionScoringAdapter:
 
 
 # ---------------------------------------------------------------------------
-# Stage 1 鈥?Load feature matrix and ground-truth labels
+# Stage 1 - Load feature matrix and ground-truth labels
 # ---------------------------------------------------------------------------
 def _load_parquet_safe(path: Path, label: str) -> pd.DataFrame:
     if path.exists():
         df = pd.read_parquet(path)
         logger.info("Loaded %s: %d rows x %d cols", label, len(df), len(df.columns))
         return df
-    logger.warning("%s not found at %s 鈥?returning empty frame", label, path)
+    logger.warning("%s not found at %s - returning empty frame", label, path)
     return pd.DataFrame()
 
 
@@ -173,7 +173,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (feature_matrix, ground_truth) with target column guaranteed."""
     fm = _load_parquet_safe(_FEATURE_MATRIX_PATH, "feature_matrix")
     if fm.empty:
-        logger.error("Feature matrix is empty 鈥?evaluation cannot proceed.")
+        logger.error("Feature matrix is empty - evaluation cannot proceed.")
         return pd.DataFrame(), pd.DataFrame()
 
     # Check for existing target labels
@@ -193,9 +193,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         )
         return fm, gt
 
-    logger.warning(
-        "Insufficient labels in feature_matrix 鈥?running build_ground_truth()"
-    )
+    logger.warning("Insufficient labels in feature_matrix - running build_ground_truth()")
     licenses = _load_parquet_safe(_LICENSES_PATH, "licenses")
     yelp = _load_parquet_safe(_YELP_PATH, "yelp")
     inspections = _load_parquet_safe(_INSPECTIONS_PATH, "inspections")
@@ -221,7 +219,8 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         coverage = gt["y_composite"].notna().mean()
         if coverage < 0.5:
             logger.warning(
-                "Label coverage is %.1f%% 鈥?below 50%% threshold", coverage * 100
+                "Label coverage is %.1f%% - below 50%% threshold",
+                coverage * 100,
             )
 
     # Merge composite label back into feature matrix
@@ -243,7 +242,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 # ---------------------------------------------------------------------------
-# Stage 2 鈥?Temporal backtest
+# Stage 2 - Temporal backtest
 # ---------------------------------------------------------------------------
 def stage_temporal_backtest(
     fm: pd.DataFrame,
@@ -255,7 +254,7 @@ def stage_temporal_backtest(
         from src.validation.backtesting import run_temporal_backtest
 
         if fm.empty:
-            raise ValueError("Empty feature matrix 鈥?skipping backtest.")
+            raise ValueError("Empty feature matrix - skipping backtest.")
 
         # Ensure ground_truth has a usable index aligned to fm
         if gt.empty or "y_composite" not in gt.columns:
@@ -302,10 +301,10 @@ def stage_temporal_backtest(
         if results.empty:
             logger.warning("Backtest returned empty results (too few time periods?).")
         else:
-            logger.info("Backtest complete 鈥?%d folds", len(results))
+            logger.info("Backtest complete - %d folds", len(results))
             _PROCESSED.mkdir(parents=True, exist_ok=True)
             results.to_parquet(_BACKTEST_OUT, index=False)
-            logger.info("Saved backtest results 鈫?%s", _BACKTEST_OUT)
+            logger.info("Saved backtest results - %s", _BACKTEST_OUT)
         return results
     except Exception as exc:
         logger.error("Temporal backtest failed: %s", exc, exc_info=True)
@@ -313,7 +312,7 @@ def stage_temporal_backtest(
 
 
 # ---------------------------------------------------------------------------
-# Stage 3 鈥?Feature ablation
+# Stage 3 - Feature ablation
 # ---------------------------------------------------------------------------
 def _build_feature_groups(columns: list[str]) -> dict[str, list[str]]:
     patterns: dict[str, list[str]] = {
@@ -339,9 +338,7 @@ def stage_feature_ablation(
         from src.validation.ablation import feature_ablation
 
         if fm.empty or gt.empty:
-            raise ValueError(
-                "Feature matrix or ground truth is empty 鈥?skipping ablation."
-            )
+            raise ValueError("Feature matrix or ground truth is empty - skipping ablation.")
 
         drop_cols = [
             c
@@ -422,7 +419,7 @@ def stage_feature_ablation(
         if not results.empty:
             _PROCESSED.mkdir(parents=True, exist_ok=True)
             results.to_parquet(_ABLATION_OUT, index=False)
-            logger.info("Saved ablation results 鈫?%s", _ABLATION_OUT)
+            logger.info("Saved ablation results - %s", _ABLATION_OUT)
         return results
     except Exception as exc:
         logger.error("Feature ablation failed: %s", exc, exc_info=True)
@@ -430,7 +427,7 @@ def stage_feature_ablation(
 
 
 # ---------------------------------------------------------------------------
-# Stage 4 鈥?Survival model evaluation
+# Stage 4 - Survival model evaluation
 # ---------------------------------------------------------------------------
 def stage_survival_eval(fm: pd.DataFrame) -> dict:
     metrics: dict = {"concordance_index": None}
@@ -516,7 +513,7 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
         _PROCESSED.mkdir(parents=True, exist_ok=True)
         with open(_SURVIVAL_EVAL_OUT, "w", encoding="utf-8") as fh:
             json.dump(metrics, fh, indent=2, default=str)
-        logger.info("Saved survival eval 鈫?%s", _SURVIVAL_EVAL_OUT)
+        logger.info("Saved survival eval - %s", _SURVIVAL_EVAL_OUT)
 
     except Exception as exc:
         logger.error("Survival model eval failed: %s", exc, exc_info=True)
@@ -525,7 +522,7 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stage 5 鈥?Aggregate summary
+# Stage 5 - Aggregate summary
 # ---------------------------------------------------------------------------
 def _extract_backtest_summary(bt: pd.DataFrame | None) -> dict:
     if bt is None or bt.empty:
@@ -584,7 +581,7 @@ def stage_summary(
 # ---------------------------------------------------------------------------
 def main() -> None:
     logger.info("=" * 60)
-    logger.info("NYC Healthy-Food White-Space Finder 鈥?Evaluation")
+    logger.info("NYC Healthy-Food White-Space Finder - Evaluation")
     logger.info("=" * 60)
 
     fm, gt = stage_load_data()
