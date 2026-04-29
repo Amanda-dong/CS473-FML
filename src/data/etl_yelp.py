@@ -31,14 +31,38 @@ REQUEST_SLEEP_SECONDS = 0.8
 
 SEARCH_TERMS = ["halal"]
 OFFSETS = [0, 50, 100, 150]
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 GRID_CONFIG = {
-    "min_lat": 40.7000,
-    "max_lat": 40.8800,
-    "min_lng": -74.0200,
-    "max_lng": -73.9300,
-    "lat_step": 0.0150,
-    "lng_step": 0.0150,
-    "radius": 1200,
+    # NYC-wide default bbox (all five boroughs).
+    "min_lat": _env_float("YELP_MIN_LAT", 40.49),
+    "max_lat": _env_float("YELP_MAX_LAT", 40.92),
+    "min_lng": _env_float("YELP_MIN_LNG", -74.26),
+    "max_lng": _env_float("YELP_MAX_LNG", -73.70),
+    # Slightly coarser default grid to keep API volume manageable.
+    "lat_step": _env_float("YELP_LAT_STEP", 0.03),
+    "lng_step": _env_float("YELP_LNG_STEP", 0.03),
+    "radius": _env_int("YELP_RADIUS_METERS", 1200),
 }
 
 DATASET_SPEC = DatasetSpec(
@@ -139,6 +163,7 @@ def _build_anchor_points() -> list[dict[str, float | str]]:
 
 
 ANCHOR_POINTS = _build_anchor_points()
+MAX_ANCHORS = _env_int("YELP_MAX_ANCHORS", 0)
 
 
 def _build_headers(api_key: str) -> dict[str, str]:
@@ -197,7 +222,8 @@ def collect_yelp_businesses() -> pd.DataFrame:
     all_rows: list[dict[str, object]] = []
     headers = _build_headers(api_key)
 
-    for anchor in ANCHOR_POINTS:
+    anchors = ANCHOR_POINTS[:MAX_ANCHORS] if MAX_ANCHORS > 0 else ANCHOR_POINTS
+    for anchor in anchors:
         anchor_name = str(anchor["anchor_name"])
         for search_term in SEARCH_TERMS:
             for offset in OFFSETS:
@@ -242,7 +268,7 @@ def collect_yelp_businesses() -> pd.DataFrame:
 
     print(f"total rows collected: {len(all_rows)}")
     print(f"unique businesses: {len(frame)}")
-    print(f"grid points used: {len(ANCHOR_POINTS)}")
+    print(f"grid points used: {len(anchors)}")
     print(f"column names: {list(frame.columns)}")
     print(f"saved latest file: {OUTPUT_PATH}")
     print(f"saved snapshot file: {snapshot_path}")
