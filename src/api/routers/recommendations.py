@@ -248,6 +248,8 @@ _ZONE_META = {
 
 
 def _infer_zone_type(zone_id: str) -> str:
+    if zone_id.startswith("nta-"):
+        return "nta_fallback"
     if zone_id.startswith(("bk-", "mn-", "qn-", "bx-", "si-")):
         return "micro_zone"
     return "zone"
@@ -267,7 +269,10 @@ def _build_zone_catalog() -> list[tuple[str, str, str, str]]:
         if zone_id in seen:
             continue
         zone_type = _infer_zone_type(zone_id)
-        zone_label = zone_id.replace("-", " ").title()
+        if zone_type == "nta_fallback":
+            zone_label = f"NTA Fallback ({zone_id[4:].upper()})"
+        else:
+            zone_label = zone_id.replace("-", " ").title()
         borough = "Any"
         catalog.append((zone_id, zone_type, zone_label, borough))
         seen.add(zone_id)

@@ -13,4 +13,4 @@ class RecommendationRequest(BaseModel):
     borough: Optional[str] = None
     risk_tolerance: str = Field(default="balanced")
     zone_type: str = Field(default="")
-    limit: int = Field(default=5, ge=1, le=20)
+    limit: int = Field(default=5, ge=1, le=50)

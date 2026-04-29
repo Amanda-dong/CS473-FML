@@ -12,6 +12,7 @@ _ZONE_TYPE_HELP = {
     "lunch_corridor": "Dense daytime-worker catchments with quick-service lunch peaks",
     "transit_catchment": "Commuter-heavy areas around subway/rail hubs",
     "business_district": "Office-heavy cores with weekday lunch concentration",
+    "nta_fallback": "Fallback NTA-based zones for areas not covered by curated business micro-zones",
 }
 
 _BOROUGH_HELP = (
@@ -27,6 +28,7 @@ def render_input_form() -> dict[str, str | int]:
         "lunch_corridor",
         "transit_catchment",
         "business_district",
+        "nta_fallback",
     ]
     zone_type = st.selectbox(
         "Zone type",
@@ -48,7 +50,7 @@ def render_input_form() -> dict[str, str | int]:
     limit = st.slider(
         "Max results to show",
         min_value=1,
-        max_value=10,
+        max_value=50,
         value=5,
         key=FORM_KEYS["limit"],
         help="Number of top-ranked micro-zones to display. Start with 5 for a focused shortlist.",

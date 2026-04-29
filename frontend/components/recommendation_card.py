@@ -11,6 +11,7 @@ _ZONE_TYPE_BADGE = {
     "lunch_corridor": "🥗 Lunch Corridor",
     "transit_catchment": "🚇 Transit",
     "business_district": "💼 Business District",
+    "nta_fallback": "🗺️ NTA Fallback",
 }
 _CLUSTER_BADGE = {
     "emerging": "🌱 Emerging",
@@ -46,7 +47,7 @@ def _build_gap_summary(card: dict, cluster: str) -> str:
     return "Opportunity signal derived from heuristic scoring."
 
 
-def _render_driver_chart(feature_contributions: dict) -> None:
+def _render_driver_chart(feature_contributions: dict, chart_key: str) -> None:
     if not feature_contributions:
         st.info("Score breakdown unavailable.")
         return
@@ -64,10 +65,11 @@ def _render_driver_chart(feature_contributions: dict) -> None:
         xaxis_title="Score contribution",
         yaxis=dict(autorange="reversed"),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=chart_key)
 
 
 def render_recommendation_card(card: dict, cluster: str = "") -> None:
+    zone_id = str(card.get("zone_id", card.get("zone_name", "unknown-zone")))
     zone_type = str(card.get("zone_type", ""))
     zone_label = str(card.get("zone_name", card.get("zone_label", "")))
     score_progress = float(
@@ -127,7 +129,9 @@ def render_recommendation_card(card: dict, cluster: str = "") -> None:
             )
 
         with st.expander("Score breakdown"):
-            _render_driver_chart(feature_contributions)
+            _render_driver_chart(
+                feature_contributions, chart_key=f"score-breakdown-{zone_id}"
+            )
 
         if freshness_note:
             st.caption(freshness_note)
