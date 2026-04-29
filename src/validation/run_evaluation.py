@@ -125,9 +125,11 @@ class ProductionScoringAdapter:
 
     def _numeric_features(self, X: pd.DataFrame) -> pd.DataFrame:
         frame = X.drop(columns=list(self._DROP_COLS), errors="ignore")
-        return frame.select_dtypes(include="number").replace(
-            [np.inf, -np.inf], np.nan
-        ).fillna(0.0)
+        return (
+            frame.select_dtypes(include="number")
+            .replace([np.inf, -np.inf], np.nan)
+            .fillna(0.0)
+        )
 
     def _cmf_scores(self, X: pd.DataFrame) -> np.ndarray:
         from src.models.cmf_score import compute_opening_score, score_zone_for_concept
@@ -153,6 +155,7 @@ class ProductionScoringAdapter:
 
 
 # ---------------------------------------------------------------------------
+
 
 # ---------------------------------------------------------------------------
 # Stage 1 鈥?Load feature matrix and ground-truth labels
