@@ -11,7 +11,7 @@ Stages
 4. Survival model concordance-index evaluation.
 5. Aggregate summary written to data/processed/evaluation_summary.json.
 
-Every stage is wrapped in try/except — the script never crashes even when
+Every stage is wrapped in try/except 鈥?the script never crashes even when
 upstream data files are absent.
 """
 
@@ -54,51 +54,115 @@ _SUMMARY_OUT = _PROCESSED / "evaluation_summary.json"
 
 
 # ---------------------------------------------------------------------------
-# Heuristic scorer wrapper — sklearn-compatible, no fitting required
+# Production scoring adapter for validation
 # ---------------------------------------------------------------------------
-class ScoringModelWrapper:
-    """Heuristic scorer adapter for the backtest harness.
+class ProductionScoringAdapter:
+    """Sklearn-compatible adapter around the production scoring logic."""
 
-    fit() is a no-op.  predict() uses simple column averages of the four
-    primary opportunity signals when present, otherwise falls back to a
-    seeded random baseline.
-    """
+    _DROP_COLS = {"target", "y_composite", "label_quality", "missingness_fraction"}
 
-    _SIGNAL_COLS = [
-        "opportunity_score",
-        "demand_signal",
-        "merchant_viability",
-        "subtype_gap",
-    ]
-    _ALT_SIGNALS = [
-        "quick_lunch_demand",
-        "survival_score",
-        "healthy_gap_score",
-        "competition_score",
-    ]
+    def __init__(
+        self,
+        concept_subtype: str = "healthy_indian",
+        risk_tolerance: str = "balanced",
+        price_tier: str = "mid",
+        zone_type: str = "",
+    ):
+        self.concept_subtype = concept_subtype
+        self.risk_tolerance = risk_tolerance
+        self.price_tier = price_tier
+        self.zone_type = zone_type
+        self.model = None
+        self.feature_names: list[str] = []
 
-    def fit(self, X: pd.DataFrame, y: pd.Series) -> "ScoringModelWrapper":
+    def fit(self, X: pd.DataFrame, y: pd.Series) -> "ProductionScoringAdapter":
+        train_X = self._numeric_features(X)
+        train_y = pd.to_numeric(y, errors="coerce")
+        valid = train_y.notna()
+        train_X = train_X.loc[valid]
+        train_y = train_y.loc[valid]
+        self.feature_names = list(train_X.columns)
+
+        if len(train_X) < 4 or train_y.nunique(dropna=True) < 2:
+            return self
+
+        try:
+            from src.models.cmf_score import HAS_XGB, LearnedScoringModel
+
+            if not HAS_XGB:
+                return self
+            self.model = LearnedScoringModel(
+                params={
+                    "n_estimators": 50,
+                    "max_depth": 3,
+                    "learning_rate": 0.08,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "random_state": 42,
+                }
+            )
+            self.model.fit(train_X, train_y)
+        except Exception as exc:
+            logger.warning("ProductionScoringAdapter fit fell back to CMF: %s", exc)
+            self.model = None
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        present = [c for c in self._SIGNAL_COLS if c in X.columns]
-        if not present:
-            present = [c for c in self._ALT_SIGNALS if c in X.columns]
-        if present:
-            return X[present].fillna(0.5).mean(axis=1).to_numpy(dtype=float)
-        # Ultimate fallback: seeded uniform random
-        return np.random.default_rng(42).uniform(0.0, 1.0, len(X))
+        feature_X = self._numeric_features(X).reindex(
+            columns=self.feature_names, fill_value=0.0
+        )
+        if self.model is not None and self.feature_names:
+            base_scores = np.asarray(self.model.predict(feature_X), dtype=float)
+        else:
+            base_scores = self._cmf_scores(X)
+        return np.asarray(
+            [
+                self._apply_context(float(score), row)
+                for score, (_, row) in zip(base_scores, X.iterrows())
+            ],
+            dtype=float,
+        )
+
+    def _numeric_features(self, X: pd.DataFrame) -> pd.DataFrame:
+        frame = X.drop(columns=list(self._DROP_COLS), errors="ignore")
+        return frame.select_dtypes(include="number").replace(
+            [np.inf, -np.inf], np.nan
+        ).fillna(0.0)
+
+    def _cmf_scores(self, X: pd.DataFrame) -> np.ndarray:
+        from src.models.cmf_score import compute_opening_score, score_zone_for_concept
+
+        scores = []
+        for _, row in X.iterrows():
+            components = score_zone_for_concept(row.to_dict(), self.concept_subtype)
+            scores.append(compute_opening_score(components))
+        return np.asarray(scores, dtype=float)
+
+    def _apply_context(self, score: float, row: pd.Series) -> float:
+        from src.api.routers.recommendations import _apply_request_context_adjustment
+
+        zone_type = str(row.get("zone_type", self.zone_type) or self.zone_type)
+        return _apply_request_context_adjustment(
+            score,
+            row.to_dict(),
+            zone_type=zone_type,
+            concept_subtype=self.concept_subtype,
+            risk_tolerance=self.risk_tolerance,
+            price_tier=self.price_tier,
+        )
 
 
 # ---------------------------------------------------------------------------
-# Stage 1 — Load feature matrix and ground-truth labels
+
+# ---------------------------------------------------------------------------
+# Stage 1 鈥?Load feature matrix and ground-truth labels
 # ---------------------------------------------------------------------------
 def _load_parquet_safe(path: Path, label: str) -> pd.DataFrame:
     if path.exists():
         df = pd.read_parquet(path)
         logger.info("Loaded %s: %d rows x %d cols", label, len(df), len(df.columns))
         return df
-    logger.warning("%s not found at %s — returning empty frame", label, path)
+    logger.warning("%s not found at %s 鈥?returning empty frame", label, path)
     return pd.DataFrame()
 
 
@@ -106,7 +170,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (feature_matrix, ground_truth) with target column guaranteed."""
     fm = _load_parquet_safe(_FEATURE_MATRIX_PATH, "feature_matrix")
     if fm.empty:
-        logger.error("Feature matrix is empty — evaluation cannot proceed.")
+        logger.error("Feature matrix is empty 鈥?evaluation cannot proceed.")
         return pd.DataFrame(), pd.DataFrame()
 
     # Check for existing target labels
@@ -127,7 +191,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         return fm, gt
 
     logger.warning(
-        "Insufficient labels in feature_matrix — running build_ground_truth()"
+        "Insufficient labels in feature_matrix 鈥?running build_ground_truth()"
     )
     licenses = _load_parquet_safe(_LICENSES_PATH, "licenses")
     yelp = _load_parquet_safe(_YELP_PATH, "yelp")
@@ -154,7 +218,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         coverage = gt["y_composite"].notna().mean()
         if coverage < 0.5:
             logger.warning(
-                "Label coverage is %.1f%% — below 50%% threshold", coverage * 100
+                "Label coverage is %.1f%% 鈥?below 50%% threshold", coverage * 100
             )
 
     # Merge composite label back into feature matrix
@@ -176,7 +240,7 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 # ---------------------------------------------------------------------------
-# Stage 2 — Temporal backtest
+# Stage 2 鈥?Temporal backtest
 # ---------------------------------------------------------------------------
 def stage_temporal_backtest(
     fm: pd.DataFrame,
@@ -188,7 +252,7 @@ def stage_temporal_backtest(
         from src.validation.backtesting import run_temporal_backtest
 
         if fm.empty:
-            raise ValueError("Empty feature matrix — skipping backtest.")
+            raise ValueError("Empty feature matrix 鈥?skipping backtest.")
 
         # Ensure ground_truth has a usable index aligned to fm
         if gt.empty or "y_composite" not in gt.columns:
@@ -220,21 +284,25 @@ def stage_temporal_backtest(
 
         gt_df.index = fm.index
 
-        logger.info("Running temporal backtest …")
+        logger.info("Running temporal backtest with ProductionScoringAdapter")
+        feature_frame = fm.drop(
+            columns=["target", "y_composite", "label_quality"],
+            errors="ignore",
+        )
         results = run_temporal_backtest(
-            feature_matrix=fm,
+            feature_matrix=feature_frame,
             ground_truth=gt_df,
-            model_cls=ScoringModelWrapper,
+            model_cls=ProductionScoringAdapter,
             year_col=year_col,
             min_train_years=min_train_years,
         )
         if results.empty:
             logger.warning("Backtest returned empty results (too few time periods?).")
         else:
-            logger.info("Backtest complete — %d folds", len(results))
+            logger.info("Backtest complete 鈥?%d folds", len(results))
             _PROCESSED.mkdir(parents=True, exist_ok=True)
             results.to_parquet(_BACKTEST_OUT, index=False)
-            logger.info("Saved backtest results → %s", _BACKTEST_OUT)
+            logger.info("Saved backtest results 鈫?%s", _BACKTEST_OUT)
         return results
     except Exception as exc:
         logger.error("Temporal backtest failed: %s", exc, exc_info=True)
@@ -242,7 +310,7 @@ def stage_temporal_backtest(
 
 
 # ---------------------------------------------------------------------------
-# Stage 3 — Feature ablation
+# Stage 3 鈥?Feature ablation
 # ---------------------------------------------------------------------------
 def _build_feature_groups(columns: list[str]) -> dict[str, list[str]]:
     patterns: dict[str, list[str]] = {
@@ -269,7 +337,7 @@ def stage_feature_ablation(
 
         if fm.empty or gt.empty:
             raise ValueError(
-                "Feature matrix or ground truth is empty — skipping ablation."
+                "Feature matrix or ground truth is empty 鈥?skipping ablation."
             )
 
         drop_cols = [
@@ -342,7 +410,7 @@ def stage_feature_ablation(
             splits = [(list(range(max(1, n // 2))), list(range(max(1, n // 2), n)))]
 
         results = feature_ablation(
-            model_cls=ScoringModelWrapper,
+            model_cls=ProductionScoringAdapter,
             X=X,
             y=y_series,
             feature_groups=feature_groups,
@@ -351,7 +419,7 @@ def stage_feature_ablation(
         if not results.empty:
             _PROCESSED.mkdir(parents=True, exist_ok=True)
             results.to_parquet(_ABLATION_OUT, index=False)
-            logger.info("Saved ablation results → %s", _ABLATION_OUT)
+            logger.info("Saved ablation results 鈫?%s", _ABLATION_OUT)
         return results
     except Exception as exc:
         logger.error("Feature ablation failed: %s", exc, exc_info=True)
@@ -359,7 +427,7 @@ def stage_feature_ablation(
 
 
 # ---------------------------------------------------------------------------
-# Stage 4 — Survival model evaluation
+# Stage 4 鈥?Survival model evaluation
 # ---------------------------------------------------------------------------
 def stage_survival_eval(fm: pd.DataFrame) -> dict:
     metrics: dict = {"concordance_index": None}
@@ -445,7 +513,7 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
         _PROCESSED.mkdir(parents=True, exist_ok=True)
         with open(_SURVIVAL_EVAL_OUT, "w", encoding="utf-8") as fh:
             json.dump(metrics, fh, indent=2, default=str)
-        logger.info("Saved survival eval → %s", _SURVIVAL_EVAL_OUT)
+        logger.info("Saved survival eval 鈫?%s", _SURVIVAL_EVAL_OUT)
 
     except Exception as exc:
         logger.error("Survival model eval failed: %s", exc, exc_info=True)
@@ -454,7 +522,7 @@ def stage_survival_eval(fm: pd.DataFrame) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Stage 5 — Aggregate summary
+# Stage 5 鈥?Aggregate summary
 # ---------------------------------------------------------------------------
 def _extract_backtest_summary(bt: pd.DataFrame | None) -> dict:
     if bt is None or bt.empty:
@@ -513,7 +581,7 @@ def stage_summary(
 # ---------------------------------------------------------------------------
 def main() -> None:
     logger.info("=" * 60)
-    logger.info("NYC Healthy-Food White-Space Finder — Evaluation")
+    logger.info("NYC Healthy-Food White-Space Finder 鈥?Evaluation")
     logger.info("=" * 60)
 
     fm, gt = stage_load_data()
