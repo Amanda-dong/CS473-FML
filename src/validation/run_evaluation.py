@@ -193,7 +193,9 @@ def stage_load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         )
         return fm, gt
 
-    logger.warning("Insufficient labels in feature_matrix - running build_ground_truth()")
+    logger.warning(
+        "Insufficient labels in feature_matrix - running build_ground_truth()"
+    )
     licenses = _load_parquet_safe(_LICENSES_PATH, "licenses")
     yelp = _load_parquet_safe(_YELP_PATH, "yelp")
     inspections = _load_parquet_safe(_INSPECTIONS_PATH, "inspections")
@@ -338,7 +340,9 @@ def stage_feature_ablation(
         from src.validation.ablation import feature_ablation
 
         if fm.empty or gt.empty:
-            raise ValueError("Feature matrix or ground truth is empty - skipping ablation.")
+            raise ValueError(
+                "Feature matrix or ground truth is empty - skipping ablation."
+            )
 
         drop_cols = [
             c
