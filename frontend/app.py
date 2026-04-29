@@ -151,6 +151,14 @@ def main() -> None:
         render_map_view(recs)
         st.divider()
 
+        csv_data = pd.DataFrame(recs).to_csv(index=False)
+        st.download_button(
+            label="📥 Download Recommendations (CSV)",
+            data=csv_data,
+            file_name="recommendations.csv",
+            mime="text/csv",
+        )
+
         if compare_mode and compare_concept and compare_concept != concept:
             col_a, col_b = st.columns(2)
             with col_a:

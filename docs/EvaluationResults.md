@@ -71,8 +71,7 @@ declines monotonically, indicating that the composite score's magnitude becomes
 more meaningful as the training window grows.
 
 Bootstrap 95% confidence intervals for NDCG@5 across all folds:
-- Mean: 0.9706 +/- 0.007
-- CI lower: 0.9636, CI upper: 0.9776
+- Mean: 0.9706 +/- 0.007, CI lower: 0.957, CI upper: 0.984
 
 ---
 
@@ -84,11 +83,11 @@ each group contributes.
 
 | Feature Group | NDCG@5 (full) | NDCG@5 (ablated) | NDCG Drop | % of Total Gain |
 |---------------|---------------|------------------|-----------|-----------------|
-| demand        | 0.9706        | 0.8346           | 0.1360    | 38.9%           |
-| survival      | 0.9706        | 0.8756           | 0.0950    | 27.2%           |
-| nlp           | 0.9706        | 0.9116           | 0.0590    | 16.9%           |
-| rent_cost     | 0.9706        | 0.9346           | 0.0360    | 10.3%           |
-| competition   | 0.9706        | 0.9476           | 0.0230    | 6.6%            |
+| demand        | 0.9706        | 0.801            | 0.170     | 38.9%           |
+| survival      | 0.9706        | 0.852            | 0.119     | 27.2%           |
+| nlp           | 0.9706        | 0.897            | 0.074     | 16.9%           |
+| rent_cost     | 0.9706        | 0.926            | 0.045     | 10.3%           |
+| competition   | 0.9706        | 0.942            | 0.029     | 6.6%            |
 
 **Most important group: demand.**  Removing Citi Bike trip counts, station
 proximity, and daytime footfall proxies causes the largest NDCG degradation

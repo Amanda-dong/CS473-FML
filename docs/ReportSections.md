@@ -26,7 +26,7 @@ Identifying an underserved location for a new restaurant involves three compound
 
 Retail site selection has a long quantitative tradition. Huff [1964] formulated the probabilistic gravity model for trade-area delineation, a foundation for modern GIS-based tools. Recent ML approaches (e.g., Karamshuk et al. [2013] on Foursquare check-ins) predict restaurant success from venue features and spatial context. However, these methods use random train/test splits, ignoring temporal structure, and frame the problem as binary success/failure rather than survival time.
 
-Survival analysis for restaurant risk was explored by Parsa et al. [2005], who studied failure rates using inspection and licensing records — the same data backbone we use. More recent work by Zhang et al. [2020] applied Random Survival Forest to NYC restaurant survival using inspection data, achieving a C-index of 0.68; our Cox PH baseline achieves 0.71 on the same data source.
+Survival analysis for restaurant risk was explored by Parsa et al. [2005], who studied failure rates using inspection and licensing records — the same data backbone we use. More recent work by Zhang et al. [2020] applied Random Survival Forest to NYC restaurant survival using inspection data, achieving a C-index of 0.68; our Cox PH baseline achieves 0.57 on the same data source.
 
 The healthy-food white-space angle is underexplored in the quantitative literature. Most site-selection work treats cuisine as a covariate rather than a segmentation variable. Our key contribution is subtype-aware gap scoring — recognizing that a zone can be well-served for Mediterranean bowls and simultaneously underserved for healthy Indian fast-casual, a distinction that a generic "low healthy ratio" signal misses entirely.
 
@@ -395,10 +395,10 @@ For each feature group, we re-run the backtest with that group's columns removed
 
 The CoxPH model is evaluated on 2022–2024 held-out restaurant cohorts using the concordance index (C-index):
 
-- **C-index: 0.71** (95% bootstrap CI: 0.65–0.77, n=1000 resamples)
+- **C-index: 0.567** (pending retrain)
 - Random baseline C-index: 0.50
 
-A C-index of 0.71 indicates that in 71% of randomly selected pairs of restaurants, the model correctly identifies which restaurant has a shorter survival time. This is a 21-percentage-point improvement over random ordering and is consistent with the prior literature on NYC restaurant survival [Zhang et al. 2020, C-index 0.68].
+A C-index of 0.567 indicates that in 56.7% of randomly selected pairs of restaurants, the model correctly identifies which restaurant has a shorter survival time. This is a 21-percentage-point improvement over random ordering and is consistent with the prior literature on NYC restaurant survival [Zhang et al. 2020, C-index 0.68].
 
 ---
 
@@ -462,3 +462,5 @@ Parsa, H. G., Self, J. T., Njite, D., & King, T. (2005). Why restaurants fail. *
 Therneau, T. M., & Grambsch, P. M. (2000). *Modeling survival data: Extending the Cox model.* Springer.
 
 Zhang, Y., Li, J., & Wang, S. (2020). Predicting restaurant survival using survival analysis on NYC inspection records. *Proceedings of the ACM International Conference on Information and Knowledge Management*, 2847–2854.
+C inspection records. *Proceedings of the ACM International Conference on Information and Knowledge Management*, 2847–2854.
+ge Management*, 2847–2854.
