@@ -435,6 +435,50 @@ def _score_one(
     )
 
 
+def _apply_request_context_adjustment(
+    base_score: float,
+    features: dict[str, float],
+    *,
+    zone_type: str,
+    concept_subtype: str,
+    risk_tolerance: str,
+    price_tier: str,
+) -> float:
+    """Make learned-model inference responsive to request-level controls."""
+    cuisine_adj = _CUISINE_GAP_BIAS.get(zone_type, {}).get(concept_subtype, 0.0)
+    risk_adj = _RISK_ADJUST.get(risk_tolerance, 0.0)
+    price_adj = _PRICE_ADJUST.get(price_tier, 0.0)
+
+    rent_pressure = _safe_float(features.get("rent_pressure"), 0.35)
+    competition = _safe_float(features.get("competition_score"), 0.35)
+    income_alignment = _safe_float(features.get("income_alignment"), 0.60)
+
+    risk_cost = rent_pressure * 0.035 + competition * 0.025
+    if risk_tolerance == "conservative":
+        risk_context_adj = -risk_cost
+    elif risk_tolerance == "aggressive":
+        risk_context_adj = risk_cost * 0.5
+    else:
+        risk_context_adj = 0.0
+
+    if price_tier == "premium":
+        price_context_adj = (income_alignment - 0.60) * 0.04
+    elif price_tier == "budget":
+        price_context_adj = (0.60 - income_alignment) * 0.03
+    else:
+        price_context_adj = 0.0
+
+    adjusted = (
+        base_score
+        + cuisine_adj * 0.35
+        + risk_adj * 0.35
+        + price_adj * 0.25
+        + risk_context_adj
+        + price_context_adj
+    )
+    return float(np.clip(adjusted, 0.0, 1.0))
+
+
 def _score_with_learned_model(
     zone_id: str,
     zone_label: str,
@@ -444,6 +488,8 @@ def _score_with_learned_model(
     survival_model,
     *,
     zone_type: str = "",
+    risk_tolerance: str = "balanced",
+    price_tier: str = "mid",
 ) -> ZoneRecommendation | None:
     """Score a zone using the trained ML model + SHAP explainability."""
     if "zone_id" in feature_matrix.columns:
@@ -464,6 +510,14 @@ def _score_with_learned_model(
         feature_row = feature_row.reindex(columns=model_feature_names, fill_value=0.0)
 
     pred_score = float(scoring_model.predict(feature_row)[0])
+    pred_score = _apply_request_context_adjustment(
+        pred_score,
+        feature_row.iloc[0].to_dict(),
+        zone_type=zone_type,
+        concept_subtype=concept_subtype,
+        risk_tolerance=risk_tolerance,
+        price_tier=price_tier,
+    )
 
     # SHAP-based feature contributions
     feature_contributions: dict[str, float] = {}
@@ -515,6 +569,7 @@ def _score_with_learned_model(
         feature_contributions=feature_contributions,
         survival_risk=survival_risk,
         model_version="xgboost_v1",
+        scoring_path="learned",
     )
 
 
@@ -555,6 +610,8 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
                 _SCORING_MODEL,
                 _SURVIVAL_MODEL,
                 zone_type=_ztype,
+                risk_tolerance=request.risk_tolerance,
+                price_tier=request.price_tier,
             )
             if rec is not None:
                 scored.append(rec)
