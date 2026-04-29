@@ -241,7 +241,10 @@ _CUISINE_GAP_BIAS: dict[str, dict[str, float]] = {
 
 _RISK_ADJUST = {"conservative": -0.06, "balanced": 0.0, "aggressive": 0.06}
 _PRICE_ADJUST = {"budget": 0.04, "mid": 0.0, "premium": -0.04}
-_ZONE_META = {zone_id: (zone_type, zone_label, borough) for zone_id, zone_type, zone_label, borough in _NYC_ZONES}
+_ZONE_META = {
+    zone_id: (zone_type, zone_label, borough)
+    for zone_id, zone_type, zone_label, borough in _NYC_ZONES
+}
 
 
 def _infer_zone_type(zone_id: str) -> str:
@@ -253,7 +256,11 @@ def _infer_zone_type(zone_id: str) -> str:
 def _build_zone_catalog() -> list[tuple[str, str, str, str]]:
     catalog: list[tuple[str, str, str, str]] = list(_NYC_ZONES)
     seen = {zone_id for zone_id, _, _, _ in catalog}
-    if _FEATURE_MATRIX is None or _FEATURE_MATRIX.empty or "zone_id" not in _FEATURE_MATRIX.columns:
+    if (
+        _FEATURE_MATRIX is None
+        or _FEATURE_MATRIX.empty
+        or "zone_id" not in _FEATURE_MATRIX.columns
+    ):
         return catalog
     zone_ids = sorted(_FEATURE_MATRIX["zone_id"].dropna().astype(str).unique().tolist())
     for zone_id in zone_ids:
@@ -268,7 +275,11 @@ def _build_zone_catalog() -> list[tuple[str, str, str, str]]:
 
 
 def _training_window() -> str:
-    if _FEATURE_MATRIX is None or _FEATURE_MATRIX.empty or "time_key" not in _FEATURE_MATRIX.columns:
+    if (
+        _FEATURE_MATRIX is None
+        or _FEATURE_MATRIX.empty
+        or "time_key" not in _FEATURE_MATRIX.columns
+    ):
         return "unknown"
     years = pd.to_numeric(_FEATURE_MATRIX["time_key"], errors="coerce").dropna()
     if years.empty:
@@ -517,7 +528,11 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
     candidates = [
         (zid, ztype, zlabel, zborough)
         for zid, ztype, zlabel, zborough in zone_catalog
-        if (borough_filter in ("Any", "") or zborough == borough_filter or zborough == "Any")
+        if (
+            borough_filter in ("Any", "")
+            or zborough == borough_filter
+            or zborough == "Any"
+        )
         and (not zone_type_filter or ztype == zone_type_filter)
     ]
     if not candidates:
@@ -587,7 +602,9 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
             "zone_type": zone_type_filter or "all",
             "borough": borough_filter,
             "train_window": _training_window(),
-            "model_version": "xgboost_v1" if _SCORING_MODEL is not None else "heuristic",
+            "model_version": "xgboost_v1"
+            if _SCORING_MODEL is not None
+            else "heuristic",
         },
         recommendations=top_n,
     )
