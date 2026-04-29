@@ -210,9 +210,7 @@ def build_citibike_features(nta_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
             }
         )
     if not rows:
-        return pd.DataFrame(
-            columns=["nta", "trip_count", "unique_start_station_count"]
-        )
+        return pd.DataFrame(columns=["nta", "trip_count", "unique_start_station_count"])
     return pd.DataFrame(rows)
 
 
