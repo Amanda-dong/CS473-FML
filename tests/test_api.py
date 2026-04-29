@@ -207,6 +207,54 @@ def test_score_with_learned_model_uses_latest_time_key_and_predict_risk() -> Non
     assert rec is not None
     assert rec.opportunity_score == pytest.approx(0.9)
     assert rec.survival_risk == pytest.approx(0.25)
+    assert rec.scoring_path == "learned"
+
+
+def test_score_with_learned_model_applies_request_context() -> None:
+    from src.api.routers.recommendations import _score_with_learned_model
+
+    class DummyScoringModel:
+        feature_names = ["rent_pressure", "competition_score", "income_alignment"]
+
+        def predict(self, frame: pd.DataFrame) -> list[float]:
+            return [0.5]
+
+    feature_matrix = pd.DataFrame(
+        {
+            "zone_id": ["bk-tandon"],
+            "time_key": [2024],
+            "rent_pressure": [0.7],
+            "competition_score": [0.6],
+            "income_alignment": [0.8],
+        }
+    )
+
+    conservative = _score_with_learned_model(
+        "bk-tandon",
+        "NYU Tandon / MetroTech",
+        "healthy_indian",
+        feature_matrix,
+        DummyScoringModel(),
+        None,
+        zone_type="campus_walkshed",
+        risk_tolerance="conservative",
+        price_tier="premium",
+    )
+    aggressive = _score_with_learned_model(
+        "bk-tandon",
+        "NYU Tandon / MetroTech",
+        "healthy_indian",
+        feature_matrix,
+        DummyScoringModel(),
+        None,
+        zone_type="campus_walkshed",
+        risk_tolerance="aggressive",
+        price_tier="budget",
+    )
+
+    assert conservative is not None
+    assert aggressive is not None
+    assert aggressive.opportunity_score > conservative.opportunity_score
 
 
 # ── _confidence_bucket — all thresholds ──────────────────────────────────────

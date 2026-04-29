@@ -1184,3 +1184,39 @@ def test_load_gemini_review_features_success(monkeypatch, tmp_path):
     # This should hit lines in _load_gemini_review_features
     res = _load_gemini_review_features(pd.DataFrame(), pd.DataFrame())
     assert not res.empty
+
+
+def test_build_zone_year_matrix_merges_gemini_zone_features(monkeypatch, tmp_path):
+    import src.features.feature_matrix as fm
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    cache_path = tmp_path / "gemini_labels.csv"
+    pd.DataFrame(
+        {
+            "restaurant_id": ["r1", "r2"],
+            "time_key": [2024, 2024],
+            "zone_id": ["bk-tandon", "bk-tandon"],
+            "rating": [5, 4],
+            "sentiment": ["positive", "negative"],
+            "halal_relevance": ["explicit_halal", "not_related"],
+            "concept_subtype": ["south_asian", "other"],
+            "confidence": [0.9, 0.8],
+        }
+    ).to_csv(cache_path, index=False)
+    monkeypatch.setattr(fm, "_GEMINI_CACHE", cache_path)
+
+    etl_outputs = {
+        "licenses": pd.DataFrame(
+            {
+                "nta_id": ["BK09"],
+                "event_date": ["2024-01-01"],
+                "license_status": ["Issued"],
+            }
+        )
+    }
+
+    result = build_zone_year_matrix(etl_outputs)
+
+    assert "halal_related_share" in result.columns
+    row = result.loc[result["zone_id"] == "bk-tandon"].iloc[0]
+    assert row["halal_related_share"] == pytest.approx(0.5)

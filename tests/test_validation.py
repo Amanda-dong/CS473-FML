@@ -80,7 +80,42 @@ def test_run_temporal_backtest_prefers_y_composite_target() -> None:
     assert _CaptureTargetModel.fit_targets == [[0.9, 0.1]]
 
 
-# ── backtesting — additional metrics ─────────────────────────────────────────
+# 鈹€鈹€ backtesting 鈥?additional metrics 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+
+def test_production_scoring_adapter_applies_context() -> None:
+    from src.validation.run_evaluation import ProductionScoringAdapter
+
+    X = pd.DataFrame(
+        {
+            "quick_lunch_demand": [0.7, 0.8],
+            "subtype_gap": [0.6, 0.7],
+            "healthy_gap_score": [0.4, 0.5],
+            "survival_score": [0.6, 0.7],
+            "rent_pressure": [0.8, 0.8],
+            "competition_score": [0.7, 0.7],
+            "zone_type": ["campus_walkshed", "campus_walkshed"],
+        }
+    )
+    y = pd.Series([0.2, 0.9])
+
+    conservative = ProductionScoringAdapter(
+        concept_subtype="healthy_indian",
+        risk_tolerance="conservative",
+        price_tier="premium",
+    ).fit(X, y)
+    aggressive = ProductionScoringAdapter(
+        concept_subtype="healthy_indian",
+        risk_tolerance="aggressive",
+        price_tier="budget",
+    ).fit(X, y)
+
+    conservative_scores = conservative.predict(X)
+    aggressive_scores = aggressive.predict(X)
+
+    assert ((0.0 <= conservative_scores) & (conservative_scores <= 1.0)).all()
+    assert ((0.0 <= aggressive_scores) & (aggressive_scores <= 1.0)).all()
+    assert aggressive_scores.mean() > conservative_scores.mean()
 
 
 def test_ndcg_at_k_perfect_ranking() -> None:
@@ -182,7 +217,7 @@ def test_evaluate_top_k_no_observed() -> None:
     assert evaluate_top_k(["a", "b"], [], k=2) == 0.0
 
 
-# ── ablation ──────────────────────────────────────────────────────────────────
+# 鈹€鈹€ ablation 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 
 class _SimpleModel:
@@ -315,7 +350,7 @@ def test_heuristic_scores_runs() -> None:
     assert isinstance(scores, np.ndarray)
 
 
-# ── backtesting — additional code paths ──────────────────────────────────────
+# 鈹€鈹€ backtesting 鈥?additional code paths 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 
 def test_run_temporal_backtest_fallback_target_column() -> None:
@@ -393,7 +428,7 @@ def test_train_test_split_by_cutoff_empty_test() -> None:
     assert test.empty
 
 
-# ── backtesting — _precision_at_k empty ranking, and run_temporal_backtest paths
+# 鈹€鈹€ backtesting 鈥?_precision_at_k empty ranking, and run_temporal_backtest paths
 
 
 def test_precision_at_k_empty_ranking_returns_zero() -> None:
@@ -424,7 +459,7 @@ def test_run_temporal_backtest_skips_empty_fold() -> None:
         feature_matrix=feature_matrix,
         ground_truth=ground_truth,
         model_cls=_SimpleModel,
-        min_train_years=0,  # first iter has empty train_X → skipped
+        min_train_years=0,  # first iter has empty train_X 鈫?skipped
     )
     assert isinstance(result, pd.DataFrame)
 
