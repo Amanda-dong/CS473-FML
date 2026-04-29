@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 import pandas as pd
 import requests
@@ -30,6 +31,28 @@ def run_placeholder_etl() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 _DATASET_ID = "ipu4-2q9a"
+_CB_PREFIX = {"1": "MN", "2": "BX", "3": "BK", "4": "QN", "5": "SI"}
+_VALID_PREFIXES = {"MN", "BK", "QN", "BX", "SI"}
+
+
+def _normalize_nta_like(value: object) -> str:
+    """Normalize community-district / NTA-like ids into a stable string code."""
+    text = str(value).strip().upper()
+    if not text:
+        return ""
+
+    # Already normalized forms like BK09, QN70, BK0101
+    if re.fullmatch(r"[A-Z]{2}\d{2,4}", text):
+        return text
+
+    # Numeric community district codes (e.g., 401, 212, 105) -> QN01, BX12, MN05
+    digits = re.sub(r"\D", "", text)
+    if len(digits) >= 3 and digits[0] in _CB_PREFIX:
+        boro = _CB_PREFIX[digits[0]]
+        district = int(digits[-2:])
+        return f"{boro}{district:02d}"
+
+    return text
 
 
 def fetch(limit: int = 50000) -> pd.DataFrame:
@@ -97,6 +120,10 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
 
     if "permit_type" not in df.columns:
         df["permit_type"] = "unknown"
+
+    df["nta_id"] = df["nta_id"].map(_normalize_nta_like)
+    df = df[df["nta_id"].astype(str).str.strip() != ""].copy()
+    df = df[df["nta_id"].astype(str).str[:2].isin(_VALID_PREFIXES)].copy()
 
     df["permit_date"] = pd.to_datetime(df["permit_date"], errors="coerce")
     df = df.dropna(subset=["permit_date"])
