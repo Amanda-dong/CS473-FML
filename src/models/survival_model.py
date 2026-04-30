@@ -546,12 +546,36 @@ def build_real_restaurant_history(
         year_opened = start.year - 1990
 
         # Determine if closed: last status is inactive/expired/cancelled
-        closed_statuses = {"inactive", "expired", "cancelled", "closed"}
+        closed_statuses = {
+            "inactive", "expired", "cancelled", "closed",
+            "surrendered", "revoked", "out of business", "close",
+            "voided", "failed to renew",
+        }
         last_status = str(last_row.get("license_status", "")).strip().lower()
         event_observed = 1 if last_status in closed_statuses else 0
 
         end = last_row["_date"] if event_observed else cutoff
         duration_days = max((end - start).days, 1)
+
+        # License history features (per-business discriminative signal)
+        status_lower = grp["license_status"].str.strip().str.lower()
+        active_dates = grp.loc[status_lower == "active", "_date"].sort_values()
+        n_renewals = max(0, len(active_dates) - 1)
+        if len(active_dates) >= 2:
+            intervals = [
+                (active_dates.iloc[i + 1] - active_dates.iloc[i]).days
+                for i in range(len(active_dates) - 1)
+            ]
+            mean_renewal_interval_days = float(np.mean(intervals))
+        else:
+            mean_renewal_interval_days = 0.0
+        inactive_labels = {
+            "expired", "surrendered", "revoked", "suspended",
+            "failed to renew", "out of business", "voided", "close", "tol",
+        }
+        n_inactive_events = int(status_lower.iloc[:-1].isin(inactive_labels).sum())
+        days_since_last_event = max(0, (cutoff - last_row["_date"]).days)
+        n_events = len(grp)
 
         records.append(
             {
@@ -562,6 +586,11 @@ def build_real_restaurant_history(
                 "year_opened": year_opened,
                 "duration_days": duration_days,
                 "event_observed": event_observed,
+                "n_events": n_events,
+                "n_renewals": n_renewals,
+                "mean_renewal_interval_days": mean_renewal_interval_days,
+                "n_inactive_events": n_inactive_events,
+                "days_since_last_event": days_since_last_event,
             }
         )
 

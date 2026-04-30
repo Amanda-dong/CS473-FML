@@ -75,12 +75,26 @@ def _load_or_build_history() -> pd.DataFrame:
 def _temporal_split(
     df: pd.DataFrame, test_frac: float = 0.2, seed: int = 42
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Split into train/test. Uses duration-based split if possible."""
+    """Calendar-based train/test split by cohort year to prevent temporal leakage.
+
+    Splits by year_opened so test restaurants opened later than train restaurants.
+    This prevents the calibration failure from duration-sorted splits (ECE 0.93+).
+    """
     df = df.copy()
-    # Sort by duration descending so "older" restaurants are in train
-    df = df.sort_values("duration_days", ascending=False).reset_index(drop=True)
+    if "year_opened" in df.columns and df["year_opened"].nunique() > 1:
+        cutoff_year = df["year_opened"].quantile(1 - test_frac)
+        train = df[df["year_opened"] <= cutoff_year].reset_index(drop=True)
+        test = df[df["year_opened"] > cutoff_year].reset_index(drop=True)
+        if len(train) > 0 and len(test) > 0:
+            return train, test
+    # Fallback: random split (no temporal leakage, just no cohort structure)
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(len(df))
     split_idx = int(len(df) * (1 - test_frac))
-    return df.iloc[:split_idx], df.iloc[split_idx:]
+    return (
+        df.iloc[idx[:split_idx]].reset_index(drop=True),
+        df.iloc[idx[split_idx:]].reset_index(drop=True),
+    )
 
 
 def _cross_validate_cindex(
