@@ -2171,3 +2171,44 @@ def test_etl_acs_run_etl_no_canonical_file_returns_placeholder(
 
     result = etl_acs.run_etl(limit=5)
     assert result.empty
+
+
+# ── etl_yelp — _env_float and _env_int valid-value paths (lines 40-43, 50-53)
+
+
+def test_etl_yelp_env_float_valid_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lines 40-43: _env_float returns parsed float when env var is a valid number."""
+    from src.data.etl_yelp import _env_float
+
+    monkeypatch.setenv("YELP_TEST_FLOAT", "0.05")
+    result = _env_float("YELP_TEST_FLOAT", 0.03)
+    assert result == pytest.approx(0.05)
+
+
+def test_etl_yelp_env_float_invalid_value_uses_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.data.etl_yelp import _env_float
+
+    monkeypatch.setenv("YELP_TEST_FLOAT", "not_a_float")
+    result = _env_float("YELP_TEST_FLOAT", 0.03)
+    assert result == pytest.approx(0.03)
+
+
+def test_etl_yelp_env_int_valid_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lines 50-53: _env_int returns parsed int when env var is a valid integer."""
+    from src.data.etl_yelp import _env_int
+
+    monkeypatch.setenv("YELP_TEST_INT", "42")
+    result = _env_int("YELP_TEST_INT", 10)
+    assert result == 42
+
+
+def test_etl_yelp_env_int_invalid_value_uses_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.data.etl_yelp import _env_int
+
+    monkeypatch.setenv("YELP_TEST_INT", "not_an_int")
+    result = _env_int("YELP_TEST_INT", 10)
+    assert result == 10

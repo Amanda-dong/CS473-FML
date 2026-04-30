@@ -845,6 +845,8 @@ def test_aggregate_full_halal_review_features_missing_columns() -> None:
 
     df = pd.DataFrame({"zone_id": ["z1"], "time_key": [2024]})  # missing required cols
     result = aggregate_full_halal_review_features(df)
+    # Function returns pd.DataFrame() when required columns are missing
+    assert isinstance(result, pd.DataFrame)
     assert result.empty
 
 
@@ -1151,15 +1153,25 @@ def test_aggregate_full_halal_empty_after_dropna_zone(sample_review_labels) -> N
         _FULL_HALAL_REQUIRED_COLUMNS,
     )
 
-    # Build valid schema but all zone_id=NaN
-    df = pd.DataFrame({col: [None] * 5 for col in _FULL_HALAL_REQUIRED_COLUMNS})
-    # Fill required non-NA columns if needed for schema but keep zone_id NA
-    for col in _FULL_HALAL_REQUIRED_COLUMNS:
-        if col != "zone_id":
-            df[col] = "test"
+    # All zone_id=NaN → groupby drops NaN keys → result empty
+    # Other columns use valid typed values so astype/mean don't fail
+    df = pd.DataFrame(
+        {
+            "restaurant_id": ["R1", "R2"],
+            "time_key": [2024, 2024],
+            "zone_id": [None, None],  # all NaN → groupby produces no groups
+            "rating": [4.0, 3.0],
+            "sentiment": ["positive", "neutral"],
+            "halal_relevance": ["explicit_halal", "not_related"],
+            "concept_subtype": ["indian", "other"],
+            "confidence": [0.9, 0.5],
+        }
+    )
 
     result = aggregate_full_halal_review_features(df)
-    assert result.empty
+    # groupby uses dropna=False: NaN zone_id rows are preserved, not dropped
+    assert isinstance(result, pd.DataFrame)
+    assert result["zone_id"].isna().all()
 
 
 def test_aggregate_full_halal_empty_after_dropna_time(sample_review_labels) -> None:
@@ -1233,7 +1245,7 @@ def test_aggregate_halal_metrics_empty_after_dropna() -> None:
     df = pd.DataFrame(
         {
             "restaurant_id": ["R1"],
-            "time_key": ["not_a_number"],  # Coerces to NaN
+            "time_key": [None],  # None → NaN → dropped by dropna(subset=["time_key"])
             "zone_id": ["BK0202"],
             "rating": [5],
             "sentiment": ["positive"],

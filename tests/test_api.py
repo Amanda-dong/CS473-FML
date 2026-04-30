@@ -566,3 +566,41 @@ def test_safe_float_non_numeric_returns_fallback():
     from src.api.routers.recommendations import _safe_float
 
     assert _safe_float(object(), 0.5) == 0.5
+
+
+# ── Cover specifically requested branches (Lines 62, 65, 273, 309) ──────────
+
+
+def test_resolve_scoring_version_none():
+    from src.api.routers.recommendations import _resolve_scoring_version
+
+    assert _resolve_scoring_version(None, "dummy") == "heuristic"
+
+
+def test_resolve_scoring_version_known(monkeypatch):
+    from src.api.routers.recommendations import _resolve_scoring_version
+    import src.api.routers.recommendations as rec_mod
+
+    monkeypatch.setattr(rec_mod, "get_model_version", lambda p: "v1.0")
+
+    class DummyModel:
+        pass
+
+    assert _resolve_scoring_version(DummyModel(), "dummy") == "v1.0"
+
+
+def test_infer_zone_type_generic_zone():
+    from src.api.routers.recommendations import _infer_zone_type
+
+    assert _infer_zone_type("generic_id_123") == "zone"
+
+
+def test_training_window_empty_years(monkeypatch):
+    from src.api.routers.recommendations import _training_window
+    import src.api.routers.recommendations as rec_mod
+    import pandas as pd
+
+    df = pd.DataFrame({"time_key": ["not_a_year", None]})
+    monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", df)
+
+    assert _training_window() == "unknown"

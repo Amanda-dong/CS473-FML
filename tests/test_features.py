@@ -1222,6 +1222,238 @@ def test_build_zone_year_matrix_merges_gemini_zone_features(monkeypatch, tmp_pat
     assert row["halal_related_share"] == pytest.approx(0.5)
 
 
+# ── feature_matrix coverage gaps ──────────────────────────────────────────────
+
+
+def test_build_zone_year_matrix_hygiene_exception(monkeypatch) -> None:
+    """Line 219-220: Hygiene file exists but read fails."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Prevent interference from Gemini or Phase1
+    monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
+
+    original_exists = Path.exists
+
+    def mock_exists(self):
+        if "hygiene_nta_features.csv" in str(self):
+            return True
+        if "phase1_neighborhood_finding.csv" in str(self):
+            return False
+        return False  # Default to false for others
+
+    def mock_read_csv(path):
+        if "hygiene_nta_features.csv" in str(path):
+            raise ValueError("Injected failure")
+        return pd.read_csv(path)
+
+    monkeypatch.setattr(Path, "exists", mock_exists)
+    monkeypatch.setattr(pd, "read_csv", mock_read_csv)
+
+    # Should not crash
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    result = build_zone_year_matrix({})
+    assert isinstance(result, pd.DataFrame)
+
+
+def test_build_zone_year_matrix_all_none_returns_empty(monkeypatch) -> None:
+    """Line 272: feature_tables empty and no static features."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Prevent interference
+    monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
+
+    def mock_exists(self):
+        if "hygiene_nta_features.csv" in str(
+            self
+        ) or "phase1_neighborhood_finding.csv" in str(self):
+            return False
+        return False
+
+    monkeypatch.setattr(Path, "exists", mock_exists)
+
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    result = build_zone_year_matrix({})
+    assert result.empty
+    assert list(result.columns) == ["zone_id", "time_key"]
+
+
+def test_build_zone_year_matrix_acs_overlap_drop(monkeypatch) -> None:
+    """Line 304: Drop overlapping ACS columns."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Prevent interference
+    monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    etl_outputs = {
+        "licenses": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "event_date": ["2024-01-01"],
+                "license_status": ["Issued"],
+                "population": [0.0],  # Overlap column
+            }
+        ),
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "population": [1000.0],
+                "median_income": [50000.0],
+                "rent_burden": [0.3],
+            }
+        ),
+    }
+    result = build_zone_year_matrix(etl_outputs)
+    assert "population" in result.columns
+    assert "median_income" in result.columns
+    assert "rent_burden" in result.columns
+
+
+def test_build_zone_year_matrix_phase1_bad_schema(monkeypatch) -> None:
+    """Line 348-349: Phase1 file exists but bad schema or read fails."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Prevent interference
+    monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
+
+    def mock_exists(self):
+        if "phase1_neighborhood_finding.csv" in str(self):
+            return True
+        return False
+
+    def mock_read_csv(path):
+        if "phase1_neighborhood_finding.csv" in str(path):
+            raise ValueError("Schema error or file corrupt")
+        return pd.read_csv(path)
+
+    monkeypatch.setattr(Path, "exists", mock_exists)
+    monkeypatch.setattr(pd, "read_csv", mock_read_csv)
+
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    result = build_zone_year_matrix(
+        {
+            "licenses": pd.DataFrame(
+                {
+                    "nta_id": ["BK0202"],
+                    "event_date": ["2024-01-01"],
+                    "license_status": ["Issued"],
+                }
+            )
+        }
+    )
+    assert "population_static" not in result.columns
+
+
+def test_build_zone_year_matrix_rent_static_only(monkeypatch) -> None:
+    """Line 355: rent_static only available."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Prevent interference
+    monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    etl_outputs = {
+        "pluto": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "assessed_value": [1000.0],
+                "year": [2024],
+                "commercial_sqft": [5000.0],
+            }
+        )
+    }
+    result = build_zone_year_matrix(etl_outputs)
+    assert "rent_pressure" in result.columns
+    assert "zone_id" in result.columns
+
+
+def test_build_zone_year_matrix_gemini_empty_merged(monkeypatch) -> None:
+    """Line 384: merged is empty but gemini_features exist."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Mock exists to avoid other files
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+    # Mock build_feature_matrix to return empty but avoid early return by providing some input
+    monkeypatch.setattr(
+        fm,
+        "build_feature_matrix",
+        lambda tables: pd.DataFrame(columns=["zone_id", "time_key"]),
+    )
+
+    def mock_load_gemini(yelp, reviews):
+        return pd.DataFrame(
+            {"zone_id": ["bk-tandon"], "time_key": [2024], "halal_related_share": [0.5]}
+        )
+
+    monkeypatch.setattr(fm, "_load_gemini_review_features", mock_load_gemini)
+
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    # Provide something to avoid early return at line 272
+    etl_outputs = {
+        "licenses": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "event_date": ["2024-01-01"],
+                "license_status": ["Issued"],
+            }
+        )
+    }
+    result = build_zone_year_matrix(etl_outputs)
+    assert not result.empty
+    assert "halal_related_share" in result.columns
+
+
+def test_build_zone_year_matrix_gemini_overlap_drop(monkeypatch) -> None:
+    """Line 392: Gemini overlap columns drop."""
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Mock exists to avoid other files
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+
+    def mock_load_gemini(yelp, reviews):
+        return pd.DataFrame(
+            {
+                "zone_id": ["bk-tandon"],  # Used one of the zones from the failed test
+                "time_key": [2024],
+                "halal_related_share": [0.8],
+            }
+        )
+
+    monkeypatch.setattr(fm, "_load_gemini_review_features", mock_load_gemini)
+
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    etl_outputs = {
+        "licenses": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "event_date": ["2024-01-01"],
+                "license_status": ["Issued"],
+                "halal_related_share": [0.1],  # Overlap column
+            }
+        )
+    }
+
+    result = build_zone_year_matrix(etl_outputs)
+    assert "halal_related_share" in result.columns
+    assert not result["halal_related_share"].isnull().all()
+
+
 def test_build_zone_year_matrix_loads_phase1_static(monkeypatch, tmp_path) -> None:
     from src.features.feature_matrix import build_zone_year_matrix
     import src.features.feature_matrix as fm
