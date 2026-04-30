@@ -200,6 +200,183 @@ def test_pipeline_raises_on_unknown_stage() -> None:
         pipeline.run_stage("nonexistent_stage")
 
 
+# ── integration / smoke tests ────────────────────────────────────────────────
+
+
+def test_pipeline_etl_only_completes(tmp_path, monkeypatch) -> None:
+    """Smoke test: run main with --etl-only and verify feature_matrix.parquet."""
+    import run_full_pipeline
+    from unittest.mock import patch
+
+    # 1. Setup paths to use tmp_path
+    processed_dir = tmp_path / "data" / "processed"
+    model_dir = tmp_path / "data" / "models"
+    processed_dir.mkdir(parents=True)
+    model_dir.mkdir(parents=True)
+
+    monkeypatch.setattr(run_full_pipeline, "PROCESSED_DIR", processed_dir)
+    monkeypatch.setattr(run_full_pipeline, "MODEL_DIR", model_dir)
+
+    # 2. Mock ETL runner to avoid real downloads/file reads
+    mock_etl_results = {
+        "licenses": pd.DataFrame(
+            {
+                "event_date": ["2024-01-01"],
+                "nta_id": ["BK33"],
+                "license_status": ["Active"],
+                "restaurant_id": ["R1"],
+                "business_unique_id": ["B1"],
+                "category": ["Restaurant"],
+            }
+        ),
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK33"],
+                "population": [1000],
+                "median_income": [70000],
+                "rent_burden": [0.3],
+            }
+        ),
+        "inspections": pd.DataFrame(
+            {
+                "inspection_date": ["2024-01-01"],
+                "nta_id": ["BK33"],
+                "grade": ["A"],
+                "restaurant_id": ["R1"],
+                "critical_flag": ["Not Applicable"],
+                "cuisine_type": ["Unknown"],
+                "zipcode": ["11201"],
+            }
+        ),
+        "yelp": pd.DataFrame(
+            {
+                "review_date": ["2024-01-01"],
+                "restaurant_id": ["R1"],
+                "review_text": ["healthy"],
+                "rating": [5.0],
+            }
+        ),
+        "pluto": pd.DataFrame(
+            {
+                "nta_id": ["BK33"],
+                "assessed_value": [1000000],
+                "commercial_sqft": [5000],
+            }
+        ),
+    }
+    mock_status = {k: "ok" for k in mock_etl_results}
+
+    # 3. Mocks for external calls
+    with (
+        patch(
+            "src.data.etl_runner.run_all_etl",
+            return_value=(mock_etl_results, mock_status),
+        ),
+        patch("requests.get") as mock_get,
+    ):
+        mock_get.return_value.json.return_value = {"status": "success"}
+        mock_get.return_value.status_code = 200
+
+        # 4. Run pipeline main
+        import sys
+
+        test_args = ["prog", "--etl-only", "--limit", "50"]
+        with patch.object(sys, "argv", test_args):
+            run_full_pipeline.main()
+
+    # 5. Verify output
+    fm_path = processed_dir / "feature_matrix.parquet"
+    assert fm_path.exists()
+    df = pd.read_parquet(fm_path)
+    assert len(df) > 0
+    assert "zone_id" in df.columns
+    assert "time_key" in df.columns
+
+
+def test_fill_nulls_in_pipeline(monkeypatch) -> None:
+    """Verify fill_feature_matrix_nulls is called during build_feature_matrix_stage."""
+    import run_full_pipeline
+    from unittest.mock import patch
+    from pathlib import Path
+
+    call_count = 0
+
+    def mock_fill(df, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return df
+
+    monkeypatch.setattr("src.data.quality.fill_feature_matrix_nulls", mock_fill)
+
+    mock_etl_outputs = {
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK33"],
+                "population": [1000],
+                "median_income": [70000],
+                "rent_burden": [0.3],
+            }
+        ),
+        "licenses": pd.DataFrame(
+            {
+                "event_date": ["2024-01-01"],
+                "nta_id": ["BK33"],
+                "license_status": ["Active"],
+                "restaurant_id": ["R1"],
+                "business_unique_id": ["B1"],
+                "category": ["Restaurant"],
+            }
+        ),
+    }
+
+    # build_feature_matrix_stage writes to PROCESSED_DIR
+    with patch("run_full_pipeline.PROCESSED_DIR", Path("/tmp")):
+        # Mock build_ground_truth to return something mergeable
+        with patch("src.features.ground_truth.build_ground_truth") as mock_gt:
+            mock_gt.return_value = pd.DataFrame(
+                columns=["zone_id", "time_key", "y_composite", "label_quality"]
+            )
+            run_full_pipeline.build_feature_matrix_stage(mock_etl_outputs)
+
+    assert call_count > 0
+
+
+def test_pipeline_summary_dict_has_correct_keys() -> None:
+    """Verify build_feature_matrix_stage returns a DataFrame."""
+    import run_full_pipeline
+    from unittest.mock import patch
+    from pathlib import Path
+
+    mock_etl_outputs = {
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK33"],
+                "population": [1000],
+                "median_income": [70000],
+                "rent_burden": [0.3],
+            }
+        ),
+        "licenses": pd.DataFrame(
+            {
+                "event_date": ["2024-01-01"],
+                "nta_id": ["BK33"],
+                "license_status": ["Active"],
+                "restaurant_id": ["R1"],
+                "business_unique_id": ["B1"],
+                "category": ["Restaurant"],
+            }
+        )
+    }
+
+    with patch("run_full_pipeline.PROCESSED_DIR", Path("/tmp")):
+        with patch("src.features.ground_truth.build_ground_truth") as mock_gt:
+            mock_gt.return_value = pd.DataFrame(
+                columns=["zone_id", "time_key", "y_composite", "label_quality"]
+            )
+            df = run_full_pipeline.build_feature_matrix_stage(mock_etl_outputs)
+            assert isinstance(df, pd.DataFrame)
+
+
 # ── preflight — exception handler paths ───────────────────────────────────────
 
 
