@@ -8,16 +8,18 @@ import pytest
 
 @pytest.fixture
 def sample_zone_features() -> dict[str, float]:
-    """Compact feature dict used across model and feature tests."""
+    """Compact feature dict using current (2020-NTA) feature matrix column names."""
     return {
-        "healthy_supply_ratio": 0.2,
+        "halal_related_share": 0.9,
         "subtype_gap": 0.8,
-        "quick_lunch_demand": 0.9,
-        "survival_score": 0.7,
+        "target": 0.7,
         "rent_pressure": 0.2,
-        "competition_score": 0.3,
+        "restaurant_count_static": 15.0,
         "license_velocity": 0.5,
-        "healthy_review_share": 0.4,
+        "overall_positive_rate": 0.4,
+        "trip_count": 50000.0,
+        "median_income_static": 85000.0,
+        "inspection_grade_avg_static": 2.5,
     }
 
 

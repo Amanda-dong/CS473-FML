@@ -249,8 +249,8 @@ def main() -> None:
         compare_concept = active_query.get("compare_concept")
         # Header metrics row
         hm1, hm2 = st.columns(2)
-        hm1.metric("NYC zones analyzed", "30")
-        hm2.metric("Data sources", "8")
+        hm1.metric("NYC zones analyzed", "137")
+        hm2.metric("Feature signals", "47")
 
         if not query_submitted:
             st.info(

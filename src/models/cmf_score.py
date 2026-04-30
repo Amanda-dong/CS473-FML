@@ -101,24 +101,34 @@ def score_zone_for_concept(
     subtype-specific weight tuning (logged for traceability).
 
     Expected keys (all optional, default to 0.5 / 0.0):
-        quick_lunch_demand, healthy_review_share, subtype_gap, survival_score,
-        license_velocity, competition_score, rent_pressure, healthy_supply_ratio,
-        transit_access, income_alignment
+        halal_related_share, overall_positive_rate, subtype_gap, target,
+        license_velocity, restaurant_count_static, rent_pressure,
+        trip_count, median_income_static
     """
-    demand = float(zone_features.get("quick_lunch_demand", 0.5))
-    gap = float(
-        zone_features.get("healthy_gap_score", zone_features.get("subtype_gap", 0.5))
-    )
-    subtype_gap = float(zone_features.get("subtype_gap", 0.5))
-    review_share = float(zone_features.get("healthy_review_share", 0.0))
-    survival = float(zone_features.get("survival_score", 0.5))
-    vel_raw = float(zone_features.get("license_velocity", 0.0))
+    def _safe(val: object, default: float) -> float:
+        """Coerce val to float, returning default on None/NaN."""
+        try:
+            f = float(val)  # type: ignore[arg-type]
+            return f if math.isfinite(f) else default
+        except (TypeError, ValueError):
+            return default
+
+    demand = _safe(zone_features.get("halal_related_share"), 0.5)
+    gap = _safe(zone_features.get("subtype_gap"), 0.5)
+    subtype_gap = gap
+    review_share = _safe(zone_features.get("overall_positive_rate"), 0.0)
+    survival = _safe(zone_features.get("target"), 0.5)
+    vel_raw = _safe(zone_features.get("license_velocity"), 0.0)
     # Normalise license velocity: sigmoid(vel) maps (−∞,+∞) → (0,1)
     vel_norm = 1.0 / (1.0 + math.exp(-vel_raw)) if vel_raw != 0.0 else 0.5
-    competition = float(zone_features.get("competition_score", 0.0))
-    rent = float(zone_features.get("rent_pressure", 0.0))
-    transit = float(zone_features.get("transit_access", 0.5))
-    income = float(zone_features.get("income_alignment", 0.5))
+    # Normalise raw counts to [0, 1] using fixed reference ranges
+    competition = min(_safe(zone_features.get("restaurant_count_static"), 0.0) / 50.0, 1.0)
+    rent = _safe(zone_features.get("rent_pressure"), 0.0)  # already [0,1] in FM
+    transit = min(_safe(zone_features.get("trip_count"), 0.0) / 200_000.0, 1.0)
+    income = min(
+        max((_safe(zone_features.get("median_income_static"), 80_000.0) - 30_000.0) / 170_000.0, 0.0),
+        1.0,
+    )
 
     return ScoreComponents(
         healthy_gap_score=gap,

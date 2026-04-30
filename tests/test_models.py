@@ -650,7 +650,8 @@ def test_score_zone_for_concept_vel_norm_zero() -> None:
 def test_top_positive_drivers_transit_access() -> None:
     from src.models.explainability import top_positive_drivers
 
-    features = {"transit_access": 0.9, "income_alignment": 0.8}
+    # trip_count=160000 normalises to 0.80 > 0.75 threshold
+    features = {"trip_count": 160_000.0, "transit_access": 0.9}
     drivers = top_positive_drivers(features)
     assert any("transit" in d.lower() for d in drivers)
 
@@ -658,7 +659,8 @@ def test_top_positive_drivers_transit_access() -> None:
 def test_top_positive_drivers_income_alignment() -> None:
     from src.models.explainability import top_positive_drivers
 
-    features = {"income_alignment": 0.8}
+    # median_income_static=140000 normalises to (140k-30k)/170k ≈ 0.647 > 0.65 → just above threshold
+    features = {"median_income_static": 141_000.0}
     drivers = top_positive_drivers(features)
     assert any("income" in d.lower() for d in drivers)
 

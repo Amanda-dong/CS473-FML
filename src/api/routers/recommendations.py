@@ -383,20 +383,17 @@ def _build_features(
     final_income = float(np.clip(income + price_income_adj, 0.0, 1.0))
 
     return {
-        "quick_lunch_demand": demand,
+        "halal_related_share": demand,
         "subtype_gap": final_gap,
-        "survival_score": final_surv,
+        "target": final_surv,
         "rent_pressure": rent,
-        "competition_score": comp,
-        "healthy_review_share": review,
+        "restaurant_count_static": comp,
+        "overall_positive_rate": review,
         "license_velocity": vel,
-        "transit_access": transit,
-        "income_alignment": final_income,
+        "trip_count": transit,
+        "median_income_static": final_income,
         "healthy_supply_ratio": 1.0 - final_gap,
         "healthy_gap_score": max(0.0, final_gap * demand - comp * 0.3),
-        "halal_related_share": _safe_float(gz.get("halal_related_share"), demand)
-        if gz
-        else demand,
         "explicit_halal_share": _safe_float(gz.get("explicit_halal_share"), 0.0)
         if gz
         else 0.0,
@@ -473,8 +470,8 @@ def _apply_request_context_adjustment(
     price_adj = _PRICE_ADJUST.get(price_tier, 0.0)
 
     rent_pressure = _safe_float(features.get("rent_pressure"), 0.35)
-    competition = _safe_float(features.get("competition_score"), 0.35)
-    income_alignment = _safe_float(features.get("income_alignment"), 0.60)
+    competition = _safe_float(features.get("restaurant_count_static"), 0.35)
+    income_alignment = _safe_float(features.get("median_income_static"), 0.60)
 
     risk_cost = rent_pressure * 0.035 + competition * 0.025
     if risk_tolerance == "conservative":
@@ -566,7 +563,7 @@ def _score_with_learned_model(
 
     # Survival risk — use zone-level viability from feature cache; avoids passing
     # zone features to a restaurant-level survival model (causes 100% risk bug).
-    survival_score = feats.get("survival_score", feats.get("merchant_viability", 0.5))
+    survival_score = feats.get("target", feats.get("merchant_viability", feats.get("survival_score", 0.5)))
     survival_risk = round(1.0 - float(survival_score), 4)
 
     return ZoneRecommendation(

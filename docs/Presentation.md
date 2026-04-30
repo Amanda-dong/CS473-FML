@@ -33,7 +33,7 @@ Subtype-aware micro-zone scoring for independent restaurant operators.
 Pipeline overview:
 
 ```
-Raw NYC Open Data  -->  ETL (8 sources)  -->  Feature Matrix
+Raw NYC Open Data  -->  ETL (10 sources)  -->  Feature Matrix
 Feature Matrix  -->  Survival Model + CMF Score  -->  Zone Rankings
 Zone Rankings  -->  FastAPI  -->  Streamlit UI  -->  Merchant Decision
 ```
@@ -65,7 +65,7 @@ Key architectural choices:
 
 **Key design decision:** DCA license data, not Yelp, defines the restaurant universe. Yelp coverage skews toward mid-market and above; DCA captures every licensed food establishment regardless of digital footprint.
 
-**ETL output:** 8 processed Parquet files joined into a zone-year feature matrix (NTA x year x feature).
+**ETL output:** 10 processed Parquet files joined into a zone-year feature matrix (NTA x year x feature).
 
 ---
 
@@ -206,7 +206,7 @@ Three-tab Streamlit application: **Top Picks | Methodology | Data Sources**
 **Merchant workflow:**
 
 1. Select concept (e.g., "Healthy Indian") + price tier + risk tolerance slider
-2. System scores all 30 curated micro-zones and returns the top 5 ranked by opportunity score
+2. System scores all 137 modeled micro-zones and returns the top 5 ranked by opportunity score
 3. Each result card displays:
    - Zone type badge (campus / business district / residential)
    - Opportunity score (0–100)
@@ -244,7 +244,7 @@ Three-tab Streamlit application: **Top Picks | Methodology | Data Sources**
 **Current limitations:**
 
 - ACS income data: synthetic fallback used for several NTAs where ACS suppression thresholds apply; real ACS microdata access would improve income-alignment precision
-- Zone catalog: 30 curated micro-zones; expanding to all 195 NTAs or H3 hexagon resolution requires additional feature engineering and compute
+- Zone catalog: 137 modeled micro-zones; expanding to all 195 NTAs or H3 hexagon resolution requires additional feature engineering and compute
 - Mobility proxy: Citi Bike trip counts are a noisy mobility signal; foot-traffic panels (Placer.ai, Safegraph) would be materially stronger but are cost-prohibitive for a course project
 - NLP label quality: Gemini annotation quality estimate is pending human review; keyword-regex is a known lower bound
 

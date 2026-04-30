@@ -6,7 +6,7 @@ Spring 2026 · Team: Catherine, Harsh, Tony, Siqi, Amanda
 
 ## §1. Executive Summary
 
-Independent restaurant operators in New York City face a structural information asymmetry: national chains commission bespoke site-selection analytics while independent merchants make location decisions on intuition and anecdote. This project builds a decision-support tool that closes that gap for one concrete niche — healthy fast-casual food concepts. The system ingests eight official and supplemental NYC data sources, constructs a zone-year feature matrix across 30 curated micro-zones, and produces ranked shortlists of underserved locations for a user-specified concept subtype (e.g., Healthy Indian, Mediterranean Bowls, Salad Bowls). A Cox Proportional Hazards survival model gates each recommendation with a commercial-viability estimate, and a weighted Concept-Market-Fit (CMF) score integrates demand signals, competition density, rent pressure, and license velocity into a single interpretable ranking. The original project focus was identifying white-space demand for halal restaurant concepts, which has since been generalized to broader healthy-food categories. The full pipeline — from raw open data through trained models to a live Streamlit interface — is deployed end-to-end and available for instructor demo.
+Independent restaurant operators in New York City face a structural information asymmetry: national chains commission bespoke site-selection analytics while independent merchants make location decisions on intuition and anecdote. This project builds a decision-support tool that closes that gap for one concrete niche — healthy fast-casual food concepts. The system ingests 10 official and supplemental NYC data sources, constructs a zone-year feature matrix across 137 modeled micro-zones, and produces ranked shortlists of underserved locations for a user-specified concept subtype (e.g., Healthy Indian, Mediterranean Bowls, Salad Bowls). A Cox Proportional Hazards survival model gates each recommendation with a commercial-viability estimate, and a weighted Concept-Market-Fit (CMF) score integrates demand signals, competition density, rent pressure, and license velocity into a single interpretable ranking. The original project focus was identifying white-space demand for halal restaurant concepts, which has since been generalized to broader healthy-food categories. The full pipeline — from raw open data through trained models to a live Streamlit interface — is deployed end-to-end and available for instructor demo.
 
 ---
 
@@ -39,7 +39,7 @@ The system is organized in three layers: data ingestion, feature computation and
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │  Layer 1 — Data Ingestion (ETL)                               │
-│  8 sources → src/data/etl_*.py → data/processed/*.parquet    │
+│  10 sources → src/data/etl_*.py → data/processed/*.parquet    │
 │                                                                │
 │  Tier 1 (backbone):  DCA licenses · DOHMH inspections ·      │
 │                      DOB permits · Census ACS · NTA boundaries│
@@ -66,7 +66,7 @@ The system is organized in three layers: data ingestion, feature computation and
 └────────────────────────────────────────────────────────────────┘
 ```
 
-Each ETL module exposes a `run_etl() → pd.DataFrame` function returning a canonically-typed frame. The feature matrix builder (`build_zone_year_matrix()`) joins all ETL outputs on `(zone_id, time_key)`, applies feature engineering, and saves a single wide parquet. Model training reads this parquet and writes `.joblib` artifacts. At inference time, the FastAPI recommendation endpoint loads these artifacts lazily at startup and scores all 30 zones per request using the CMF formula.
+Each ETL module exposes a `run_etl() → pd.DataFrame` function returning a canonically-typed frame. The feature matrix builder (`build_zone_year_matrix()`) joins all ETL outputs on `(zone_id, time_key)`, applies feature engineering, and saves a single wide parquet. Model training reads this parquet and writes `.joblib` artifacts. At inference time, the FastAPI recommendation endpoint loads these artifacts lazily at startup and scores all 137 zones per request using the CMF formula.
 
 ---
 
@@ -104,7 +104,7 @@ with open/close event dates, enabling accurate survival-time construction.
 | Reddit (`r/nyc`, `r/AskNYC`) | `src/data/etl_reddit.py` | `month`, `community_district`, `mention_text` | Used only if ≥ 200 non-Unknown posts/month; else 311 |
 | Citi Bike trip data | `src/data/etl_citibike.py` | `year`, `nta_id`, `trip_count`, `station_count` | Mobility proxy; falls back to placeholder if download fails |
 | Inside Airbnb | `src/data/etl_airbnb.py` | `nta_id` | (Deprecated) Historically used for housing-pressure enrichment |
-| NTA Boundaries | `src/data/etl_boundaries.py` | `zone_id`, `zone_type`, `geometry_wkt` | 30-code static fallback if GeoJSON download fails |
+| NTA Boundaries | `src/data/etl_boundaries.py` | `zone_id`, `zone_type`, `geometry_wkt` | 137-code static fallback if GeoJSON download fails |
 | NYC DOB Permits | `src/data/etl_permits.py` | `permit_date`, `nta_id`, `permit_type`, `job_count` | Construction velocity signal for phase discovery |
 
 Note: Google Trends was explicitly removed from the plan. The `pytrends` library
@@ -374,7 +374,7 @@ The primary ranking metric is **NDCG@5** (Normalized Discounted Cumulative Gain 
 
 **Interpretation:** NDCG@5 improves consistently as the training window grows, consistent with the model learning more stable zone-level patterns over time. The 2020 fold shows the lowest performance, attributable to COVID-19 disruption: restaurant activity patterns in 2020 diverged sharply from the 2015–2019 training distribution, reducing signal quality in license velocity and inspection covariates.
 
-Note on catalog size: the recommendation catalog contains 30 curated micro-zones. NDCG@k on a 30-item catalog is not directly comparable to large-catalog benchmarks (e.g., recommendation systems literature reporting NDCG@10 on 10,000-item catalogs). The task here is closer to a small-set ranking problem; absolute NDCG values above 0.7 are expected for a well-calibrated heuristic on such a small catalog.
+Note on catalog size: the recommendation catalog contains 137 modeled micro-zones. NDCG@k on a 137-item catalog is not directly comparable to large-catalog benchmarks (e.g., recommendation systems literature reporting NDCG@10 on 10,000-item catalogs). The task here is closer to a small-set ranking problem; absolute NDCG values above 0.7 are expected for a well-calibrated heuristic on such a small catalog.
 
 ### §6.3 Feature Ablation
 
@@ -409,7 +409,7 @@ The merchant workflow is shortlist-first:
 1. Select a healthy concept subtype (e.g., Healthy Indian / South Asian) from the sidebar.
 2. Set price tier (budget / mid / premium) and risk tolerance (conservative / balanced / aggressive).
 3. Optionally filter by borough or zone type (campus walk-shed, lunch corridor, transit catchment, business district).
-4. The system scores all 30 micro-zones and returns the top-k ranked by CMF opportunity score.
+4. The system scores all 137 micro-zones and returns the top-k ranked by CMF opportunity score.
 5. Each recommendation card displays: zone type badge, opportunity score, survival risk percentage, confidence bucket (high/medium/low), trajectory cluster badge, risk flags, positive drivers, and an expandable feature contribution chart.
 6. A Plotly scatter map overlays scored zones with color proportional to opportunity score.
 7. Users can compare two concepts side-by-side and export the shortlist as CSV.
@@ -424,7 +424,7 @@ The UI is intentionally map-subordinate: the map supports the shortlist rather t
 
 **NLP pipeline:** The `healthy_review_share` and `subtype_gap` features currently use keyword-regex fallback. The Gemini weak-supervision pass (in progress, handled by a separate team workstream) will replace this with confidence-filtered silver labels, expected to yield a 9-point NDCG improvement per the ablation table.
 
-**Catalog size:** The recommendation catalog covers 30 curated micro-zones. Expanding to all 195 NTAs or H3 hexagons is architecturally feasible — the ETL, feature matrix, and scoring pipeline are zone-agnostic. The main constraint is the Citi Bike and PLUTO coverage, which would require spatial joins rather than the current crosswalk.
+**Catalog size:** The recommendation catalog covers 137 curated micro-zones. Expanding to all 195 NTAs or H3 hexagons is architecturally feasible — the ETL, feature matrix, and scoring pipeline are zone-agnostic. The main constraint is the Citi Bike and PLUTO coverage, which would require spatial joins rather than the current crosswalk.
 
 **Foot traffic:** Citi Bike trip counts are a noisy mobility proxy. Commercial foot-traffic APIs (Placer.ai, Safegraph) provide higher-resolution pedestrian counts and dwell-time estimates. Integration would require a data-access agreement not available in the course environment.
 
@@ -440,7 +440,7 @@ We built a rigorous, end-to-end healthy-food white-space recommender for NYC mic
 
 Walk-forward temporal evaluation confirms that the CMF scoring system substantially outperforms a random baseline (NDCG@5 0.83 vs. 0.50) with consistent improvement over time. The survival model achieves a concordance index of 0.71, consistent with the best published results on the same data source. The Streamlit interface translates these outputs into a shortlist-first merchant workflow with interpretable evidence cards.
 
-The system architecture — eight ETL modules, a canonical zone-year feature matrix, three trained model artifacts, and a FastAPI/Streamlit stack — is production-ready for the course demo and extensible to a broader catalog or additional cities without architectural changes.
+The system architecture — 10 ETL modules, a canonical zone-year feature matrix, three trained model artifacts, and a FastAPI/Streamlit stack — is production-ready for the course demo and extensible to a broader catalog or additional cities without architectural changes.
 
 ---
 
@@ -463,3 +463,5 @@ Therneau, T. M., & Grambsch, P. M. (2000). *Modeling survival data: Extending th
 Zhang, Y., Li, J., & Wang, S. (2020). Predicting restaurant survival using survival analysis on NYC inspection records. *Proceedings of the ACM International Conference on Information and Knowledge Management*, 2847–2854.
 C inspection records. *Proceedings of the ACM International Conference on Information and Knowledge Management*, 2847–2854.
 ge Management*, 2847–2854.
+54.
+

@@ -11,10 +11,10 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
     """Return quantitative explanation strings for the strongest positive signals."""
     drivers: list[str] = []
 
-    quick_lunch = zone_features.get("quick_lunch_demand", 0.0)
-    if quick_lunch > 0.6:
+    halal_share = zone_features.get("halal_related_share", 0.0)
+    if halal_share > 0.6:
         drivers.append(
-            f"High daytime foot-traffic / lunch-demand index ({quick_lunch:.0%})"
+            f"High daytime foot-traffic / halal-demand index ({halal_share:.0%})"
         )
 
     subtype_gap = zone_features.get("subtype_gap", 0.0)
@@ -23,7 +23,7 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
             f"Strong cuisine gap ({subtype_gap:.0%}) — this concept is under-supplied here"
         )
 
-    survival_score = zone_features.get("survival_score", 0.0)
+    survival_score = zone_features.get("target", 0.0)
     if survival_score > 0.6:
         drivers.append(
             f"Survival model gives {survival_score:.0%} commercial viability"
@@ -33,19 +33,21 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
     if license_velocity > 0.3:
         drivers.append("Positive license velocity — active neighborhood growth signal")
 
-    healthy_review_share = zone_features.get("healthy_review_share", 0.0)
-    if healthy_review_share > 0.3:
+    overall_pos = zone_features.get("overall_positive_rate", 0.0)
+    if overall_pos > 0.3:
         drivers.append(
-            f"NLP review signals show {healthy_review_share:.0%} demand for this category"
+            f"NLP review signals show {overall_pos:.0%} demand for this category"
         )
 
-    transit_access = zone_features.get("transit_access", 0.0)
-    if transit_access > 0.75:
+    trip_raw = float(zone_features.get("trip_count", 0.0))
+    trip_norm = min(trip_raw / 200_000.0, 1.0)
+    if trip_norm > 0.75:
         drivers.append(
-            f"Excellent transit accessibility ({transit_access:.0%}) — maximises foot-traffic"
+            f"Excellent transit accessibility ({trip_norm:.0%}) — maximises foot-traffic"
         )
 
-    income_alignment = zone_features.get("income_alignment", 0.0)
+    income_raw = float(zone_features.get("median_income_static", 0.0))
+    income_alignment = min(max((income_raw - 30_000.0) / 170_000.0, 0.0), 1.0) if income_raw > 1.0 else income_raw
     if income_alignment > 0.65:
         drivers.append("Income profile aligns well with the chosen price tier")
 
@@ -62,24 +64,24 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
             f"High rent pressure ({rent_pressure:.0%}) — may compress margins significantly"
         )
 
-    competition_score = zone_features.get("competition_score", 0.0)
-    if competition_score > 0.5:
+    comp_score = zone_features.get("restaurant_count_static", 0.0)
+    if comp_score > 0.5:
         risks.append(
-            f"Saturated market ({competition_score:.0%} competitor density) — differentiation required"
+            f"Saturated market ({comp_score:.0%} competitor density) — differentiation required"
         )
 
-    survival_score = zone_features.get("survival_score", 0.0)
+    survival_score = zone_features.get("target", 0.0)
     if survival_score < 0.4:
         risks.append("Below-average survival outlook — consider more established zone")
 
-    income_alignment = zone_features.get("income_alignment", 0.0)
+    income_alignment = zone_features.get("median_income_static", 0.0)
     if income_alignment < 0.35:
         risks.append(
             "Income/price-tier mismatch — local spending power may not support this concept"
         )
 
-    transit_access = zone_features.get("transit_access", 0.0)
-    if transit_access < 0.45:
+    trip_count = zone_features.get("trip_count", 0.0)
+    if trip_count < 0.45:
         risks.append(
             "Limited transit access — foot-traffic relies on local residents only"
         )
@@ -92,20 +94,16 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 FEATURE_DISPLAY_NAMES: dict[str, str] = {
-    "demand_signal": "Daytime foot-traffic demand",
+    "halal_related_share": "Daytime foot-traffic demand",
     "subtype_gap": "Cuisine white-space opportunity",
-    "survival_score": "Commercial viability",
+    "target": "Commercial viability",
     "rent_pressure": "Rent pressure",
-    "competition_score": "Market competition",
+    "restaurant_count_static": "Market competition",
     "license_velocity": "Neighborhood growth signal",
-    "healthy_review_share": "NLP demand confirmation",
-    "transit_access": "Transit accessibility",
-    "income_alignment": "Price-tier income fit",
-    "inspection_grade_avg": "Health inspection quality",
-    "healthy_gap_score": "Category under-supply",
-    "quick_lunch_demand": "Lunch-traffic demand index",
-    "review_demand_score": "Review-based demand signal",
-    "merchant_viability_score": "Merchant viability outlook",
+    "overall_positive_rate": "NLP demand confirmation",
+    "trip_count": "Transit accessibility",
+    "median_income_static": "Price-tier income fit",
+    "inspection_grade_avg_static": "Health inspection quality",
 }
 
 
