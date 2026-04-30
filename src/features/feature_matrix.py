@@ -558,8 +558,19 @@ def _load_gemini_review_features(
                 on="restaurant_id",
                 how="left",
             )
+            
+        if "zone_id" in labels_df.columns:
+            labels_df = labels_df.dropna(subset=["zone_id"])
+            
         if "time_key" not in labels_df.columns:
-            labels_df["time_key"] = _GEMINI_FALLBACK_TIME_KEY  # pragma: no cover
+            labels_df["time_key"] = pd.NA  # pragma: no cover
+            
+        if "review_date" in labels_df.columns:
+            labels_df["time_key"] = labels_df["time_key"].fillna(
+                pd.to_datetime(labels_df["review_date"], errors="coerce").dt.year
+            )
+        labels_df["time_key"] = labels_df["time_key"].fillna(_GEMINI_FALLBACK_TIME_KEY)
+        
         return aggregate_healthy_review_features(labels_df)
     except Exception:
         logger.warning(
