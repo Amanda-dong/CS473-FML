@@ -588,7 +588,9 @@ def test_inspection_quality_with_zone_id_col() -> None:
 def test_inspection_quality_with_time_key() -> None:
     from src.features.ground_truth import _inspection_quality
 
-    df = pd.DataFrame({"nta_id": ["BK0202"], "time_key": [2022], "grade": ["A", "B"][:1]})
+    df = pd.DataFrame(
+        {"nta_id": ["BK0202"], "time_key": [2022], "grade": ["A", "B"][:1]}
+    )
     result = _inspection_quality(df)
     assert not result.empty
 
@@ -1237,7 +1239,9 @@ def test_build_zone_year_matrix_loads_phase1_static(monkeypatch, tmp_path) -> No
         }
     ).to_csv(phase1_path, index=False)
 
-    monkeypatch.setattr(fm, "Path", lambda p: phase1_path if "phase1" in str(p) else Path(p))
+    monkeypatch.setattr(
+        fm, "Path", lambda p: phase1_path if "phase1" in str(p) else Path(p)
+    )
 
     etl_outputs = {
         "acs": pd.DataFrame(

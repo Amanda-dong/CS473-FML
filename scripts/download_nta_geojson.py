@@ -5,7 +5,7 @@ Writes:
 - ``data/raw/nta2020_nyc.geojson`` — 2020 NTAs (all boroughs), from ArcGIS
   ``NYC_Neighborhood_Tabulation_Areas_2020`` (fields normalized to lowercase).
 
-- ``data/raw/nta.geojson`` — 2020 NTAs **all five boroughs**. 
+- ``data/raw/nta.geojson`` — 2020 NTAs **all five boroughs**.
 
 The legacy ``build_nta_features.load_manhattan_ntas()`` still expects
 ``nta.geojson``. For **Yelp → zone_id** without the GDB,
@@ -31,6 +31,7 @@ URL_2020 = (
     "NYC_Neighborhood_Tabulation_Areas_2020/FeatureServer/0/query"
     "?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500"
 )
+
 
 def _fetch_json(url: str) -> dict:
     with urllib.request.urlopen(url, timeout=120) as resp:

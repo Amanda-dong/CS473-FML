@@ -21,8 +21,13 @@ def _cuisine_diversity_features(inspections: pd.DataFrame) -> pd.DataFrame:
 
     # High-risk cuisines (historically higher violation rates)
     high_risk = {
-        "chinese", "mexican", "american", "latin american",
-        "caribbean", "bakery products/desserts", "spanish",
+        "chinese",
+        "mexican",
+        "american",
+        "latin american",
+        "caribbean",
+        "bakery products/desserts",
+        "spanish",
     }
 
     records = []
@@ -99,9 +104,16 @@ def main() -> None:
 
     # Drop any old versions of these columns before merging
     drop_cols = [
-        c for c in zf.columns
-        if c in {"cuisine_diversity", "dominant_cuisine", "high_risk_cuisine_share",
-                 "yelp_avg_rating", "yelp_review_density"}
+        c
+        for c in zf.columns
+        if c
+        in {
+            "cuisine_diversity",
+            "dominant_cuisine",
+            "high_risk_cuisine_share",
+            "yelp_avg_rating",
+            "yelp_review_density",
+        }
     ]
     if drop_cols:
         zf = zf.drop(columns=drop_cols)
@@ -118,8 +130,10 @@ def main() -> None:
 
     zf.to_parquet(zone_features_path, index=False)
     print(f"Saved enriched zone_features: {zf.shape}")
-    print(f"New cols: cuisine_diversity, dominant_cuisine, high_risk_cuisine_share, "
-          f"yelp_avg_rating, yelp_review_density")
+    print(
+        "New cols: cuisine_diversity, dominant_cuisine, high_risk_cuisine_share, "
+        "yelp_avg_rating, yelp_review_density"
+    )
     print(f"NTAs with cuisine data: {zf['cuisine_diversity'].gt(0).sum()}")
     print(f"NTAs with Yelp data: {zf['yelp_review_density'].gt(0).sum()}")
 

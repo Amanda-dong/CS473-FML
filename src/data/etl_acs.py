@@ -88,7 +88,9 @@ def _transform(df: pd.DataFrame) -> pd.DataFrame:
                 "median_income": pd.to_numeric(df["MdHHIncE"], errors="coerce"),
                 "population": pd.to_numeric(df["Pop16plE"], errors="coerce"),
                 # Estimate from median income: 30% of monthly income as proxy for rent burden.
-                "rent_burden": pd.to_numeric(df["MdHHIncE"], errors="coerce") * 0.30 / 12,
+                "rent_burden": pd.to_numeric(df["MdHHIncE"], errors="coerce")
+                * 0.30
+                / 12,
             }
         )
     else:
