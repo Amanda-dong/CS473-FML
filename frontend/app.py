@@ -248,9 +248,11 @@ def main() -> None:
         compare_mode = bool(active_query.get("compare_mode", False))
         compare_concept = active_query.get("compare_concept")
         # Header metrics row
-        hm1, hm2 = st.columns(2)
+        hm1, hm2, hm3, hm4 = st.columns(4)
         hm1.metric("NYC zones analyzed", "137")
         hm2.metric("Feature signals", "49")
+        hm3.metric("Time range", "2020-2024")
+        hm4.metric("Data sources", "10")
 
         if not query_submitted:
             st.info(
@@ -259,8 +261,12 @@ def main() -> None:
         else:
             _render_current_query(active_query)
             with st.spinner("Scoring zones..."):
-                recs = _fetch_recs(concept, price, borough, risk, zone_type, limit)
-                cluster_map = _fetch_clusters(concept, risk, price)
+                try:
+                    recs = _fetch_recs(concept, price, borough, risk, zone_type, limit)
+                    cluster_map = _fetch_clusters(concept, risk, price)
+                except Exception as e:
+                    st.error(f"Error scoring zones: {e}")
+                    st.stop()
 
             featured_zone_id = render_top_match_panel(
                 active_query,

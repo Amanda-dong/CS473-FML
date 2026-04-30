@@ -23,6 +23,12 @@ _SOURCES: list[tuple[str, str, str, str | None]] = [
     ),
     (
         "T1",
+        "NYC Business Licenses",
+        "DCA/DCA active licenses (daily updates)",
+        "data/processed/licenses.parquet",
+    ),
+    (
+        "T1",
         "Citi Bike trips",
         "Monthly S3 dumps (202603 snapshot)",
         "data/processed/citibike.parquet",
@@ -47,15 +53,23 @@ _SOURCES: list[tuple[str, str, str, str | None]] = [
         "Monthly export from NYC Open Data",
         "data/processed/complaints_311.parquet",
     ),
+    (
+        "T2",
+        "NYC PLUTO (Land Use)",
+        "Static land-use data (2024 vintage)",
+        "data/processed/pluto.parquet",
+    ),
 ]
 
 _PARQUET_CHECKS = {
     "NYC DOHMH Inspections": "data/processed/inspections.parquet",
     "NYC DOB Permits": "data/processed/permits.parquet",
+    "NYC Business Licenses": "data/processed/licenses.parquet",
     "Citi Bike trips": "data/processed/citibike.parquet",
     "NYC NTA boundaries": "data/processed/boundaries.parquet",
     "Yelp Fusion API": "data/processed/yelp.parquet",
     "NYC 311 Complaints": "data/processed/complaints_311.parquet",
+    "NYC PLUTO (Land Use)": "data/processed/pluto.parquet",
     "U.S. Census ACS 5-year": None,
     "Inside Airbnb": None,
 }

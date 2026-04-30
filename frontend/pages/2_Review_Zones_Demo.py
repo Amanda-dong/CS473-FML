@@ -95,18 +95,27 @@ if not REVIEWS_PATH.is_file():
     st.info("Place the Gemini-labeled file under `data/raw/` and rerun.")
     st.stop()
 
-df = pd.read_csv(REVIEWS_PATH)
+try:
+    df = pd.read_csv(REVIEWS_PATH)
+except Exception as e:
+    st.error(f"Error loading Gemini labels: {e}")
+    st.stop()
+
 df["has_zone"] = df["zone_id"].notna() & (df["zone_id"].astype(str).str.strip() != "")
 
 biz_full: pd.DataFrame | None = None
 if BUSINESS_PATH.is_file():
-    biz_full = pd.read_csv(BUSINESS_PATH)
-    biz_full["id"] = biz_full["id"].astype(str).str.strip()
-    biz_geo = biz_full[["id", "latitude", "longitude"]].rename(
-        columns={"id": "restaurant_id"}
-    )
-    df["restaurant_id"] = df["restaurant_id"].astype(str).str.strip()
-    df = df.merge(biz_geo, on="restaurant_id", how="left")
+    try:
+        biz_full = pd.read_csv(BUSINESS_PATH)
+        biz_full["id"] = biz_full["id"].astype(str).str.strip()
+        biz_geo = biz_full[["id", "latitude", "longitude"]].rename(
+            columns={"id": "restaurant_id"}
+        )
+        df["restaurant_id"] = df["restaurant_id"].astype(str).str.strip()
+        df = df.merge(biz_geo, on="restaurant_id", how="left")
+    except Exception as e:
+        st.error(f"Error loading business data: {e}")
+        st.info("The map will be disabled due to data loading failure.")
 else:
     st.warning(f"No `{BUSINESS_PATH}` — map disabled.")
 
