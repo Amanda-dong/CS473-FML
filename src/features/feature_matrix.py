@@ -232,6 +232,49 @@ def build_zone_year_matrix(
         except Exception:
             pass
 
+    _phase1_path = Path("data/raw/phase1_neighborhood_finding.csv")
+    if _phase1_path.exists():
+        try:
+            _p1 = pd.read_csv(_phase1_path)
+            if {"nta", "restaurant_count", "population_16plus"}.issubset(_p1.columns):
+                _p1 = _p1.rename(
+                    columns={
+                        "nta": "nta_id",
+                        "population_16plus": "population_static",
+                        "restaurant_count": "restaurant_count_static",
+                        "halal_count": "halal_count_static",
+                    }
+                )
+                if "median_household_income" in _p1.columns:
+                    _p1 = _p1.rename(
+                        columns={"median_household_income": "median_income_static"}
+                    )
+                _keep_p1 = [
+                    c
+                    for c in [
+                        "nta_id",
+                        "population_static",
+                        "restaurant_count_static",
+                        "halal_count_static",
+                        "median_income_static",
+                    ]
+                    if c in _p1.columns
+                ]
+                _p1_zone = aggregate_nta_to_zone(
+                    _p1[_keep_p1],
+                    zone_col="nta_id",
+                    agg_rules={
+                        "population_static": "sum",
+                        "restaurant_count_static": "sum",
+                        "halal_count_static": "sum",
+                        "median_income_static": "mean",
+                    },
+                )
+                if not _p1_zone.empty:
+                    feature_tables["phase1_static"] = _p1_zone
+        except Exception:
+            pass
+
     # --- Permits: construction velocity (needs "permits" dataset) ---
     permits_df = etl_outputs.get("permits", pd.DataFrame())
     if (
@@ -255,12 +298,6 @@ def build_zone_year_matrix(
     citibike_df = etl_outputs.get("citibike", pd.DataFrame())
     if not citibike_df.empty and "nta_id" in citibike_df.columns:
         cb = citibike_df.copy()
-        if "nta_id" in cb.columns and not cb.empty and cb["nta_id"].str.len().max() > 4:
-            cb["nta_id"] = cb["nta_id"].str[:4]
-            cb = cb.groupby(["nta_id", "time_key"], as_index=False).agg(
-                trip_count=("trip_count", "sum"),
-                station_count=("station_count", "sum"),
-            )
         if "year" in cb.columns and "time_key" not in cb.columns:
             cb = cb.rename(columns={"year": "time_key"})
         cb["time_key"] = (
@@ -430,21 +467,21 @@ def _prepare_review_signals(
 
 
 _CD_TO_ZONE: dict[str, str | None] = {
-    "Brooklyn": "BK09",
-    "Manhattan": "MN17",
-    "Queens": "QN70",
-    "Bronx": "BX44",
-    "Harlem": "MN25",
-    "Astoria": "QN35",
-    "Flushing": "QN49",
-    "Williamsburg": "BK73",
-    "Bushwick": "BK21",
-    "Flatbush": "BK38",
-    "Greenpoint": "BK29",
-    "Sunset Park": "BK54",
-    "Jackson Heights": "QN27",
-    "Bay Ridge": "BK43",
-    "Ridgewood": "QN17",
+    "Brooklyn": "BK0202",
+    "Manhattan": "MN0604",
+    "Queens": "QN0201",
+    "Bronx": "BX0701",
+    "Harlem": "MN1001",
+    "Astoria": "QN0101",
+    "Flushing": "QN0707",
+    "Williamsburg": "BK0102",
+    "Bushwick": "BK0401",
+    "Flatbush": "BK1401",
+    "Greenpoint": None,
+    "Sunset Park": "BK0702",
+    "Jackson Heights": "QN0301",
+    "Bay Ridge": "BK1001",
+    "Ridgewood": None,
     "Unknown": None,
 }
 

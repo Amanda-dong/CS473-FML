@@ -225,7 +225,7 @@ def test_build_real_restaurant_history_uses_business_unique_id_without_inspectio
             "restaurant_id": [pd.NA, pd.NA],
             "business_unique_id": ["dca-1", "dca-1"],
             "license_status": ["Active", "Expired"],
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
         }
     )
     inspections = pd.DataFrame({"restaurant_id": ["camis-1"], "grade": ["A"]})
@@ -420,7 +420,7 @@ def test_build_real_restaurant_history_with_closed_status() -> None:
             "restaurant_id": ["camis-1", "camis-1"],
             "business_unique_id": [pd.NA, pd.NA],
             "license_status": ["Active", "Expired"],
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
         }
     )
     inspections = pd.DataFrame({"restaurant_id": ["camis-1"], "grade": ["A"]})
@@ -453,7 +453,7 @@ def test_build_real_restaurant_history_with_zone_features() -> None:
             "restaurant_id": ["r1", "r1"],
             "business_unique_id": [pd.NA, pd.NA],
             "license_status": ["Active", "Active"],
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
         }
     )
     zone_features = pd.DataFrame(
@@ -867,7 +867,7 @@ def test_survival_model_no_entity_id_col() -> None:
         {
             "event_date": pd.to_datetime(["2020-01-01", "2022-03-01"]),
             "license_status": ["Active", "Expired"],
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
         }
     )
     result = build_real_restaurant_history(licenses, pd.DataFrame())
@@ -1301,12 +1301,12 @@ def test_build_real_restaurant_history_zone_features_join():
             "event_date": pd.to_datetime(["2020-01-01"]),
             "business_unique_id": ["BU1"],
             "license_status": ["Active"],
-            "nta_id": ["BK09"],
+            "nta_id": ["BK0202"],
         }
     )
     zone_features = pd.DataFrame(
         {
-            "zone_id": ["BK09"],
+            "zone_id": ["BK0202"],
             "rent_pressure": [0.4],
             "competition_score": [0.3],
             "transit_access": [0.6],

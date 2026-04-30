@@ -209,7 +209,7 @@ def test_build_zone_year_matrix_enriches_yelp_reviews_from_inspections() -> None
                 "inspection_date": ["2024-01-15"],
                 "restaurant_id": ["camis-1"],
                 "grade": ["A"],
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
             }
         ),
     }
@@ -256,14 +256,14 @@ def test_build_zone_year_matrix_all_datasets() -> None:
     etl_outputs = {
         "licenses": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "event_date": ["2024-01-01"],
                 "license_status": ["Issued"],
             }
         ),
         "pluto": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "assessed_value": [1000.0],
                 "year": [2024],
                 "commercial_sqft": [5000.0],
@@ -271,7 +271,7 @@ def test_build_zone_year_matrix_all_datasets() -> None:
         ),
         "acs": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "population": [1000.0],
                 "median_income": [50000.0],
                 "rent_burden": [0.3],
@@ -280,24 +280,24 @@ def test_build_zone_year_matrix_all_datasets() -> None:
         "inspections": pd.DataFrame(
             {
                 "inspection_date": ["2024-01-01"],
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "grade": ["A"],
                 "restaurant_id": ["r1"],
             }
         ),
         "permits": pd.DataFrame(
-            {"permit_date": ["2024-01-01"], "nta_id": ["BK09"], "job_count": [5.0]}
+            {"permit_date": ["2024-01-01"], "nta_id": ["BK0202"], "job_count": [5.0]}
         ),
         "citibike": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "time_key": [2024],
                 "trip_count": [100.0],
                 "station_count": [5.0],
             }
         ),
         "airbnb": pd.DataFrame(
-            {"nta_id": ["BK09"], "listing_count": [10.0], "entire_home_ratio": [0.6]}
+            {"nta_id": ["BK0202"], "listing_count": [10.0], "entire_home_ratio": [0.6]}
         ),
     }
     result = build_zone_year_matrix(etl_outputs)
@@ -407,7 +407,7 @@ def _make_licenses_gt() -> pd.DataFrame:
             "restaurant_id": ["camis-1", "camis-1", "camis-2", "camis-2"],
             "business_unique_id": ["dca-1", "dca-1", "dca-2", "dca-2"],
             "license_status": ["Active", "Active", "Issued", "Expired"],
-            "nta_id": ["BK09", "BK09", "BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202", "BK0202", "BK0202"],
         }
     )
 
@@ -415,7 +415,7 @@ def _make_licenses_gt() -> pd.DataFrame:
 def _make_reviews_gt() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "zone_id": ["bk-tandon", "bk-tandon", "bk-tandon"],
+            "zone_id": ["bk-downtownbk", "bk-downtownbk", "bk-downtownbk"],
             "time_key": [2022, 2022, 2023],
             "rating": [4.5, 3.5, 4.0],
         }
@@ -425,7 +425,7 @@ def _make_reviews_gt() -> pd.DataFrame:
 def _make_inspections_gt() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
             "inspection_date": ["2022-06-01", "2023-07-01"],
             "grade": ["A", "B"],
         }
@@ -491,7 +491,7 @@ def test_survival_rate_no_coverable_cohorts() -> None:
             "restaurant_id": ["r1", "r2"],
             "business_unique_id": [pd.NA, pd.NA],
             "license_status": ["Active", "Active"],
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
         }
     )
     result = _survival_rate(df, horizon_years=2)
@@ -588,7 +588,7 @@ def test_inspection_quality_with_zone_id_col() -> None:
 def test_inspection_quality_with_time_key() -> None:
     from src.features.ground_truth import _inspection_quality
 
-    df = pd.DataFrame({"nta_id": ["BK09"], "time_key": [2022], "grade": ["A", "B"][:1]})
+    df = pd.DataFrame({"nta_id": ["BK0202"], "time_key": [2022], "grade": ["A", "B"][:1]})
     result = _inspection_quality(df)
     assert not result.empty
 
@@ -596,7 +596,7 @@ def test_inspection_quality_with_time_key() -> None:
 def test_inspection_quality_missing_grade() -> None:
     from src.features.ground_truth import _inspection_quality
 
-    df = pd.DataFrame({"nta_id": ["BK09"], "inspection_date": ["2022-01-01"]})
+    df = pd.DataFrame({"nta_id": ["BK0202"], "inspection_date": ["2022-01-01"]})
     result = _inspection_quality(df)
     assert result.empty
 
@@ -639,8 +639,7 @@ def test_build_ground_truth_composite_bounded() -> None:
 def test_lat_lon_to_nta_manhattan() -> None:
     from src.utils.geospatial import lat_lon_to_nta
 
-    # lon >= -73.75 falls through to MN default in the borough-bucket algorithm
-    result = lat_lon_to_nta(pd.Series([40.75]), pd.Series([-73.74]))
+    result = lat_lon_to_nta(pd.Series([40.7580]), pd.Series([-73.9855]))
     assert result.iloc[0].startswith("MN")
 
 
@@ -691,7 +690,7 @@ def test_describe_microzone_fallback() -> None:
 def test_aggregate_nta_to_zone_basic() -> None:
     from src.features.zone_crosswalk import aggregate_nta_to_zone
 
-    df = pd.DataFrame({"nta_id": ["BK09", "MN22"], "population": [5000.0, 8000.0]})
+    df = pd.DataFrame({"nta_id": ["BK0202", "MN0202"], "population": [5000.0, 8000.0]})
     result = aggregate_nta_to_zone(
         df, zone_col="nta_id", agg_rules={"population": "mean"}
     )
@@ -718,7 +717,7 @@ def test_aggregate_nta_to_zone_with_year() -> None:
     from src.features.zone_crosswalk import aggregate_nta_to_zone
 
     df = pd.DataFrame(
-        {"nta_id": ["BK09", "BK09"], "year": [2022, 2023], "value": [1.0, 2.0]}
+        {"nta_id": ["BK0202", "BK0202"], "year": [2022, 2023], "value": [1.0, 2.0]}
     )
     result = aggregate_nta_to_zone(df, zone_col="nta_id")
     assert "time_key" in result.columns
@@ -729,7 +728,7 @@ def test_aggregate_nta_to_zone_with_weights() -> None:
 
     df = pd.DataFrame(
         {
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
             "value": [10.0, 20.0],
             "pop": [100.0, 200.0],
         }
@@ -746,7 +745,7 @@ def test_aggregate_nta_to_zone_weighted_sum_and_skip_missing() -> None:
 
     df = pd.DataFrame(
         {
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
             "value": [10.0, 20.0],
             "pop": [100.0, 200.0],
         }
@@ -766,7 +765,7 @@ def test_aggregate_nta_to_zone_weighted_else_path() -> None:
 
     df = pd.DataFrame(
         {
-            "nta_id": ["BK09", "BK09"],
+            "nta_id": ["BK0202", "BK0202"],
             "value": [10.0, 20.0],
             "pop": [100.0, 200.0],
         }
@@ -783,7 +782,7 @@ def test_aggregate_nta_to_zone_weighted_else_path() -> None:
 def test_aggregate_nta_to_zone_sum_agg() -> None:
     from src.features.zone_crosswalk import aggregate_nta_to_zone
 
-    df = pd.DataFrame({"nta_id": ["BK09"], "count": [5.0]})
+    df = pd.DataFrame({"nta_id": ["BK0202"], "count": [5.0]})
     result = aggregate_nta_to_zone(df, zone_col="nta_id", agg_rules={"count": "sum"})
     assert not result.empty
 
@@ -791,7 +790,7 @@ def test_aggregate_nta_to_zone_sum_agg() -> None:
 def test_aggregate_nta_to_zone_no_numeric_cols() -> None:
     from src.features.zone_crosswalk import aggregate_nta_to_zone
 
-    df = pd.DataFrame({"nta_id": ["BK09"], "label": ["A"]})
+    df = pd.DataFrame({"nta_id": ["BK0202"], "label": ["A"]})
     result = aggregate_nta_to_zone(df, zone_col="nta_id")
     assert not result.empty  # returns deduped zone_id only
 
@@ -799,8 +798,8 @@ def test_aggregate_nta_to_zone_no_numeric_cols() -> None:
 def test_resolve_nta_multi_zone_no_primary_falls_back_to_sorted() -> None:
     from src.features.zone_crosswalk import resolve_nta_to_zone_id
 
-    # BK09 → primary is bk-tandon
-    assert resolve_nta_to_zone_id("BK09") == "bk-tandon"
+    # BK0202 → primary is bk-downtownbk
+    assert resolve_nta_to_zone_id("BK0202") == "bk-downtownbk"
 
 
 # ── demand signals — additional branches ──────────────────────────────────────
@@ -907,7 +906,7 @@ def test_build_zone_year_matrix_with_licenses() -> None:
             "restaurant_id": [f"R{i}" for i in range(6)],
             "business_unique_id": [f"BU{i}" for i in range(6)],
             "license_status": ["Active"] * 6,
-            "nta_id": ["BK09"] * 6,
+            "nta_id": ["BK0202"] * 6,
             "category": ["Restaurant"] * 6,
         }
     )
@@ -1002,7 +1001,7 @@ def test_feature_matrix_citibike_year_rename() -> None:
     etl_outputs = {
         "citibike": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "year": [2024],
                 "trip_count": [10],
                 "station_count": [1],
@@ -1021,7 +1020,7 @@ def test_feature_matrix_empty_cases() -> None:
     etl_outputs = {
         "pluto": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "assessed_value": [1000],
                 "year": [2024],
                 "commercial_sqft": [100],
@@ -1042,14 +1041,14 @@ def test_feature_matrix_airbnb_merges() -> None:
     etl_outputs = {
         "acs": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "population": [1000],
                 "median_income": [50000],
                 "rent_burden": [0.3],
             }
         ),
         "airbnb": pd.DataFrame(
-            {"nta_id": ["BK09"], "listing_count": [10], "entire_home_ratio": [0.5]}
+            {"nta_id": ["BK0202"], "listing_count": [10], "entire_home_ratio": [0.5]}
         ),
     }
     result = build_zone_year_matrix(etl_outputs)
@@ -1059,14 +1058,14 @@ def test_feature_matrix_airbnb_merges() -> None:
     etl_outputs_2 = {
         "pluto": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "assessed_value": [1000],
                 "year": [2024],
                 "commercial_sqft": [100],
             }
         ),
         "airbnb": pd.DataFrame(
-            {"nta_id": ["BK09"], "listing_count": [10], "entire_home_ratio": [0.5]}
+            {"nta_id": ["BK0202"], "listing_count": [10], "entire_home_ratio": [0.5]}
         ),
     }
     result_2 = build_zone_year_matrix(etl_outputs_2)
@@ -1145,7 +1144,7 @@ def test_feature_matrix_airbnb_only() -> None:
     # Hits the new logic: only airbnb_static present
     etl_outputs = {
         "airbnb": pd.DataFrame(
-            {"nta_id": ["BK09"], "listing_count": [10], "entire_home_ratio": [0.5]}
+            {"nta_id": ["BK0202"], "listing_count": [10], "entire_home_ratio": [0.5]}
         )
     }
     result = build_zone_year_matrix(etl_outputs)
@@ -1207,7 +1206,7 @@ def test_build_zone_year_matrix_merges_gemini_zone_features(monkeypatch, tmp_pat
     etl_outputs = {
         "licenses": pd.DataFrame(
             {
-                "nta_id": ["BK09"],
+                "nta_id": ["BK0202"],
                 "event_date": ["2024-01-01"],
                 "license_status": ["Issued"],
             }
@@ -1219,3 +1218,41 @@ def test_build_zone_year_matrix_merges_gemini_zone_features(monkeypatch, tmp_pat
     assert "halal_related_share" in result.columns
     row = result.loc[result["zone_id"] == "bk-tandon"].iloc[0]
     assert row["halal_related_share"] == pytest.approx(0.5)
+
+
+def test_build_zone_year_matrix_loads_phase1_static(monkeypatch, tmp_path) -> None:
+    from src.features.feature_matrix import build_zone_year_matrix
+    import src.features.feature_matrix as fm
+    from pathlib import Path
+
+    # Mock the phase1 file
+    phase1_path = tmp_path / "phase1.csv"
+    pd.DataFrame(
+        {
+            "nta": ["BK0202"],
+            "restaurant_count": [10],
+            "population_16plus": [1000],
+            "halal_count": [2],
+            "median_household_income": [50000],
+        }
+    ).to_csv(phase1_path, index=False)
+
+    monkeypatch.setattr(fm, "Path", lambda p: phase1_path if "phase1" in str(p) else Path(p))
+
+    etl_outputs = {
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "population": [1000.0],
+                "median_income": [50000.0],
+                "rent_burden": [0.3],
+            }
+        )
+    }
+
+    result = build_zone_year_matrix(etl_outputs)
+
+    assert "population_static" in result.columns
+    assert "restaurant_count_static" in result.columns
+    assert "halal_count_static" in result.columns
+    assert "median_income_static" in result.columns

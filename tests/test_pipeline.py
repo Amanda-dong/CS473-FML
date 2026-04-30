@@ -262,7 +262,7 @@ def test_processed_preflight_corrupt_reviews(tmp_path) -> None:
             "restaurant_id": ["R001"],
             "business_unique_id": ["dca-1"],
             "license_status": ["Active"],
-            "nta_id": ["BK09"],
+            "nta_id": ["BK0202"],
             "category": ["Restaurant"],
         }
     ).to_parquet(tmp_path / "licenses.parquet", index=False)
@@ -273,7 +273,7 @@ def test_processed_preflight_corrupt_reviews(tmp_path) -> None:
             "restaurant_id": ["R001"],
             "grade": ["A"],
             "critical_flag": ["Not Applicable"],
-            "nta_id": ["BK09"],
+            "nta_id": ["BK0202"],
             "cuisine_type": ["Unknown"],
             "zipcode": ["11201"],
         }

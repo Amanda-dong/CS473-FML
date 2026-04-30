@@ -48,7 +48,7 @@ def _normalize_nta_like(value: object) -> str:
     if not text:
         return ""
 
-    # Already normalized forms like BK09, QN70, BK0101
+    # Already normalized 2020 NTA codes like BK0202, MN0202
     if re.fullmatch(r"[A-Z]{2}\d{2,4}", text):
         return text
 

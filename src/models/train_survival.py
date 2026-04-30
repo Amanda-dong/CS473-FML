@@ -41,7 +41,7 @@ def _load_or_build_history() -> pd.DataFrame:
     licenses_df = pd.read_parquet(licenses_path)
     inspections_df = pd.read_parquet(inspections_path)
 
-    # zone_features.parquet is keyed by NTA codes (e.g. "BK09") — same format
+    # zone_features.parquet is keyed by NTA codes (e.g. "BK0202") — same format
     # used by the licenses nta_id column — so it joins directly.
     zone_features: pd.DataFrame | None = None
     if zone_path.exists():

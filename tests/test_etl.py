@@ -1848,7 +1848,8 @@ def test_etl_acs_transform_nyc_profile_extract(monkeypatch: pytest.MonkeyPatch) 
     assert result.iloc[0]["nta_id"] == "BK09"
     assert result.iloc[0]["population"] == 5000
     assert result.iloc[0]["median_income"] == 75000
-    assert pd.isna(result.iloc[0]["rent_burden"])
+    # rent_burden estimated as 30% of monthly income (MdHHIncE * 0.30 / 12)
+    assert result.iloc[0]["rent_burden"] == pytest.approx(75000 * 0.30 / 12, rel=1e-3)
 
 
 # ── etl_airbnb — _read_local exception ───────────────────────────────────────

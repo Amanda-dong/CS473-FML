@@ -1,9 +1,9 @@
 """Assign each Yelp business to an NTA (NYC polygons) and a micro-zone id.
 
-Requires **2010 NYC NTA** polygons (ACS codes like MN22, BK09):
+Requires **2020 NYC NTA** polygons (codes like MN0202, BK0202):
 
 - Run ``python scripts/download_nta_geojson.py`` once to create
-  ``data/raw/nta_nyc_2010.geojson`` (and optional ``nta.geojson`` for Phase1 ETL).
+  ``data/raw/nta.geojson``.
 
 Uses ``src.data.nta_layers.load_nyc_ntas_for_zones`` — **no** ACS GDB needed
 for this script (unlike ``build_nta_features.load_manhattan_ntas``).

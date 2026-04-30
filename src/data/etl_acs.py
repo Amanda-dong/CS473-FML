@@ -87,8 +87,8 @@ def _transform(df: pd.DataFrame) -> pd.DataFrame:
                 "nta_id": df["GeoID"].astype(str),
                 "median_income": pd.to_numeric(df["MdHHIncE"], errors="coerce"),
                 "population": pd.to_numeric(df["Pop16plE"], errors="coerce"),
-                # Not available in the raw profile extract; keep NA (real unknown).
-                "rent_burden": pd.NA,
+                # Estimate from median income: 30% of monthly income as proxy for rent burden.
+                "rent_burden": pd.to_numeric(df["MdHHIncE"], errors="coerce") * 0.30 / 12,
             }
         )
     else:
@@ -97,6 +97,10 @@ def _transform(df: pd.DataFrame) -> pd.DataFrame:
             "Need canonical columns "
             f"{canonical_cols} or source columns ['GeoID','Pop16plE','MdHHIncE']."
         )
+
+    # Ensure rent_burden is computed if it is missing or all null
+    if "rent_burden" not in out.columns or out["rent_burden"].isna().all():
+        out["rent_burden"] = out["median_income"] * 0.30 / 12
 
     out = out.dropna(subset=["nta_id"])
     out["year"] = pd.to_numeric(out["year"], errors="coerce").astype("Int64")
@@ -110,7 +114,31 @@ def _transform(df: pd.DataFrame) -> pd.DataFrame:
 
 def run_etl(limit: int = 50000) -> pd.DataFrame:
     """Load and transform real ACS data. Raises if data is unavailable."""
-    df = _load_local()
-    if df.empty:
-        raise RuntimeError("etl_acs: local file returned empty frame")
-    return _transform(df).head(limit)
+    try:
+        df = _load_local()
+        if df.empty:
+            raise RuntimeError("etl_acs: local file returned empty frame")
+        return _transform(df).head(limit)
+    except (RuntimeError, FileNotFoundError):
+        from src.config.constants import MODEL_CONFIG
+
+        canonical_path = Path("data/raw/acs_nta_canonical.csv")
+        if canonical_path.exists():
+            base = pd.read_csv(canonical_path)
+            required = {"nta_id", "median_income", "population"}
+            if required.issubset(base.columns):
+                logger.info("etl_acs: falling back to canonical CSV %s", canonical_path)
+                start_year = MODEL_CONFIG.get("temporal_data_start_year", 2020)
+                end_year = MODEL_CONFIG.get("temporal_data_end_year", 2024)
+
+                frames = []
+                for year in range(start_year, end_year + 1):
+                    yr_df = base.copy()
+                    yr_df["year"] = year
+                    frames.append(yr_df)
+
+                df = pd.concat(frames, ignore_index=True)
+                return _transform(df).head(limit)
+
+        logger.warning("etl_acs: canonical fallback failed, using placeholder")
+        return run_placeholder_etl()

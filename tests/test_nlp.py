@@ -1169,7 +1169,7 @@ def test_aggregate_full_halal_empty_after_dropna_time(sample_review_labels) -> N
     )
 
     df = pd.DataFrame({col: ["test"] * 5 for col in _FULL_HALAL_REQUIRED_COLUMNS})
-    df["zone_id"] = "BK09"
+    df["zone_id"] = "BK0202"
     df["time_key"] = np.nan
 
     result = aggregate_full_halal_review_features(df)
@@ -1234,7 +1234,7 @@ def test_aggregate_halal_metrics_empty_after_dropna() -> None:
         {
             "restaurant_id": ["R1"],
             "time_key": ["not_a_number"],  # Coerces to NaN
-            "zone_id": ["BK09"],
+            "zone_id": ["BK0202"],
             "rating": [5],
             "sentiment": ["positive"],
             "halal_relevance": ["explicit_halal"],

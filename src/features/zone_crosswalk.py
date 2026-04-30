@@ -83,6 +83,51 @@ def _load_all_nta_codes() -> list[str]:
     return []
 
 
+_NTA_2010_TO_2020: dict[str, str] = {
+    "BK09": "BK0202",
+    "BK31": "BK1001",
+    "BK32": "BK1001",
+    "BK33": "BK0203",
+    "BK41": "BK1401",
+    "BK42": "BK0702",
+    "BK43": "BK1401",
+    "BK69": "BK0802",
+    "BK73": "BK0102",
+    "BK77": "BK0401",
+    "BX01": "BX0101",
+    "BX03": "BX0301",
+    "BX05": "BX0301",
+    "BX06": "BX0701",
+    "BX07": "BX0801",
+    "BX08": "BX0801",
+    "BX09": "BX0602",
+    "BX26": "BX0904",
+    "BX44": "BX1004",
+    "BX46": "BX0904",
+    "MN09": "MN0901",
+    "MN11": "MN1001",
+    "MN17": "MN0604",
+    "MN19": "MN0604",
+    "MN21": "MN0401",
+    "MN22": "MN0202",
+    "MN25": "MN0101",
+    "MN31": "MN0801",
+    "QN17": "QN0602",
+    "QN18": "QN0601",
+    "QN26": "QN0401",
+    "QN27": "QN0401",
+    "QN48": "QN0707",
+    "QN49": "QN0701",
+    "QN50": "QN0704",
+    "QN57": "QN0301",
+    "QN61": "QN1201",
+    "QN70": "QN0201",
+    "QN72": "QN0101",
+    "SI07": "SI0101",
+    "SI11": "SI0204",
+}
+
+
 def _build_zone_to_nta() -> dict[str, list[str]]:
     """Return crosswalk that preserves base zones and fills all remaining NTAs."""
     mapping = {zone_id: list(ntas) for zone_id, ntas in _BASE_ZONE_TO_NTA.items()}
@@ -112,7 +157,7 @@ NTA_PRIMARY_ZONE: dict[str, str] = {
 
 
 def resolve_nta_to_zone_id(nta: str | None) -> str | None:
-    """Map an ACS NTA code (e.g. ``MN22``) to one micro-zone ``zone_id``.
+    """Map an ACS NTA code (e.g. ``MN0202``) to one micro-zone ``zone_id``.
 
     Returns ``None`` if the NTA is not part of :data:`ZONE_TO_NTA` (e.g. a
     NYC block outside the modeled micro-zone list).
@@ -166,6 +211,31 @@ def aggregate_nta_to_zone(
         for nta in nta_list:
             rows.append({"zone_id": zone_id, zone_col: nta})
     mapping = pd.DataFrame(rows)
+
+    # Backward-compat: also map 4-char prefixes of 6-char codes so ETL data
+    # using 2010 NTA codes (BK02) can join against 2020 codes (BK0202 -> prefix BK02).
+    # We deduplicate so one 4-char prefix maps to the first zone found.
+    seen_4char: set[str] = set()
+    extra_rows = []
+    for zone_id, nta_list in ZONE_TO_NTA.items():
+        for nta in nta_list:
+            if len(nta) == 6:
+                prefix = nta[:4]
+                if prefix not in seen_4char:
+                    seen_4char.add(prefix)
+                    extra_rows.append({"zone_id": zone_id, zone_col: prefix})
+    if extra_rows:
+        mapping = pd.concat([mapping, pd.DataFrame(extra_rows)], ignore_index=True)
+
+    extra_2010 = []
+    for nta_2010, nta_2020 in _NTA_2010_TO_2020.items():
+        for zone_id, nta_list in ZONE_TO_NTA.items():
+            if nta_2020 in nta_list:
+                extra_2010.append({"zone_id": zone_id, zone_col: nta_2010})
+                break
+    if extra_2010:
+        mapping = pd.concat([mapping, pd.DataFrame(extra_2010)], ignore_index=True)
+        mapping = mapping.drop_duplicates(subset=[zone_col, "zone_id"])
 
     merged = nta_df.merge(mapping, on=zone_col, how="inner")
     if merged.empty:
