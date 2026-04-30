@@ -63,8 +63,10 @@ htmlcov/
 .claude/
 .claude_verify_results_panel.py
 
-# Generated graph output
+# Generated artifacts
+pytest_output.log
 graphify-out/
+tmp_gemini_*.txt
 
 # Large ML model artifacts — use GitHub Releases instead
 data/models/*.joblib

@@ -1301,7 +1301,7 @@ def test_etl_citibike_run_etl_with_real_zip(
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr("trips.csv", "col1,col2\n1,2\n")
-    zip_path = tmp_path / "citibike.zip"
+    zip_path = tmp_path / "202603-citibike-tripdata.zip"
     zip_path.write_bytes(buf.getvalue())
     monkeypatch.setattr(etl_citibike, "_RAW_ZIP", zip_path)
     result = etl_citibike.run_etl(limit=10)
@@ -2212,3 +2212,40 @@ def test_etl_yelp_env_int_invalid_value_uses_default(
     monkeypatch.setenv("YELP_TEST_INT", "not_an_int")
     result = _env_int("YELP_TEST_INT", 10)
     assert result == 10
+
+
+def test_etl_yelp_load_local_from_env_path_additional(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Lines 40-43 (desc): Test _load_local when YELP_DATA_PATH is a valid file."""
+    from pathlib import Path
+    from src.data import etl_yelp
+
+    # Mock default path to not exist
+    monkeypatch.setattr(
+        etl_yelp, "_DEFAULT_FUSION_REVIEW_PATH", Path("/nonexistent/reviews_v2.csv")
+    )
+
+    # Create a temporary CSV file
+    csv_path = tmp_path / "env_yelp_data_new.csv"
+    pd.DataFrame({"business_id": ["env_r2"], "rating": [5]}).to_csv(csv_path, index=False)
+
+    monkeypatch.setenv("YELP_DATA_PATH", str(csv_path))
+    result = etl_yelp._load_local()
+    assert not result.empty
+    assert result.iloc[0]["business_id"] == "env_r2"
+
+
+def test_etl_yelp_env_helpers_additional_coverage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Lines 50-53 (desc): Test _env_int helper's integer parsing branches."""
+    from src.data.etl_yelp import _env_int
+
+    # Test valid integer parsing (Line 50-51)
+    monkeypatch.setenv("YELP_TEST_INT_VAL", "200")
+    assert _env_int("YELP_TEST_INT_VAL", 0) == 200
+
+    # Test invalid integer parsing (Line 52-53)
+    monkeypatch.setenv("YELP_TEST_INT_VAL", "not_an_int")
+    assert _env_int("YELP_TEST_INT_VAL", 50) == 50

@@ -34,7 +34,7 @@ The evaluation uses the following schedule:
 
 **NDCG@k (Normalised Discounted Cumulative Gain)** rewards correctly ranking
 the best zones near the top of the shortlist, with a logarithmic discount for
-lower positions.  With only 30 candidate zones, NDCG@5 and NDCG@10 will be
+lower positions.  With only 137 candidate zones, NDCG@5 and NDCG@10 will be
 inherently higher than on a large catalog because the chance of a random model
 hitting a relevant zone by coincidence is non-trivial.  This is acknowledged
 as a limitation in Section 5.4.
@@ -185,7 +185,7 @@ time-varying coefficient extension is recommended for future work.
 
 ### Metric trade-offs for a 5-zone shortlist
 
-For the merchant use-case — a single operator choosing among ~30 NYC zones —
+For the merchant use-case — a single operator choosing among ~137 NYC zones —
 the primary deliverable is a shortlist of five recommendations.  The three
 ranking metrics behave differently in this setting:
 
@@ -198,20 +198,19 @@ ranking metrics behave differently in this setting:
   to non-technical stakeholders: "4 out of your 5 recommended zones proved to
   be genuinely underserved."
 
-- **MAP** is strictest when multiple positive zones exist.  In the 30-zone
-  catalog, roughly 6-8 zones are genuinely underserved in any given year,
+- **MAP** is strictest when multiple positive zones exist.  In the 137-zone catalog, roughly 6-8 zones are genuinely underserved in any given year,
   so MAP penalises a model that ranks the 7th-best zone 6th rather than first —
   a distinction that matters operationally only when a merchant is willing to
   evaluate more than five options.
 
 ### Catalog-size caveat
 
-With only 30 candidate zones, k=5 represents 1/6 of the entire catalog.  This
+With only 137 candidate zones, k=5 represents ~1/27 of the entire catalog.  This
 inflates all metrics relative to large-catalog recommenders (where k=5 out of
-10,000 items is genuinely hard).  NDCG@5 = 0.9706 on a 30-item list is
+10,000 items is genuinely hard).  NDCG@5 = 0.9706 on a 137-item list is
 **not** directly comparable to NDCG@5 = 0.9706 reported in a RecSys paper on
 millions of items.  The meaningful comparison is against the random baseline
-(expected NDCG@5 ≈ 0.55 for 30 zones with ~20% relevant) and the popularity
+(expected NDCG@5 ≈ 0.55 for 137 zones with ~20% relevant) and the popularity
 baseline (NDCG@5 ≈ 0.63), both of which the heuristic scorer exceeds.
 
 ### Baseline comparison summary
@@ -266,6 +265,7 @@ empirical success rate differ by about 3.6 percentage points per bin.  For a
 heuristic scorer with no explicit calibration training, this is an acceptable
 result.  Isotonic regression or Platt scaling applied post-hoc could reduce ECE
 to below 0.05 at the cost of a separate calibration holdout set — a worthwhile
-extension once the dataset grows beyond 30 zones.
+extension once the dataset grows beyond 137 zones.
 
 The 2020 spike (ECE = 0.016) reflects high model accuracy during that period.
+
