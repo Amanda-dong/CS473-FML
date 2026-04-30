@@ -116,24 +116,68 @@ not evidence that rent is economically unimportant.
 
 ## 5.3 Survival Model
 
-The survival module fits a Cox Proportional Hazards model on real restaurant
-license histories from New York City.  Each restaurant contributes one record
-with `duration_days` (days from first license to closure or censoring) and
-`event_observed` (1 = confirmed closure, 0 = right-censored).  Covariates
-include inspection grade, zone competition score, rent pressure, and transit
-access.
+The survival module fits Cox Proportional Hazards (Cox PH) and Random Survival
+Forest (RSF) models on real restaurant license histories from New York City.
+Each restaurant contributes one record with `duration_days` (days from first
+license event to closure or right-censoring) and `event_observed` (1 = confirmed
+closure, 0 = still active at data cutoff).
 
-The model is evaluated on an 80/20 time-sorted split (restaurants that opened
-later are in the test set, mimicking forward deployment).
+### Dataset
 
-**Concordance index (C-index):** 0.800 (Random Survival Forest, 80/20 temporal holdout)
+| Statistic | Value |
+|-----------|-------|
+| Total restaurants | 37,135 |
+| Observed closures | 13,021 (35.1%) |
+| Right-censored | 24,114 (64.9%) |
+| Train set | 30,222 |
+| Test set | 6,913 |
 
-**Bootstrap 95% CI (n=1000 resamples):** [0.787, 0.813] (estimated from fold variance)
+The train/test split is **calendar-based by cohort year** (`year_opened`): businesses
+that first received a license in earlier years form the training set, and later
+cohorts form the test set.  This prevents duration leakage — a duration-sorted
+split would assign all short-lived restaurants to test, collapsing actual survival
+to near zero and inflating ECE above 0.90.
 
-A C-index of 0.800 means the model correctly orders 80% of randomly chosen
-restaurant pairs by their survival time.  The RSF model is trained on a
-stratified 8 000-row subsample (memory constraint) and evaluated on the
-full 7 577-record holdout.
+### Features
+
+Covariates include zone-level signals (rent pressure, competition score, transit
+access, cuisine diversity, Yelp average rating) and per-business license history
+features extracted from the event sequence: `n_renewals`, `mean_renewal_interval_days`,
+`n_inactive_events`, and `days_since_last_event`.  The license history features are
+the strongest individual-level discriminators — they capture operational stability
+signals not available from zone aggregates alone.
+
+### Results
+
+| Model | C-index (holdout) | C-index (5-fold CV) | 95% CI |
+|-------|-------------------|---------------------|--------|
+| Cox PH | 0.5544 | 0.5992 ± 0.0043 | [0.591, 0.608] |
+| RSF (8K subsample) | 0.5430 | 0.6497 ± 0.0093 | [0.631, 0.668] |
+
+**Selected model: Cox PH** (higher holdout C-index; RSF CV advantage reflects its
+larger subsample variance and is not representative of full-data performance).
+
+Cox PH Brier scores (IPCW-corrected):
+
+| Horizon | Brier Score | N Informative |
+|---------|-------------|---------------|
+| 90 days | 0.168 | 6,232 |
+| 180 days | 0.170 | 5,702 |
+| 365 days | 0.171 | 3,630 |
+| 730 days | 0.175 | 1,318 |
+
+**Expected Calibration Error (ECE): 0.150** — a 84% reduction from the pre-fix
+value of 0.93, which was caused by the duration-sorted split.
+
+### Proportional Hazards Assumption
+
+Several license history features (`n_renewals`, `n_events`, `mean_renewal_interval_days`)
+violate the Cox PH assumption (Schoenfeld residual test p < 0.05), indicating
+their hazard ratios change over time.  This is expected behaviour for renewal counts —
+a business that renews frequently early in its history behaves differently from one
+that renews late.  The RSF model does not require the PH assumption and shows
+higher cross-validated C-index (0.650) as a result.  A stratified Cox model or
+time-varying coefficient extension is recommended for future work.
 
 ---
 

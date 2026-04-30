@@ -42,7 +42,13 @@ def normalize_feature_matrix(df: pd.DataFrame) -> pd.DataFrame:
     """
     result = df.copy()
     numeric_cols = result.select_dtypes(include=["number"]).columns
-    result[numeric_cols] = result[numeric_cols].fillna(0.0)
+    _count_kw = {"count", "velocity", "net_open", "net_close", "trip", "station"}
+    _count_cols = [c for c in numeric_cols if any(kw in c.lower() for kw in _count_kw)]
+    _rate_cols = [c for c in numeric_cols if c not in _count_cols]
+    result[_count_cols] = result[_count_cols].fillna(0.0)
+    for _col in _rate_cols:
+        _med = result[_col].median()
+        result[_col] = result[_col].fillna(_med if pd.notna(_med) else 0.0)
     for col in numeric_cols:
         mean = result[col].mean()
         std = result[col].std()
@@ -207,6 +213,25 @@ def build_zone_year_matrix(
         if not grade_zone.empty:
             feature_tables["inspections"] = grade_zone
 
+    _hygiene_path = Path("data/raw/hygiene_nta_features.csv")
+    if _hygiene_path.exists():
+        try:
+            _hyg = pd.read_csv(_hygiene_path)
+            if "nta" in _hyg.columns and "critical_violation_rate" in _hyg.columns:
+                _hyg = _hyg.rename(columns={"nta": "nta_id"})
+                _hyg["inspection_grade_avg_static"] = (
+                    1.0 - _hyg["critical_violation_rate"].clip(0, 1)
+                ).round(4)
+                _hyg_zone = aggregate_nta_to_zone(
+                    _hyg[["nta_id", "inspection_grade_avg_static"]],
+                    zone_col="nta_id",
+                    agg_rules={"inspection_grade_avg_static": "mean"},
+                )
+                if not _hyg_zone.empty:
+                    feature_tables["hygiene_static"] = _hyg_zone
+        except Exception:
+            pass
+
     # --- Permits: construction velocity (needs "permits" dataset) ---
     permits_df = etl_outputs.get("permits", pd.DataFrame())
     if (
@@ -227,10 +252,15 @@ def build_zone_year_matrix(
         if not pv_zone.empty:
             feature_tables["permits"] = pv_zone
 
-    # --- Citi Bike: mobility proxy (needs "citibike" dataset) ---
     citibike_df = etl_outputs.get("citibike", pd.DataFrame())
     if not citibike_df.empty and "nta_id" in citibike_df.columns:
         cb = citibike_df.copy()
+        if "nta_id" in cb.columns and not cb.empty and cb["nta_id"].str.len().max() > 4:
+            cb["nta_id"] = cb["nta_id"].str[:4]
+            cb = cb.groupby(["nta_id", "time_key"], as_index=False).agg(
+                trip_count=("trip_count", "sum"),
+                station_count=("station_count", "sum"),
+            )
         if "year" in cb.columns and "time_key" not in cb.columns:
             cb = cb.rename(columns={"year": "time_key"})
         cb["time_key"] = (

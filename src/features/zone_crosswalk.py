@@ -7,53 +7,53 @@ from pathlib import Path
 
 import pandas as pd
 
-# Maps each of the 27 micro-zone IDs to 2020 NYC NTA codes.
+# Maps each micro-zone ID to real 2020 NYC NTA codes (6-char format: BK0202).
 _BASE_ZONE_TO_NTA: dict[str, list[str]] = {
     # Brooklyn
-    "bk-tandon": ["BK09"],  # Downtown Brooklyn-DUMBO-Boerum Hill
-    "bk-downtownbk": ["BK09"],  # Downtown Brooklyn-DUMBO-Boerum Hill
-    "bk-williamsburg": ["BK73"],  # Williamsburg
-    "bk-navy-yard": ["BK09", "BK33"],  # Downtown BK + Vinegar Hill/Fort Greene adj.
-    "bk-fort-greene": ["BK33"],  # Fort Greene
-    "bk-crown-hts": ["BK69"],  # Crown Heights North
-    "bk-sunset-pk": ["BK42"],  # Sunset Park
+    "bk-tandon": ["BK0202"],  # Downtown Brooklyn-DUMBO-Boerum Hill
+    "bk-downtownbk": ["BK0202"],  # Downtown Brooklyn-DUMBO-Boerum Hill
+    "bk-williamsburg": ["BK0102"],  # Williamsburg
+    "bk-navy-yard": ["BK0202", "BK0261"],  # Downtown Brooklyn + Brooklyn Navy Yard
+    "bk-fort-greene": ["BK0203"],  # Fort Greene
+    "bk-crown-hts": ["BK0802"],  # Crown Heights (North)
+    "bk-sunset-pk": ["BK0702", "BK0703"],  # Sunset Park (West + Central)
     # Manhattan
-    "mn-midtown-e": ["MN17"],  # Midtown-Midtown South
-    "mn-fidi": ["MN25"],  # Battery Park City-Lower Manhattan
-    "mn-columbia": ["MN09"],  # Morningside Heights
-    "mn-nyu-wash-sq": ["MN22"],  # Greenwich Village-SoHo
-    "mn-ues-hosp": ["MN31"],  # Lenox Hill-Roosevelt Island
-    "mn-chelsea": ["MN21"],  # Chelsea-Hudson Yards
-    "mn-harlem": ["MN11"],  # Central Harlem
-    "mn-lic-adj": ["MN17", "MN19"],  # Midtown East + Turtle Bay
+    "mn-midtown-e": ["MN0604"],  # East Midtown-Turtle Bay
+    "mn-fidi": ["MN0101", "MN0102"],  # Financial District-Battery Park City + Tribeca
+    "mn-columbia": ["MN0901"],  # Morningside Heights
+    "mn-nyu-wash-sq": ["MN0202", "MN0201"],  # Greenwich Village + SoHo-Little Italy
+    "mn-ues-hosp": ["MN0801"],  # Upper East Side-Lenox Hill-Roosevelt Island
+    "mn-chelsea": ["MN0401"],  # Chelsea-Hudson Yards
+    "mn-harlem": ["MN1001", "MN1002"],  # Harlem (South + North)
+    "mn-lic-adj": ["MN0604", "MN0502"],  # East Midtown + Midtown-Times Square
     # Queens
-    "qn-lic": ["QN70"],  # Long Island City
-    "qn-astoria": ["QN72"],  # Astoria
-    "qn-flushing": ["QN48"],  # Flushing
-    "qn-jackson-hts": ["QN57"],  # Jackson Heights
-    "qn-forest-hills": ["QN17"],  # Forest Hills
-    "qn-jamaica": ["QN61"],  # Jamaica
-    # Queens expansion zones (higher-coverage neighborhood buckets)
-    "qn-college-point-whitestone": ["QN49"],  # College Point / Whitestone adj.
-    "qn-murray-hill-flushing": ["QN50"],  # Murray Hill / Flushing adj.
-    "qn-elmhurst-corona": ["QN27", "QN26"],  # Elmhurst + Corona
-    "qn-rego-middle": ["QN18"],  # Rego Park / Middle Village
+    "qn-lic": ["QN0201"],  # Long Island City-Hunters Point
+    "qn-astoria": ["QN0101", "QN0102", "QN0103"],  # Astoria (North + Old Astoria + Central)
+    "qn-flushing": ["QN0707", "QN0704"],  # Flushing-Willets Point + Murray Hill-Broadway Flushing
+    "qn-jackson-hts": ["QN0301"],  # Jackson Heights
+    "qn-forest-hills": ["QN0602"],  # Forest Hills
+    "qn-jamaica": ["QN1201"],  # Jamaica
+    # Queens expansion zones
+    "qn-college-point-whitestone": ["QN0701", "QN0702"],  # College Point + Whitestone-Beechhurst
+    "qn-murray-hill-flushing": ["QN0704"],  # Murray Hill-Broadway Flushing
+    "qn-elmhurst-corona": ["QN0401", "QN0402"],  # Elmhurst + Corona
+    "qn-rego-middle": ["QN0601", "QN0504"],  # Rego Park + Middle Village
     # Bronx
-    "bx-fordham": ["BX06"],  # Fordham
-    "bx-mott-haven": ["BX01"],  # Mott Haven-Port Morris
-    "bx-co-op-city": ["BX44"],  # Co-op City
-    "bx-tremont": ["BX09"],  # East Tremont
+    "bx-fordham": ["BX0701", "BX0503"],  # University Heights-Fordham + Fordham Heights
+    "bx-mott-haven": ["BX0101"],  # Mott Haven-Port Morris
+    "bx-co-op-city": ["BX1004"],  # Co-op City
+    "bx-tremont": ["BX0602"],  # Tremont
     # Bronx expansion zones
-    "bx-south-hub": ["BX03", "BX05"],  # Morrisania / Melrose / Hunts Point adj.
-    "bx-west-corridor": ["BX07", "BX08"],  # Kingsbridge Heights / Riverdale adj.
-    "bx-east-corridor": ["BX26", "BX46"],  # Parkchester / Throgs Neck adj.
+    "bx-south-hub": ["BX0301", "BX0102", "BX0201"],  # Morrisania + Melrose + Hunts Point
+    "bx-west-corridor": ["BX0801", "BX0803"],  # Kingsbridge Heights + Riverdale
+    "bx-east-corridor": ["BX0904", "BX1002"],  # Parkchester + Throgs Neck-Schuylerville
     # Staten Island
-    "si-st-george": ["SI07"],  # St. George
-    "si-new-spring": ["SI11"],  # New Springville-Bloomfield-Travis
+    "si-st-george": ["SI0101"],  # St. George-New Brighton
+    "si-new-spring": ["SI0204"],  # New Springville-Willowbrook-Bulls Head-Travis
     # Brooklyn expansion zones
-    "bk-bushwick-ridgewood": ["BK77"],  # Bushwick North / East Williamsburg adj.
-    "bk-bayridge-benson": ["BK31", "BK32"],  # Bay Ridge / Bensonhurst adj.
-    "bk-flatbush-midwood": ["BK41", "BK43"],  # Flatbush / Midwood adj.
+    "bk-bushwick-ridgewood": ["BK0401", "BK0402"],  # Bushwick (West + East)
+    "bk-bayridge-benson": ["BK1001", "BK1101"],  # Bay Ridge + Bensonhurst
+    "bk-flatbush-midwood": ["BK1401", "BK1403"],  # Flatbush + Midwood
 }
 
 
@@ -63,22 +63,24 @@ def _generic_zone_id(nta_code: str) -> str:
 
 
 def _load_all_nta_codes() -> list[str]:
-    """Load all NYC 2010 NTA codes from local GeoJSON when available."""
-    geojson_path = Path("data/raw/nta_nyc_2010.geojson")
-    if not geojson_path.exists():
-        return []
-    try:
-        payload = json.loads(geojson_path.read_text(encoding="utf-8"))
-    except Exception:
-        return []
-    features = payload.get("features", [])
-    codes: set[str] = set()
-    for feature in features:
-        props = feature.get("properties", {}) if isinstance(feature, dict) else {}
-        nta = str(props.get("nta", "")).strip().upper()
-        if nta:
-            codes.add(nta)
-    return sorted(codes)
+    """Load all NYC 2020 NTA codes from local GeoJSON when available."""
+    for candidate in ("data/raw/nta.geojson", "data/raw/nta2020_nyc.geojson"):
+        geojson_path = Path(candidate)
+        if not geojson_path.exists():
+            continue
+        try:
+            payload = json.loads(geojson_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        features = payload.get("features", [])
+        codes: set[str] = set()
+        for feature in features:
+            props = feature.get("properties", {}) if isinstance(feature, dict) else {}
+            nta = str(props.get("nta2020", "")).strip()
+            if nta:
+                codes.add(nta)
+        return sorted(codes)
+    return []
 
 
 def _build_zone_to_nta() -> dict[str, list[str]]:
@@ -100,12 +102,12 @@ for _zone, _ntas in ZONE_TO_NTA.items():
     for _nta in _ntas:
         NTA_TO_ZONES.setdefault(_nta, []).append(_zone)
 
-# When one ACS NTA code maps to multiple micro-zones, pick a single primary for point-level assignment.
+# When one NTA maps to multiple micro-zones, pick a single primary for point-level assignment.
 # (Aggregations that split one NTA across zones still use aggregate_nta_to_zone.)
 NTA_PRIMARY_ZONE: dict[str, str] = {
-    "BK09": "bk-tandon",
-    "BK33": "bk-fort-greene",
-    "MN17": "mn-midtown-e",
+    "BK0202": "bk-downtownbk",  # shared by bk-tandon, bk-downtownbk, bk-navy-yard
+    "MN0604": "mn-midtown-e",  # shared by mn-midtown-e, mn-lic-adj
+    "QN0704": "qn-flushing",  # shared by qn-flushing, qn-murray-hill-flushing
 }
 
 
