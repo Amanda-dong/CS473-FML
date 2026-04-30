@@ -547,9 +547,16 @@ def build_real_restaurant_history(
 
         # Determine if closed: last status is inactive/expired/cancelled
         closed_statuses = {
-            "inactive", "expired", "cancelled", "closed",
-            "surrendered", "revoked", "out of business", "close",
-            "voided", "failed to renew",
+            "inactive",
+            "expired",
+            "cancelled",
+            "closed",
+            "surrendered",
+            "revoked",
+            "out of business",
+            "close",
+            "voided",
+            "failed to renew",
         }
         last_status = str(last_row.get("license_status", "")).strip().lower()
         event_observed = 1 if last_status in closed_statuses else 0
@@ -570,8 +577,15 @@ def build_real_restaurant_history(
         else:
             mean_renewal_interval_days = 0.0
         inactive_labels = {
-            "expired", "surrendered", "revoked", "suspended",
-            "failed to renew", "out of business", "voided", "close", "tol",
+            "expired",
+            "surrendered",
+            "revoked",
+            "suspended",
+            "failed to renew",
+            "out of business",
+            "voided",
+            "close",
+            "tol",
         }
         n_inactive_events = int(status_lower.iloc[:-1].isin(inactive_labels).sum())
         days_since_last_event = max(0, (cutoff - last_row["_date"]).days)
