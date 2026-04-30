@@ -14,6 +14,7 @@ class ZoneRecommendation(BaseModel):
     score: float = Field(default=0.0)
     opportunity_score: float = Field(default=0.0)
     confidence_tier: str = Field(default="low")
+    confidence_bucket: str = Field(default="low")
     concept_subtype: str
     positive_drivers: list[str] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
