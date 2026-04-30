@@ -27,7 +27,7 @@ from src.schemas.requests import RecommendationRequest
 
 
 SUBTYPE_LABELS = {
-    "halal_fast_casual": "Halal Fast Casual",
+    "halal": "Halal Fast Casual",
     "salad_bowls": "Salad Bowls",
     "mediterranean_bowls": "Mediterranean Bowls",
     "healthy_indian": "Healthy Indian",

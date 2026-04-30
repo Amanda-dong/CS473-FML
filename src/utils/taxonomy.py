@@ -11,7 +11,7 @@ from src.config import HEALTHY_SUBTYPES
 
 _KEYWORDS: dict[str, tuple[str, ...]] = {
     # Healthy / wellness
-    "halal_fast_casual": (
+    "halal": (
         "halal",
         "zabihah",
         "zabiha",

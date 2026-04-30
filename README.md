@@ -126,7 +126,7 @@ The implementation is complete. All eight planned stages have been delivered:
 1. **Data source audit** — 10 ETL modules with real NYC Open Data integrations (permits, licenses, inspections, ACS, PLUTO, Citi Bike, Airbnb, Yelp, 311, boundaries)
 2. **Canonical neighborhood feature matrix** — 773 zone-year rows, 33 features across all data sources
 3. **Micro-zone layer** — 8 campus, lunch-corridor, transit-catchment, and business-district zones across all 5 boroughs
-4. **Phase discovery** — k-means and GMM trajectory clustering (k=3 and k=4 evaluated); NTA halal-story cluster assignments
+4. **Phase discovery** — k-means and GMM trajectory clustering (k=3 and k=4 evaluated); NTA healthy food-story cluster assignments
 5. **Survival modeling** — Cox PH + Random Survival Forest; `survival_model.joblib` trained and evaluated
 6. **NLP labeling and aggregation** — Gemini Flash silver labels on full Yelp corpus; zone-level healthy-demand features in `gemini_full_zone_features.csv`
 7. **Healthy-food white-space ranking** — XGBoost scoring model + LambdaMART ranker; interpretable CMF score with subtype-gap, survival-risk, and positive-driver explanations

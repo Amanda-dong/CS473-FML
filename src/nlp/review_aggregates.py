@@ -258,7 +258,7 @@ def aggregate_healthy_review_features(review_labels: pd.DataFrame) -> pd.DataFra
             "vegan_grab_and_go",
             "smoothie_juice",
             "protein_forward_lunch",
-            "halal_fast_casual",
+            "halal",
         }
         healthy_grp = grp[
             grp["concept_subtype"].isin(HEALTHY_CORE_SUBTYPES)
