@@ -335,7 +335,7 @@ def aggregate_healthy_review_features(review_labels: pd.DataFrame) -> pd.DataFra
     return (
         df.groupby(["zone_id", "time_key"], as_index=False, dropna=False)
         .apply(_agg_group, include_groups=False)
-        .sort_values(["zone_id", "time_key"], na_position='last')
+        .sort_values(["zone_id", "time_key"], na_position="last")
         .reset_index(drop=True)
     )
 
