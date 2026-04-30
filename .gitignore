@@ -65,3 +65,6 @@ htmlcov/
 
 # Generated graph output
 graphify-out/
+
+# Large ML model artifacts — use GitHub Releases instead
+data/models/*.joblib
