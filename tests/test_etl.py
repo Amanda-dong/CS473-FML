@@ -147,7 +147,7 @@ def test_etl_311_run_placeholder_etl() -> None:
 def test_etl_acs_borough_key_bn() -> None:
     from src.data.etl_acs import _borough_key
 
-    assert _borough_key("MN17") == "MN"
+    assert _borough_key("MN0604") == "MN"
     assert _borough_key("BK09") == "BK"
     assert _borough_key("bk-tandon") == "BK"
     assert _borough_key("mn-fidi") == "MN"
@@ -249,7 +249,7 @@ def test_etl_airbnb_transform_no_room_type(monkeypatch: pytest.MonkeyPatch) -> N
 
     monkeypatch.setattr(
         "src.utils.geospatial.lat_lon_to_nta",
-        lambda lat, lon: pd.Series(["MN17"] * len(lat), index=lat.index),
+        lambda lat, lon: pd.Series(["MN0604"] * len(lat), index=lat.index),
     )
     raw = pd.DataFrame({"latitude": [40.75], "longitude": [-73.99]})
     result = etl_airbnb._transform(raw)
@@ -313,7 +313,7 @@ def test_etl_citibike_load_zip_in_memory(monkeypatch: pytest.MonkeyPatch) -> Non
 
     monkeypatch.setattr(
         "src.utils.geospatial.lat_lon_to_nta",
-        lambda lat, lon: pd.Series(["MN17"] * len(lat), index=lat.index),
+        lambda lat, lon: pd.Series(["MN0604"] * len(lat), index=lat.index),
     )
     # Build a minimal in-memory zip with a CSV
     buf = io.BytesIO()
@@ -359,7 +359,7 @@ def test_etl_pluto_transform_basic(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.data import etl_pluto
     import src.data.etl_inspections as etl_insp
 
-    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17", "11201": "BK09"})
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN0604", "11201": "BK09"})
     raw = pd.DataFrame(
         {
             "yearbuilt": ["1990", "2000"],
@@ -459,7 +459,7 @@ def test_etl_inspections_run_placeholder() -> None:
 def test_etl_inspections_transform_basic(monkeypatch: pytest.MonkeyPatch) -> None:
     import src.data.etl_inspections as etl_insp
 
-    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17"})
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN0604"})
     raw = pd.DataFrame(
         {
             "camis": ["12345"],
@@ -502,7 +502,7 @@ def test_etl_inspections_transform_unmapped_zip(
 def test_etl_inspections_transform_no_zip_col(monkeypatch: pytest.MonkeyPatch) -> None:
     import src.data.etl_inspections as etl_insp
 
-    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17"})
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN0604"})
     raw = pd.DataFrame(
         {
             "camis": ["11111"],
@@ -551,7 +551,7 @@ def test_etl_licenses_transform_adds_restaurant_id_na() -> None:
             "license_creation_date": ["2024-01-01"],
             "business_unique_id": ["dca-42"],
             "license_status": ["Active"],
-            "nta": ["MN17"],
+            "nta": ["MN0604"],
             "business_category": ["Restaurant"],
         }
     )
@@ -928,7 +928,7 @@ def test_etl_pluto_transform_no_bldgarea(monkeypatch: pytest.MonkeyPatch) -> Non
     import src.data.etl_inspections as etl_insp
     from src.data import etl_pluto
 
-    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17"})
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN0604"})
     raw = pd.DataFrame(
         {
             "yearbuilt": ["1985"],
@@ -1582,7 +1582,7 @@ def test_etl_inspections_run_etl_calls_fetch_and_transform(
         }
     )
     # Prevent live HTTP call from _get_zip_to_nta
-    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN17"})
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN0604"})
     monkeypatch.setattr(etl_insp, "fetch", lambda limit=0: sample)
     result = etl_insp.run_etl(limit=5)
     assert isinstance(result, pd.DataFrame)
@@ -2004,3 +2004,170 @@ def test_etl_airbnb_run_etl_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(etl_airbnb, "_transform", lambda df: good_result)
     result = etl_airbnb.run_etl(limit=5)
     assert list(result["nta_id"]) == ["MN01"]
+
+
+# ── etl_citibike — _year_from_zip_name ───────────────────────────────────────
+
+
+def test_etl_citibike_year_from_zip_name_valid() -> None:
+    from pathlib import Path
+
+    from src.data.etl_citibike import _year_from_zip_name
+
+    assert _year_from_zip_name(Path("202603-citibike-tripdata.zip")) == 2026
+    assert _year_from_zip_name(Path("202201-citibike-tripdata.zip")) == 2022
+
+
+def test_etl_citibike_year_from_zip_name_invalid() -> None:
+    from pathlib import Path
+
+    from src.data.etl_citibike import _year_from_zip_name
+
+    assert _year_from_zip_name(Path("something.zip")) is None
+    assert _year_from_zip_name(Path("citibike-tripdata.zip")) is None
+
+
+# ── etl_citibike — local glob zip path (lines 138-193) ───────────────────────
+
+
+def test_etl_citibike_run_etl_local_glob_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import io
+    import zipfile
+
+    from src.data import etl_citibike
+
+    # Create a real zip matching *-citibike-tripdata.zip so the glob picks it up
+    zip_path = tmp_path / "202603-citibike-tripdata.zip"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        csv_content = (
+            "start_lat,start_lng,start_station_id\n"
+            "40.75,-73.99,S1\n"
+            "40.76,-73.98,S1\n"
+            "40.77,-73.97,S2\n"
+        )
+        zf.writestr("trips.csv", csv_content)
+    zip_path.write_bytes(buf.getvalue())
+
+    # _RAW_ZIP.parent must be tmp_path so the glob finds our zip
+    monkeypatch.setattr(etl_citibike, "_RAW_ZIP", zip_path)
+    monkeypatch.setattr(
+        etl_citibike, "_FALLBACK_FEATURES_CSV", tmp_path / "nonexistent.csv"
+    )
+    monkeypatch.setattr(
+        "src.utils.geospatial.lat_lon_to_nta",
+        lambda lat, lon: pd.Series(["MN2601"] * len(lat), index=lat.index),
+    )
+
+    result = etl_citibike.run_etl(limit=100)
+    assert isinstance(result, pd.DataFrame)
+    assert set(result.columns) == {"year", "nta_id", "trip_count", "station_count"}
+    assert len(result) > 0
+    assert (result["trip_count"] > 0).all()
+
+
+def test_etl_citibike_run_etl_local_glob_with_backfill(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Backfill CSV supplements missing years when not all years are in the zip data."""
+    import io
+    import zipfile
+
+    from src.data import etl_citibike
+
+    # Zip only covers 2026 trips
+    zip_path = tmp_path / "202603-citibike-tripdata.zip"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr(
+            "trips.csv",
+            "start_lat,start_lng\n40.75,-73.99\n",
+        )
+    zip_path.write_bytes(buf.getvalue())
+
+    # Fallback CSV has historical NTA data for backfill
+    fallback_csv = tmp_path / "citibike_fallback.csv"
+    fallback_csv.write_text("nta,trip_count,unique_start_station_count\nBK09,50,3\n")
+
+    monkeypatch.setattr(etl_citibike, "_RAW_ZIP", zip_path)
+    monkeypatch.setattr(etl_citibike, "_FALLBACK_FEATURES_CSV", fallback_csv)
+    monkeypatch.setattr(
+        "src.utils.geospatial.lat_lon_to_nta",
+        lambda lat, lon: pd.Series(["MN2601"] * len(lat), index=lat.index),
+    )
+    # Force a wide year range so backfill is needed
+    monkeypatch.setitem(
+        __import__("src.config.constants", fromlist=["MODEL_CONFIG"]).MODEL_CONFIG,
+        "temporal_data_start_year",
+        2020,
+    )
+    monkeypatch.setitem(
+        __import__("src.config.constants", fromlist=["MODEL_CONFIG"]).MODEL_CONFIG,
+        "temporal_data_end_year",
+        2022,
+    )
+
+    result = etl_citibike.run_etl(limit=100)
+    assert isinstance(result, pd.DataFrame)
+    assert set(result.columns) == {"year", "nta_id", "trip_count", "station_count"}
+    # Backfill should produce rows for 2020, 2021, 2022
+    years_present = set(result["year"].unique())
+    assert years_present.issuperset({2020, 2021, 2022})
+
+
+# ── etl_acs — ACS_DATA_GLOB branch (lines 50-61) ─────────────────────────────
+
+
+def test_etl_acs_load_local_glob_success(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    from src.data.etl_acs import _load_local
+
+    csv1 = tmp_path / "acs_2022.csv"
+    csv2 = tmp_path / "acs_2023.csv"
+    csv1.write_text(
+        "year,nta_id,median_income,population,rent_burden\n"
+        "2022,BK0900,60000,5000,1500\n"
+    )
+    csv2.write_text(
+        "year,nta_id,median_income,population,rent_burden\n"
+        "2023,BK0900,62000,5100,1550\n"
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ACS_DATA_GLOB", "acs_*.csv")
+    monkeypatch.delenv("ACS_DATA_PATH", raising=False)
+
+    result = _load_local()
+    assert len(result) == 2
+    assert set(result["year"].tolist()) == {2022, 2023}
+
+
+def test_etl_acs_load_local_glob_no_match(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    from src.data.etl_acs import _load_local
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ACS_DATA_GLOB", "nonexistent_acs_*.csv")
+    monkeypatch.delenv("ACS_DATA_PATH", raising=False)
+
+    with pytest.raises(FileNotFoundError, match="ACS_DATA_GLOB"):
+        _load_local()
+
+
+def test_etl_acs_run_etl_no_canonical_file_returns_placeholder(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """Lines 145-146: no env var + canonical CSV absent → placeholder."""
+    from src.data import etl_acs
+
+    # cwd has no data/raw/acs_nta_canonical.csv so canonical_path.exists() is False
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("ACS_DATA_PATH", raising=False)
+    monkeypatch.delenv("ACS_DATA_GLOB", raising=False)
+
+    result = etl_acs.run_etl(limit=5)
+    assert result.empty
