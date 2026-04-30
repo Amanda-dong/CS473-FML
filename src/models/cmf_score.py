@@ -105,6 +105,7 @@ def score_zone_for_concept(
         license_velocity, restaurant_count_static, rent_pressure,
         trip_count, median_income_static
     """
+
     def _safe(val: object, default: float) -> float:
         """Coerce val to float, returning default on None/NaN."""
         try:
@@ -122,11 +123,17 @@ def score_zone_for_concept(
     # Normalise license velocity: sigmoid(vel) maps (−∞,+∞) → (0,1)
     vel_norm = 1.0 / (1.0 + math.exp(-vel_raw)) if vel_raw != 0.0 else 0.5
     # Normalise raw counts to [0, 1] using fixed reference ranges
-    competition = min(_safe(zone_features.get("restaurant_count_static"), 0.0) / 50.0, 1.0)
+    competition = min(
+        _safe(zone_features.get("restaurant_count_static"), 0.0) / 50.0, 1.0
+    )
     rent = _safe(zone_features.get("rent_pressure"), 0.0)  # already [0,1] in FM
     transit = min(_safe(zone_features.get("trip_count"), 0.0) / 200_000.0, 1.0)
     income = min(
-        max((_safe(zone_features.get("median_income_static"), 80_000.0) - 30_000.0) / 170_000.0, 0.0),
+        max(
+            (_safe(zone_features.get("median_income_static"), 80_000.0) - 30_000.0)
+            / 170_000.0,
+            0.0,
+        ),
         1.0,
     )
 

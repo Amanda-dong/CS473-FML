@@ -464,4 +464,3 @@ Zhang, Y., Li, J., & Wang, S. (2020). Predicting restaurant survival using survi
 C inspection records. *Proceedings of the ACM International Conference on Information and Knowledge Management*, 2847–2854.
 ge Management*, 2847–2854.
 54.
-

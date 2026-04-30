@@ -2228,7 +2228,9 @@ def test_etl_yelp_load_local_from_env_path_additional(
 
     # Create a temporary CSV file
     csv_path = tmp_path / "env_yelp_data_new.csv"
-    pd.DataFrame({"business_id": ["env_r2"], "rating": [5]}).to_csv(csv_path, index=False)
+    pd.DataFrame({"business_id": ["env_r2"], "rating": [5]}).to_csv(
+        csv_path, index=False
+    )
 
     monkeypatch.setenv("YELP_DATA_PATH", str(csv_path))
     result = etl_yelp._load_local()

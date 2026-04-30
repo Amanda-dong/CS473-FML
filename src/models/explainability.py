@@ -47,7 +47,11 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
         )
 
     income_raw = float(zone_features.get("median_income_static", 0.0))
-    income_alignment = min(max((income_raw - 30_000.0) / 170_000.0, 0.0), 1.0) if income_raw > 1.0 else income_raw
+    income_alignment = (
+        min(max((income_raw - 30_000.0) / 170_000.0, 0.0), 1.0)
+        if income_raw > 1.0
+        else income_raw
+    )
     if income_alignment > 0.65:
         drivers.append("Income profile aligns well with the chosen price tier")
 

@@ -563,7 +563,9 @@ def _score_with_learned_model(
 
     # Survival risk — use zone-level viability from feature cache; avoids passing
     # zone features to a restaurant-level survival model (causes 100% risk bug).
-    survival_score = feats.get("target", feats.get("merchant_viability", feats.get("survival_score", 0.5)))
+    survival_score = feats.get(
+        "target", feats.get("merchant_viability", feats.get("survival_score", 0.5))
+    )
     survival_risk = round(1.0 - float(survival_score), 4)
 
     return ZoneRecommendation(
