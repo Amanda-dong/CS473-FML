@@ -17,6 +17,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from frontend.components.page_intro import render_page_intro
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 REVIEWS_PATH = REPO_ROOT / "data" / "raw" / "gemini_labels_full.csv"
 BUSINESS_PATH = REPO_ROOT / "data" / "raw" / "yelp_business.csv"
@@ -79,6 +81,10 @@ def _restaurant_id_from_plotly_state(
 st.set_page_config(page_title="Review × Zones Demo", layout="wide")
 
 st.title("Gemini-Labeled Reviews × Micro-zones")
+render_page_intro(
+    "What this page does",
+    "Use this page to inspect review coverage and zone mapping. Go back to Top Picks when you want recommendations.",
+)
 st.caption(
     "`zone_id` is filled only when the business falls in a modeled micro-zone "
     "(see `zone_crosswalk.py`); `nta` may still be set for any NYC NTA."

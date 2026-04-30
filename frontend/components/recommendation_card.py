@@ -15,7 +15,7 @@ _ZONE_TYPE_BADGE = {
 }
 _CLUSTER_BADGE = {
     "emerging": "🌱 Emerging",
-    "gentrifying": "📈 Gentrifying",
+    "gentrifying": "📈 Fast-Growing",
     "stable": "🏛️ Stable",
     "declining": "📉 Declining",
 }
@@ -106,6 +106,7 @@ def render_recommendation_card(card: dict, cluster: str = "") -> None:
         )
 
         st.progress(max(0.0, min(1.0, score_progress)))
+        st.caption("Higher opportunity is better. Lower survival risk is safer.")
 
         summary = healthy_gap_summary.strip() or _build_gap_summary(card, cluster)
         st.write(summary)
@@ -129,6 +130,7 @@ def render_recommendation_card(card: dict, cluster: str = "") -> None:
             )
 
         with st.expander("Score breakdown"):
+            st.caption("See which signals raised or lowered the score.")
             _render_driver_chart(
                 feature_contributions, chart_key=f"score-breakdown-{zone_id}"
             )

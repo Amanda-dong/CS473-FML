@@ -64,6 +64,7 @@ _PARQUET_CHECKS = {
 def render_data_freshness(note: str = "") -> None:
     """Render per-source freshness with live availability status."""
     st.markdown(f"**Last page load:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    st.caption("If a source is stale or missing, treat the shortlist as directional.")
     st.divider()
 
     available = 0

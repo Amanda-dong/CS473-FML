@@ -44,6 +44,10 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
     proportional to opportunity score. Falls back to plain NTA centroids
     (or a placeholder) when no recommendations are available.
     """
+    st.subheader("Zone Map")
+    st.caption(
+        "See where the strongest zones cluster. Hover for score, risk, and confidence."
+    )
     if recommendations:
         try:
             import plotly.graph_objects as go

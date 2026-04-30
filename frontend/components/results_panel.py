@@ -44,10 +44,66 @@ def _render_summary_row(recommendations: list[dict]) -> None:
     c3.metric("Confidence mix", conf_label)
 
 
+def render_top_match_panel(
+    user_state: dict,
+    recommendation: dict | None,
+    cluster_map: dict[str, str] | None = None,
+) -> str | None:
+    """Render a featured top match panel and return its zone_id."""
+    if not recommendation:
+        return None
+
+    zone_id = str(recommendation.get("zone_id", ""))
+    zone_name = str(
+        recommendation.get("zone_name", recommendation.get("zone_label", "Top Match"))
+    )
+    score = float(recommendation.get("opportunity_score", 0.0) or 0.0)
+    survival_risk = float(recommendation.get("survival_risk", 0.0) or 0.0)
+    confidence = str(recommendation.get("confidence_bucket", "—")).title()
+    concept = str(user_state.get("concept_subtype", "")).replace("_", " ").title()
+    zone_type = str(recommendation.get("zone_type", ""))
+    cluster = (cluster_map or {}).get(zone_type, "")
+    summary = str(recommendation.get("healthy_gap_summary", "") or "")
+    positives = (
+        recommendation.get("positive_drivers") or recommendation.get("positives") or []
+    )
+
+    st.subheader("Top Match")
+    st.caption("Start here. This is the strongest match for your current query.")
+    with st.container(border=True):
+        st.markdown(f"#### {zone_name}")
+        meta_bits = [
+            bit
+            for bit in [
+                zone_type.replace("_", " ").title() if zone_type else "",
+                cluster.title() if cluster else "",
+            ]
+            if bit
+        ]
+        if meta_bits:
+            st.caption(" | ".join(meta_bits))
+
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Opportunity score", f"{score * 100:.0f}%")
+        m2.metric("Survival risk", f"{survival_risk * 100:.0f}%")
+        m3.metric("Confidence", confidence)
+
+        if concept:
+            st.markdown(
+                f"**Why it stands out:** {summary or f'This zone ranked first for {concept}.'}"
+            )
+        if positives:
+            st.markdown(
+                "**Key strengths:** " + "; ".join(str(item) for item in positives[:3])
+            )
+    return zone_id or None
+
+
 def render_results_panel(
     user_state: dict,
     recommendations: list[dict] | None = None,
     cluster_map: dict[str, str] | None = None,
+    featured_zone_id: str | None = None,
 ) -> None:
     if recommendations is None:
         st.info("Configure your search in the sidebar to see recommendations.")
@@ -57,14 +113,23 @@ def render_results_panel(
         st.warning("No recommendations found for the current filters.")
         return
 
-    concept = user_state.get("concept_subtype", "")
-    if concept:
-        st.caption(f"Concept: {concept.replace('_', ' ').title()}")
+    st.subheader("Recommended Zones")
+    st.caption("Use these cards to compare the rest of your shortlist.")
 
     _render_summary_row(recommendations)
     st.divider()
 
-    for rec in recommendations:
+    remaining = [
+        rec
+        for rec in recommendations
+        if str(rec.get("zone_id", "")) != str(featured_zone_id or "")
+    ]
+    if featured_zone_id and remaining:
+        st.caption("Compare the remaining options below.")
+    elif featured_zone_id and not remaining:
+        st.caption("Your query returned one highlighted recommendation.")
+
+    for rec in remaining if featured_zone_id else recommendations:
         zone_type = rec.get("zone_type", "")
         cluster = (cluster_map or {}).get(zone_type, "")
         render_recommendation_card(rec, cluster=cluster)
