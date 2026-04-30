@@ -49,7 +49,13 @@ class SurvivalModelBundle:
     uses_heuristic_: bool = field(default=False, init=False)
 
     def _select_numeric_features(self, restaurant_history: pd.DataFrame) -> list[str]:
-        excluded = {self.duration_col, self.event_col}
+        excluded = {
+            self.duration_col,
+            self.event_col,
+            "restaurant_id",
+            "zone_id",
+            "_inspection_restaurant_id",
+        }
         return [
             column
             for column in restaurant_history.select_dtypes(include=["number"]).columns
@@ -493,6 +499,11 @@ def build_real_restaurant_history(
     # Handle both nta_id (ETL output) and zone_id (legacy)
     zone_col = "nta_id" if "nta_id" in licenses.columns else "zone_id"
 
+    # Pre-join cuisine_type from inspections if missing in licenses
+    if "cuisine_type" not in licenses.columns and "cuisine_type" in inspections_df.columns:
+        cuisine_map = inspections_df.dropna(subset=["cuisine_type"]).groupby("restaurant_id")["cuisine_type"].first()
+        licenses = licenses.merge(cuisine_map, left_on="_inspection_restaurant_id", right_index=True, how="left")
+
     if licenses.empty:
         return pd.DataFrame(
             columns=[
@@ -517,7 +528,8 @@ def build_real_restaurant_history(
 
         start = first_row["_date"]
         zone_id = first_row.get(zone_col, "unknown")
-        cuisine = first_row.get("cuisine_type", "unknown")
+        cuisine = str(first_row.get("cuisine_type", "unknown")).lower().strip()
+        year_opened = start.year - 1990
 
         # Determine if closed: last status is inactive/expired/cancelled
         closed_statuses = {"inactive", "expired", "cancelled", "closed"}
@@ -533,6 +545,7 @@ def build_real_restaurant_history(
                 "_inspection_restaurant_id": first_row.get("_inspection_restaurant_id"),
                 "zone_id": zone_id,
                 "cuisine_type": cuisine,
+                "year_opened": year_opened,
                 "duration_days": duration_days,
                 "event_observed": event_observed,
             }
@@ -541,6 +554,12 @@ def build_real_restaurant_history(
     result = pd.DataFrame(records)
     if result.empty:
         return result  # pragma: no cover
+
+    result = pd.get_dummies(
+        result, columns=["cuisine_type"], prefix="cuisine", drop_first=True, dtype=float
+    )
+    cuisine_cols = [c for c in result.columns if c.startswith("cuisine_")]
+    result[cuisine_cols] = result[cuisine_cols].fillna(0.0)
 
     # Join inspection grades
     if (
@@ -566,11 +585,7 @@ def build_real_restaurant_history(
 
     # Join zone features
     if zone_features is not None and "zone_id" in result.columns:
-        zone_cols = [
-            c
-            for c in ["rent_pressure", "competition_score", "transit_access"]
-            if c in zone_features.columns
-        ]
+        zone_cols = zone_features.select_dtypes(include=["number"]).columns.tolist()
         if zone_cols and "zone_id" in zone_features.columns:
             result = result.merge(
                 zone_features[["zone_id", *zone_cols]], on="zone_id", how="left"

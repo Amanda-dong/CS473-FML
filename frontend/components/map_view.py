@@ -60,8 +60,9 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
                 scores.append(score * 100)
                 name = rec.get("zone_name", zid)
                 risk = float(rec.get("survival_risk", 0.0) or 0.0)
+                conf = str(rec.get("confidence_bucket", "—")).title()
                 texts.append(
-                    f"<b>{name}</b><br>Score: {score * 100:.0f}%<br>Risk: {risk * 100:.0f}%"
+                    f"<b>{name}</b><br>Score: {score * 100:.0f}%<br>Risk: {risk * 100:.0f}%<br>Confidence: {conf}"
                 )
                 zone_ids.append(zid)
 

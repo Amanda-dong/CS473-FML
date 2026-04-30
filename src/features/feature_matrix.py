@@ -278,6 +278,8 @@ def build_zone_year_matrix(
             airbnb_static, on="zone_id", how="outer"
         )  # pragma: no cover
 
+    merged = merged.drop(columns=["listing_count", "entire_home_ratio"], errors="ignore")
+
     # --- Upgrade healthy_review_share with Gemini labels if cache exists ---
     gemini_features = _load_gemini_review_features(yelp_df, review_locations)
     if not gemini_features.empty and "zone_id" in gemini_features.columns:

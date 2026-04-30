@@ -174,24 +174,21 @@ async def test_predict_cmf_borough_filter() -> None:
     assert resp.status_code == 200
 
 
-def test_score_with_learned_model_uses_latest_time_key_and_predict_risk() -> None:
+def test_score_with_learned_model_uses_latest_time_key_and_survival_score() -> None:
     from src.api.routers.recommendations import _score_with_learned_model
 
     class DummyScoringModel:
-        feature_names = ["healthy_review_share"]
+        feature_names = ["healthy_review_share", "survival_score"]
 
         def predict(self, frame: pd.DataFrame) -> list[float]:
             return frame["healthy_review_share"].tolist()
-
-    class DummySurvivalModel:
-        def predict_risk(self, frame: pd.DataFrame) -> pd.Series:
-            return pd.Series([0.25], index=frame.index)
 
     feature_matrix = pd.DataFrame(
         {
             "zone_id": ["bk-tandon", "bk-tandon"],
             "time_key": [2022, 2024],
             "healthy_review_share": [0.1, 0.9],
+            "survival_score": [0.3, 0.75],  # latest row (2024) = 0.75
         }
     )
 
@@ -201,12 +198,12 @@ def test_score_with_learned_model_uses_latest_time_key_and_predict_risk() -> Non
         "salad_bowls",
         feature_matrix,
         DummyScoringModel(),
-        DummySurvivalModel(),
+        None,
     )
 
     assert rec is not None
     assert rec.opportunity_score == pytest.approx(0.9)
-    assert rec.survival_risk == pytest.approx(0.25)
+    assert rec.survival_risk == pytest.approx(0.25)  # 1.0 - 0.75
     assert rec.scoring_path == "learned"
 
 
@@ -396,27 +393,19 @@ def test_score_with_learned_model_missing_zone() -> None:
 
 
 def test_score_with_learned_model_predict_fallback() -> None:
-    import numpy as np
     from src.api.routers.recommendations import _score_with_learned_model
 
     class DummyScoringModel:
         def predict(self, frame: pd.DataFrame) -> list[float]:
             return [0.5]
 
-    class DummySurvivalModel:
-        def predict(self, frame: pd.DataFrame) -> np.ndarray:
-            return np.array([0.8])
-
-    feature_matrix = pd.DataFrame({"zone_id": ["bk-tandon"], "feat1": [0.5]})
-    rec = _score_with_learned_model(
-        "bk-tandon",
-        "Label",
-        "subtype",
-        feature_matrix,
-        DummyScoringModel(),
-        DummySurvivalModel(),
+    feature_matrix = pd.DataFrame(
+        {"zone_id": ["bk-tandon"], "feat1": [0.5], "survival_score": [0.8]}
     )
-    assert rec.survival_risk == pytest.approx(0.2)
+    rec = _score_with_learned_model(
+        "bk-tandon", "Label", "subtype", feature_matrix, DummyScoringModel(), None
+    )
+    assert rec.survival_risk == pytest.approx(0.2)  # 1.0 - 0.8
 
 
 def test_score_with_learned_model_shap_tree_explainer() -> None:
@@ -519,30 +508,24 @@ def test_score_with_learned_model_survival_predict(monkeypatch) -> None:
         def feature_names(self):
             return ["feat1"]
 
-    class FakeSurvival:
-        def predict(self, X):
-            return np.array([0.8])
-
     feature_matrix = pd.DataFrame(
-        {"zone_id": ["Z1"], "feat1": [1.0], "time_key": [2024]}
+        {"zone_id": ["Z1"], "feat1": [1.0], "time_key": [2024], "survival_score": [0.8]}
     )
 
-    # Target 8: line 388-389 in recommendations.py
-    # survival_risk = float(1.0 - survival_model.predict(feature_row)[0])
     res = _score_with_learned_model(
         zone_id="Z1",
         zone_label="Zone 1",
         concept_subtype="healthy_indian",
         feature_matrix=feature_matrix,
         scoring_model=FakeScoring(),
-        survival_model=FakeSurvival(),
+        survival_model=None,
     )
 
     assert res is not None
     assert res.survival_risk == pytest.approx(0.2)  # 1.0 - 0.8
 
 
-def test_score_with_learned_model_survival_exception_swallowed() -> None:
+def test_score_with_learned_model_survival_no_score_defaults_to_half() -> None:
     from src.api.routers.recommendations import _score_with_learned_model
 
     class FakeScoring:
@@ -553,16 +536,13 @@ def test_score_with_learned_model_survival_exception_swallowed() -> None:
         def feature_names(self):
             return ["f1"]
 
-    class FakeSurvivalError:
-        def predict(self, X):
-            raise RuntimeError("Fake Error")
-
+    # No survival_score column → defaults to 0.5 viability → risk = 0.5
     feature_matrix = pd.DataFrame({"zone_id": ["Z1"], "f1": [1.0], "time_key": [2024]})
     res = _score_with_learned_model(
-        "Z1", "L1", "S1", feature_matrix, FakeScoring(), FakeSurvivalError()
+        "Z1", "L1", "S1", feature_matrix, FakeScoring(), None
     )
     assert res is not None
-    assert res.survival_risk == 0.0
+    assert res.survival_risk == pytest.approx(0.5)
 
 
 @pytest.mark.asyncio

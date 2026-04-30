@@ -76,21 +76,31 @@ def _render_zone_overview(recs: list[dict]) -> None:
         [
             {
                 "Zone": r.get("zone_name", r.get("zone_label", "")),
-                "Score": r.get("opportunity_score", 0.0) * 100,
-                "Risk": r.get("survival_risk", 0.0) * 100,
+                "Score": f"{float(r.get('opportunity_score', 0.0) or 0.0) * 100:.0f}%",
+                "Confidence": str(r.get("confidence_bucket", "—")).title(),
+                "Risk": f"{float(r.get('survival_risk', 0.0) or 0.0) * 100:.0f}%",
                 "Type": r.get("zone_type", ""),
+                "_Score_Num": float(r.get("opportunity_score", 0.0) or 0.0) * 100,
             }
             for r in recs
         ]
     )
+    
+    st.dataframe(df.drop(columns=["_Score_Num"]), use_container_width=True, hide_index=True)
+
     fig = px.bar(
         df,
         x="Zone",
-        y="Score",
+        y="_Score_Num",
         color="Type",
+        hover_data={"_Score_Num": False, "Score": True, "Confidence": True, "Risk": True, "Type": True},
         title="Opportunity score by zone (%)",
     )
-    fig.update_layout(height=360, margin=dict(l=10, r=10, t=40, b=10))
+    fig.update_layout(
+        height=360, 
+        margin=dict(l=10, r=10, t=40, b=10),
+        yaxis_title="Score"
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 

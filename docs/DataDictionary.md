@@ -229,28 +229,11 @@ Status:
 
 Purpose:
 
-- housing-pressure enrichment
-
-Current code path:
-
-- `src/data/etl_airbnb.py`
-
-Canonical columns:
-
-| Column | Type / meaning | Why it exists |
-| :---- | :---- | :---- |
-| `year` | analysis year | temporal join |
-| `nta_id` | NTA code | geography join |
-| `listing_count` | short-term rental inventory | pressure signal |
-| `entire_home_ratio` | share of entire-home listings | housing displacement proxy |
-
-Phase usage:
-
-- planned for phase discovery
+- (Deprecated) Historically used for housing-pressure enrichment; currently excluded from scoring.
 
 Status:
 
-- schema defined, real loader not yet implemented
+- Deprecated - features removed from matrix by team consensus.
 
 ### 3.8 `yelp`
 
@@ -494,7 +477,7 @@ Current implemented joined columns:
 Important note:
 
 - this is the current implemented column set from the builder
-- additional planned source families such as permits, Citi Bike, Airbnb, and 311
+- additional planned source families such as permits, Citi Bike, and 311
   are not yet joined into this matrix
 
 ### 5.5 Restaurant history for survival

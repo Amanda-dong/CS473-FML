@@ -526,11 +526,13 @@ def _score_with_learned_model(
         zone_rows = zone_rows.sort_values("time_key")
 
     row = zone_rows.iloc[[-1]]
-    feature_row = row.drop(columns=["zone_id", "time_key"], errors="ignore")
+    full_row = row.drop(columns=["zone_id", "time_key"], errors="ignore")
 
     model_feature_names = list(getattr(scoring_model, "feature_names", []) or [])
     if model_feature_names:
-        feature_row = feature_row.reindex(columns=model_feature_names, fill_value=0.0)
+        feature_row = full_row.reindex(columns=model_feature_names, fill_value=0.0)
+    else:
+        feature_row = full_row
 
     pred_score = float(scoring_model.predict(feature_row)[0])
     pred_score = _apply_request_context_adjustment(
@@ -560,18 +562,12 @@ def _score_with_learned_model(
     except Exception as exc:
         logger.warning("SHAP explainability failed for zone %s: %s", zone_id, exc)
 
-    # Survival risk
-    survival_risk = 0.0
-    if survival_model is not None:
-        try:
-            if hasattr(survival_model, "predict_risk"):
-                survival_risk = float(survival_model.predict_risk(feature_row).iloc[0])
-            else:
-                survival_risk = float(1.0 - survival_model.predict(feature_row)[0])
-        except Exception:
-            pass
+    feats = full_row.iloc[0].to_dict()
 
-    feats = feature_row.iloc[0].to_dict()
+    # Survival risk — use zone-level viability from feature cache; avoids passing
+    # zone features to a restaurant-level survival model (causes 100% risk bug).
+    survival_score = feats.get("survival_score", feats.get("merchant_viability", 0.5))
+    survival_risk = round(1.0 - float(survival_score), 4)
 
     return ZoneRecommendation(
         zone_id=zone_id,

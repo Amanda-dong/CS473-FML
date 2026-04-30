@@ -9,6 +9,7 @@ import pandas as pd
 
 from src.config.constants import MODEL_DIR, PROCESSED_DIR
 from src.data.quality import prepare_survival_history
+from src.features.zone_crosswalk import ZONE_TO_NTA
 from src.models.survival_model import (
     SurvivalModelBundle,
     build_real_restaurant_history,
@@ -40,7 +41,43 @@ def _load_or_build_history() -> pd.DataFrame:
 
     licenses_df = pd.read_parquet(licenses_path)
     inspections_df = pd.read_parquet(inspections_path)
-    zone_features = pd.read_parquet(zone_path) if zone_path.exists() else None
+
+    # zone_features.parquet uses zone_id format (e.g. "bk-crown-hts") but
+    # licenses use NTA codes (e.g. "BK09").  Expand via the crosswalk so the
+    # join inside build_real_restaurant_history actually connects.
+    zone_features: pd.DataFrame | None = None
+    if zone_path.exists():
+        zf = pd.read_parquet(zone_path)
+        feature_cols = [c for c in zf.columns if c != "zone_id"]
+        rows = []
+        for _, row in zf.iterrows():
+            for nta in ZONE_TO_NTA.get(str(row["zone_id"]), []):
+                rows.append({"zone_id": nta, **{c: row[c] for c in feature_cols}})
+        if rows:
+            zone_features = pd.DataFrame(rows).groupby("zone_id", as_index=False).mean(
+                numeric_only=True
+            )
+
+    # Add NTA-level inspection quality — licenses have no per-restaurant ID
+    # so we aggregate grade by NTA and merge as a zone covariate.
+    if "nta_id" in inspections_df.columns and "grade" in inspections_df.columns:
+        grade_num = {"A": 1.0, "B": 2.0, "C": 3.0}
+        nta_grade = (
+            inspections_df[inspections_df["grade"].isin(grade_num)]
+            .assign(grade_num=lambda d: d["grade"].map(grade_num))
+            .groupby("nta_id")["grade_num"]
+            .mean()
+            .reset_index()
+            .rename(columns={"nta_id": "zone_id", "grade_num": "inspection_grade_avg"})
+        )
+        if zone_features is not None:
+            zone_features = zone_features.merge(nta_grade, on="zone_id", how="left", suffixes=("", "_nta"))
+            if "inspection_grade_avg_nta" in zone_features.columns:
+                zone_features["inspection_grade_avg"] = zone_features["inspection_grade_avg_nta"].fillna(zone_features.get("inspection_grade_avg", 2.0))
+                zone_features = zone_features.drop(columns=["inspection_grade_avg_nta"])
+        else:
+            zone_features = nta_grade
+
     print("Building restaurant history from real data...")
     history = build_real_restaurant_history(licenses_df, inspections_df, zone_features)
     history, _report = prepare_survival_history(history)

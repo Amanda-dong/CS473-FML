@@ -311,7 +311,6 @@ def test_build_zone_year_matrix_all_datasets() -> None:
         "inspection_grade_avg",
         "permit_velocity",
         "trip_count",
-        "listing_count",
     ]
     for col in expected_cols:
         assert col in result.columns, f"Column {col} missing from merged matrix"
@@ -1054,7 +1053,7 @@ def test_feature_matrix_airbnb_merges() -> None:
         ),
     }
     result = build_zone_year_matrix(etl_outputs)
-    assert "listing_count" in result.columns
+    assert "listing_count" not in result.columns
 
     # Empty merged (but with airbnb_static)
     etl_outputs_2 = {
@@ -1071,7 +1070,7 @@ def test_feature_matrix_airbnb_merges() -> None:
         ),
     }
     result_2 = build_zone_year_matrix(etl_outputs_2)
-    assert "listing_count" in result_2.columns
+    assert "listing_count" not in result_2.columns
 
 
 def test_prepare_review_signals_no_spatial_id() -> None:
@@ -1150,7 +1149,7 @@ def test_feature_matrix_airbnb_only() -> None:
         )
     }
     result = build_zone_year_matrix(etl_outputs)
-    assert "listing_count" in result.columns
+    assert "listing_count" not in result.columns
     assert "time_key" in result.columns
 
 
