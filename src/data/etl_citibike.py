@@ -159,7 +159,12 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
                 try:
                     base = pd.read_csv(_FALLBACK_FEATURES_CSV)
                     if {"nta", "trip_count"}.issubset(base.columns):
-                        present_years = set(pd.to_numeric(merged["year"], errors="coerce").dropna().astype(int).tolist())
+                        present_years = set(
+                            pd.to_numeric(merged["year"], errors="coerce")
+                            .dropna()
+                            .astype(int)
+                            .tolist()
+                        )
                         needed_years = set(range(start_year, end_year + 1))
                         if not needed_years.issubset(present_years):
                             backfill = _year_backfill(base)
