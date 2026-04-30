@@ -10,50 +10,51 @@
 | src/api/main.py                           |       16 |        0 |    100% |           |
 | src/api/routers/\_\_init\_\_.py           |        0 |        0 |    100% |           |
 | src/api/routers/datasets.py               |        7 |        0 |    100% |           |
-| src/api/routers/health.py                 |        5 |        0 |    100% |           |
-| src/api/routers/recommendations.py        |      247 |        4 |     98% |62, 65, 273, 309 |
+| src/api/routers/health.py                 |       19 |        2 |     89% |     21-22 |
+| src/api/routers/recommendations.py        |      247 |        0 |    100% |           |
 | src/config/\_\_init\_\_.py                |        3 |        0 |    100% |           |
 | src/config/constants.py                   |        6 |        0 |    100% |           |
 | src/config/settings.py                    |       27 |        0 |    100% |           |
 | src/data/\_\_init\_\_.py                  |        3 |        0 |    100% |           |
 | src/data/audit.py                         |        5 |        0 |    100% |           |
 | src/data/base.py                          |       25 |        0 |    100% |           |
+| src/data/enrich\_zone\_features.py        |       58 |       26 |     55% |    90-138 |
 | src/data/etl\_311.py                      |       31 |        0 |    100% |           |
-| src/data/etl\_acs.py                      |       43 |        0 |    100% |           |
+| src/data/etl\_acs.py                      |       75 |        1 |     99% |        60 |
 | src/data/etl\_airbnb.py                   |       53 |        0 |    100% |           |
-| src/data/etl\_citibike.py                 |       64 |        0 |    100% |           |
-| src/data/etl\_inspections.py              |       54 |        0 |    100% |           |
-| src/data/etl\_licenses.py                 |       33 |        0 |    100% |           |
+| src/data/etl\_citibike.py                 |      114 |        4 |     96% |144-145, 160-161 |
+| src/data/etl\_inspections.py              |       95 |        2 |     98% |  111, 121 |
+| src/data/etl\_licenses.py                 |       34 |        0 |    100% |           |
 | src/data/etl\_permits.py                  |       69 |        3 |     96% |49, 53, 69 |
-| src/data/etl\_pluto.py                    |       43 |        0 |    100% |           |
+| src/data/etl\_pluto.py                    |       46 |        0 |    100% |           |
 | src/data/etl\_runner.py                   |       61 |        0 |    100% |           |
-| src/data/etl\_yelp.py                     |      141 |        8 |     94% |40-43, 50-53 |
-| src/data/quality.py                       |       77 |        1 |     99% |       116 |
+| src/data/etl\_yelp.py                     |      141 |        0 |    100% |           |
+| src/data/quality.py                       |      146 |       30 |     79% |94, 107, 116, 120-123, 127-131, 138-161, 173, 177, 181, 188-191, 276 |
 | src/data/registry.py                      |       11 |        0 |    100% |           |
 | src/features/\_\_init\_\_.py              |        4 |        0 |    100% |           |
 | src/features/competition\_score.py        |        7 |        0 |    100% |           |
 | src/features/demand\_signals.py           |       27 |        0 |    100% |           |
-| src/features/feature\_matrix.py           |      207 |        2 |     99% |  301, 309 |
+| src/features/feature\_matrix.py           |      248 |        2 |     99% |  304, 392 |
 | src/features/ground\_truth.py             |      114 |        0 |    100% |           |
 | src/features/healthy\_gap.py              |        9 |        0 |    100% |           |
 | src/features/license\_velocity.py         |       18 |        0 |    100% |           |
 | src/features/merchant\_viability.py       |        8 |        0 |    100% |           |
 | src/features/microzones.py                |       10 |        0 |    100% |           |
 | src/features/rent\_trajectory.py          |       13 |        0 |    100% |           |
-| src/features/zone\_crosswalk.py           |       89 |       16 |     82% |62, 70-81, 89-91 |
+| src/features/zone\_crosswalk.py           |      112 |        4 |     96% |84, 87-88, 97 |
 | src/models/\_\_init\_\_.py                |        4 |        0 |    100% |           |
 | src/models/baselines.py                   |        9 |        0 |    100% |           |
-| src/models/cmf\_score.py                  |      102 |        0 |    100% |           |
-| src/models/explainability.py              |       59 |        0 |    100% |           |
+| src/models/cmf\_score.py                  |      108 |        0 |    100% |           |
+| src/models/explainability.py              |       61 |        0 |    100% |           |
 | src/models/model\_loader.py               |       87 |        0 |    100% |           |
 | src/models/ranking\_model.py              |       45 |        0 |    100% |           |
-| src/models/survival\_model.py             |      249 |        0 |    100% |           |
+| src/models/survival\_model.py             |      260 |        0 |    100% |           |
 | src/models/trajectory\_model.py           |      135 |        0 |    100% |           |
 | src/nlp/\_\_init\_\_.py                   |        3 |        0 |    100% |           |
 | src/nlp/embeddings.py                     |      123 |        0 |    100% |           |
 | src/nlp/gemini\_labels.py                 |      157 |        0 |    100% |           |
 | src/nlp/neighborhood\_mentions.py         |        4 |        0 |    100% |           |
-| src/nlp/review\_aggregates.py             |       81 |        0 |    100% |           |
+| src/nlp/review\_aggregates.py             |       75 |        0 |    100% |           |
 | src/nlp/sentiment.py                      |        2 |        0 |    100% |           |
 | src/nlp/subtype\_classifier.py            |       32 |        0 |    100% |           |
 | src/nlp/topic\_model.py                   |       45 |        0 |    100% |           |
@@ -65,9 +66,9 @@
 | src/schemas/\_\_init\_\_.py               |        4 |        0 |    100% |           |
 | src/schemas/datasets.py                   |        6 |        0 |    100% |           |
 | src/schemas/requests.py                   |        9 |        0 |    100% |           |
-| src/schemas/results.py                    |       25 |        0 |    100% |           |
+| src/schemas/results.py                    |       31 |        0 |    100% |           |
 | src/utils/\_\_init\_\_.py                 |        4 |        0 |    100% |           |
-| src/utils/geospatial.py                   |       14 |        0 |    100% |           |
+| src/utils/geospatial.py                   |       74 |       15 |     80% |31-35, 40, 43-45, 53, 57-58, 65-66, 90, 122-123 |
 | src/utils/paths.py                        |        6 |        0 |    100% |           |
 | src/utils/taxonomy.py                     |       16 |        0 |    100% |           |
 | src/validation/\_\_init\_\_.py            |        3 |        0 |    100% |           |
@@ -75,7 +76,7 @@
 | src/validation/backtesting.py             |      149 |        0 |    100% |           |
 | src/validation/causal.py                  |      335 |       39 |     88% |25, 48, 109, 190-193, 257, 320, 326, 339, 367, 369, 418, 436, 599-613, 621-629, 639, 641, 643, 646, 736-747, 821-835 |
 | src/validation/run\_causal\_evaluation.py |       37 |       37 |      0% |     3-100 |
-| **TOTAL**                                 | **3475** |  **110** | **97%** |           |
+| **TOTAL**                                 | **3886** |  **165** | **96%** |           |
 
 
 ## Setup coverage badge
