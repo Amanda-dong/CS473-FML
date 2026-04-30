@@ -26,4 +26,5 @@ def load_nyc_ntas_for_zones() -> gpd.GeoDataFrame:
     if "nta2020" not in gdf.columns:
         raise ValueError("Expected column 'nta2020' in nta.geojson")
     gdf["nta2020"] = gdf["nta2020"].astype(str).str.strip().str.upper()
+    gdf = gdf.rename(columns={"nta2020": "nta"})
     return gdf
