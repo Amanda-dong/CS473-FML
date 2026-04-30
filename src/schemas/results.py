@@ -18,6 +18,7 @@ class ZoneRecommendation(BaseModel):
     concept_subtype: str
     positive_drivers: list[str] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
+    positives: list[str] = Field(default_factory=list)
     similar_restaurants: list[str] = Field(default_factory=list)
     data_freshness: str = Field(default="2026-04")
     zone_type: str = Field(default="")

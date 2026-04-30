@@ -138,7 +138,7 @@ Model Performance: Survival C-index ~0.80
 
 Evaluation artifacts: `data/processed/backtest_results.parquet`, `ablation_results.parquet`, `docs/EvaluationResults.md`, `docs/CausalMLEvaluationReport.md`
 
-Test suite: 564 tests, all passing (`uv run pytest`)
+Test suite: 574 tests, all passing (`uv run pytest`)
 
 ## Repository Structure
 
