@@ -39,7 +39,27 @@ async def test_health_check() -> None:
     ) as client:
         resp = await client.get("/health")
     assert resp.status_code == 200
-    assert resp.json()["status"] == "ok"
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert "feature_matrix_rows" in data
+    assert "feature_matrix_cols" in data
+    assert "model_files_present" in data
+
+
+@pytest.mark.asyncio
+async def test_zones_endpoint() -> None:
+    from httpx import ASGITransport, AsyncClient
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/zones")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data, list)
+    if len(data) > 0:
+        assert "zone_id" in data[0]
+        assert "zone_name" in data[0]
 
 
 @pytest.mark.asyncio

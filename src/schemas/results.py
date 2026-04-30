@@ -46,6 +46,17 @@ class RecommendationResponse(BaseModel):
     recommendations: list[ZoneRecommendation] = Field(default_factory=list)
 
 
+class HealthResponse(BaseModel):
+    """System health and data stats."""
+
+    status: str
+    fm_row_count: int = 0
+    feature_count: int = 0
+    feature_matrix_rows: int = 0
+    feature_matrix_cols: int = 0
+    model_files_present: bool = False
+
+
 def build_placeholder_response(
     concept_subtype: str, limit: int = 5
 ) -> RecommendationResponse:

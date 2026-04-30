@@ -683,6 +683,24 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
     )
 
 
+@router.get("/zones", response_model=list[dict[str, str]])
+async def list_zones() -> list[dict[str, str]]:
+    """Return all unique zone IDs and their display names from the Gemini featureset."""
+    if not _GEMINI_ZONE_PATH.exists():
+        return []
+
+    try:
+        df = pd.read_csv(_GEMINI_ZONE_PATH)
+        zone_ids = sorted(df["zone_id"].dropna().unique().tolist())
+        return [
+            {"zone_id": zid, "zone_name": zid.replace("-", " ").title()}
+            for zid in zone_ids
+        ]
+    except Exception as e:
+        logger.warning(f"recommendations: failed to list zones: {e}")
+        return []
+
+
 @router.post("/predict/cmf", response_model=RecommendationResponse)
 async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
     """Score all NYC candidate zones and return the top-N ranked recommendations."""
