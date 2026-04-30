@@ -29,7 +29,9 @@ def _load_nta_polygons() -> tuple[list[str], Any]:
         import shapely
         from shapely.geometry import shape
     except ImportError:
-        logger.warning("shapely not available; lat_lon_to_nta will return empty strings")
+        logger.warning(
+            "shapely not available; lat_lon_to_nta will return empty strings"
+        )
         return [], None
 
     for candidate in _NTA_GEOJSON_CANDIDATES:
@@ -112,7 +114,9 @@ def lat_lon_to_nta(lat: pd.Series, lon: pd.Series) -> pd.Series:
             um_lon = lon_arr[unmatched_mask]
             um_lat = lat_arr[unmatched_mask]
             # Euclidean distance in degree space (good enough for NYC scale)
-            dists = (cx[:, None] - um_lon[None, :]) ** 2 + (cy[:, None] - um_lat[None, :]) ** 2
+            dists = (cx[:, None] - um_lon[None, :]) ** 2 + (
+                cy[:, None] - um_lat[None, :]
+            ) ** 2
             nearest = np.argmin(dists, axis=0)
             result[unmatched_mask] = np.array(codes)[nearest]
         except Exception as exc:

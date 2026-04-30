@@ -186,7 +186,7 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
         df["inspection_date"].dt.year.nunique() <= 1 if not df.empty else True
     )
 
-    if (is_sparse or is_single_year):
+    if is_sparse or is_single_year:
         import os
 
         static_path = "data/raw/hygiene_nta_features.csv"

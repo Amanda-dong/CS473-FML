@@ -28,13 +28,23 @@ _BASE_ZONE_TO_NTA: dict[str, list[str]] = {
     "mn-lic-adj": ["MN0604", "MN0502"],  # East Midtown + Midtown-Times Square
     # Queens
     "qn-lic": ["QN0201"],  # Long Island City-Hunters Point
-    "qn-astoria": ["QN0101", "QN0102", "QN0103"],  # Astoria (North + Old Astoria + Central)
-    "qn-flushing": ["QN0707", "QN0704"],  # Flushing-Willets Point + Murray Hill-Broadway Flushing
+    "qn-astoria": [
+        "QN0101",
+        "QN0102",
+        "QN0103",
+    ],  # Astoria (North + Old Astoria + Central)
+    "qn-flushing": [
+        "QN0707",
+        "QN0704",
+    ],  # Flushing-Willets Point + Murray Hill-Broadway Flushing
     "qn-jackson-hts": ["QN0301"],  # Jackson Heights
     "qn-forest-hills": ["QN0602"],  # Forest Hills
     "qn-jamaica": ["QN1201"],  # Jamaica
     # Queens expansion zones
-    "qn-college-point-whitestone": ["QN0701", "QN0702"],  # College Point + Whitestone-Beechhurst
+    "qn-college-point-whitestone": [
+        "QN0701",
+        "QN0702",
+    ],  # College Point + Whitestone-Beechhurst
     "qn-murray-hill-flushing": ["QN0704"],  # Murray Hill-Broadway Flushing
     "qn-elmhurst-corona": ["QN0401", "QN0402"],  # Elmhurst + Corona
     "qn-rego-middle": ["QN0601", "QN0504"],  # Rego Park + Middle Village
@@ -44,7 +54,11 @@ _BASE_ZONE_TO_NTA: dict[str, list[str]] = {
     "bx-co-op-city": ["BX1004"],  # Co-op City
     "bx-tremont": ["BX0602"],  # Tremont
     # Bronx expansion zones
-    "bx-south-hub": ["BX0301", "BX0102", "BX0201"],  # Morrisania + Melrose + Hunts Point
+    "bx-south-hub": [
+        "BX0301",
+        "BX0102",
+        "BX0201",
+    ],  # Morrisania + Melrose + Hunts Point
     "bx-west-corridor": ["BX0801", "BX0803"],  # Kingsbridge Heights + Riverdale
     "bx-east-corridor": ["BX0904", "BX1002"],  # Parkchester + Throgs Neck-Schuylerville
     # Staten Island

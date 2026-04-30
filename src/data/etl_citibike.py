@@ -161,20 +161,17 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
                     frames.append(frame)
         if frames:
             merged = pd.concat(frames, ignore_index=True)
-            merged = (
-                merged.groupby(["year", "nta_id"], as_index=False)
-                .agg(
-                    trip_count=("trip_count", "sum"),
-                    station_count=("station_count", "max"),
-                )
+            merged = merged.groupby(["year", "nta_id"], as_index=False).agg(
+                trip_count=("trip_count", "sum"),
+                station_count=("station_count", "max"),
             )
 
             # Normalize 6-char NTA to 4-char
             if merged["nta_id"].str.len().max() > 4:
                 merged["nta_id"] = merged["nta_id"].str[:4]
-                merged = merged.groupby(
-                    ["year", "nta_id"], as_index=False
-                ).agg({"trip_count": "sum", "station_count": "sum"})
+                merged = merged.groupby(["year", "nta_id"], as_index=False).agg(
+                    {"trip_count": "sum", "station_count": "sum"}
+                )
 
             merged = merged.sort_values(["year", "nta_id"]).reset_index(drop=True)
 
