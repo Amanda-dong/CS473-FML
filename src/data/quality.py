@@ -109,6 +109,12 @@ def prepare_training_frame(
     if "label_quality" in frame.columns:
         frame = frame[frame["label_quality"].fillna(0.0) >= min_label_quality].copy()
 
+    # Zone-time NLP aggregates may include string labels; learned scorer uses numeric cols only.
+    _string_feature_drop = frozenset({"dominant_subtype"})
+    _drop = [c for c in _string_feature_drop if c in frame.columns]
+    if _drop:
+        frame = frame.drop(columns=_drop)
+
     reserved = set(present_key_columns) | {
         target_col,
         "label_quality",
