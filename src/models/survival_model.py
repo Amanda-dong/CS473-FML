@@ -500,9 +500,21 @@ def build_real_restaurant_history(
     zone_col = "nta_id" if "nta_id" in licenses.columns else "zone_id"
 
     # Pre-join cuisine_type from inspections if missing in licenses
-    if "cuisine_type" not in licenses.columns and "cuisine_type" in inspections_df.columns:
-        cuisine_map = inspections_df.dropna(subset=["cuisine_type"]).groupby("restaurant_id")["cuisine_type"].first()
-        licenses = licenses.merge(cuisine_map, left_on="_inspection_restaurant_id", right_index=True, how="left")
+    if (
+        "cuisine_type" not in licenses.columns
+        and "cuisine_type" in inspections_df.columns
+    ):
+        cuisine_map = (
+            inspections_df.dropna(subset=["cuisine_type"])
+            .groupby("restaurant_id")["cuisine_type"]
+            .first()
+        )
+        licenses = licenses.merge(
+            cuisine_map,
+            left_on="_inspection_restaurant_id",
+            right_index=True,
+            how="left",
+        )
 
     if licenses.empty:
         return pd.DataFrame(

@@ -54,8 +54,10 @@ def _load_or_build_history() -> pd.DataFrame:
             for nta in ZONE_TO_NTA.get(str(row["zone_id"]), []):
                 rows.append({"zone_id": nta, **{c: row[c] for c in feature_cols}})
         if rows:
-            zone_features = pd.DataFrame(rows).groupby("zone_id", as_index=False).mean(
-                numeric_only=True
+            zone_features = (
+                pd.DataFrame(rows)
+                .groupby("zone_id", as_index=False)
+                .mean(numeric_only=True)
             )
 
     # Add NTA-level inspection quality — licenses have no per-restaurant ID
@@ -71,9 +73,13 @@ def _load_or_build_history() -> pd.DataFrame:
             .rename(columns={"nta_id": "zone_id", "grade_num": "inspection_grade_avg"})
         )
         if zone_features is not None:
-            zone_features = zone_features.merge(nta_grade, on="zone_id", how="left", suffixes=("", "_nta"))
+            zone_features = zone_features.merge(
+                nta_grade, on="zone_id", how="left", suffixes=("", "_nta")
+            )
             if "inspection_grade_avg_nta" in zone_features.columns:
-                zone_features["inspection_grade_avg"] = zone_features["inspection_grade_avg_nta"].fillna(zone_features.get("inspection_grade_avg", 2.0))
+                zone_features["inspection_grade_avg"] = zone_features[
+                    "inspection_grade_avg_nta"
+                ].fillna(zone_features.get("inspection_grade_avg", 2.0))
                 zone_features = zone_features.drop(columns=["inspection_grade_avg_nta"])
         else:
             zone_features = nta_grade
