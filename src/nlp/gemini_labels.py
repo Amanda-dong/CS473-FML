@@ -16,7 +16,7 @@ _HALAL_RELEVANCE_LABELS = ("explicit_halal", "implicit_halal", "not_related")
 _DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 _DEFAULT_PORTKEY_BASE_URL = "https://ai-gateway.apps.cloud.rt.nyu.edu/v1"
 _DEFAULT_PORTKEY_MODEL = "@vertexai/gemini-2.5-flash-lite"
-_LABEL_SCHEMA_VERSION = "halal_context_v3"
+_LABEL_SCHEMA_VERSION = "healthy_food_v1"
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class GeminiReviewLabel:
 
     review_id: str
     sentiment: str
-    halal_relevance: str
+    halal_relevance: str  # Note: Retained as 'halal_relevance' for data schema compatibility.
     concept_subtype: str
     confidence: float
     rationale: str = ""
@@ -36,19 +36,19 @@ def build_label_prompt(review_text: str, subtype_candidates: tuple[str, ...]) ->
 
     subtype_list = ", ".join(subtype_candidates)
     return (
-        "Label this Yelp review for halal food demand analysis.\n"
+        "Label this Yelp review for healthy food demand analysis.\n"
         "Return JSON only with keys: sentiment, halal_relevance, "
         "concept_subtype, confidence.\n"
         "sentiment must be one of: positive, neutral, negative.\n"
         "halal_relevance must be one of: explicit_halal, implicit_halal, "
         "not_related.\n"
         "The review text may include business context such as business name "
-        "and categories. Use that context when judging halal relevance.\n"
+        "and categories. Use that context when judging healthy food relevance.\n"
+        "Note: halal is one of many healthy food categories. concept_subtype captures the specific food category.\n"
         "Use explicit_halal when the review text, business name, or business "
         "categories clearly mention halal.\n"
-        "Use implicit_halal only when the review implies halal demand, such as "
-        "asking for more halal options or discussing a known halal concept.\n"
-        "Use not_related when halal demand is not clear. Be conservative and "
+        "Use implicit_halal only when the review implies demand for halal options without explicit mention.\n"
+        "Use not_related when halal-specific demand is not clear. Be conservative and "
         "do not guess.\n"
         f"Allowed subtypes: {subtype_list}.\n"
         "Do not create new concept_subtype labels. If none fit, use other.\n"
@@ -61,7 +61,7 @@ def _build_batch_prompt(
 ) -> str:
     """Build a prompt that labels multiple reviews in one API call."""
     subtype_list = ", ".join(subtype_candidates)
-    lines = ["Label each Yelp review for halal food demand analysis."]
+    lines = ["Label each Yelp review for healthy food demand analysis."]
     lines.append("Return JSON only.")
     lines.append("Return a JSON array with one object per review.")
     lines.append(
@@ -72,7 +72,7 @@ def _build_batch_prompt(
     lines.append(
         "halal_relevance must be one of: explicit_halal, implicit_halal, not_related."
     )
-    lines.append("Definitions:")
+    lines.append("Definitions (Note: Halal is one of many healthy food subtypes. concept_subtype will identify the category):")
     lines.append(
         "- explicit_halal: the review text, business name, or business "
         "categories clearly mention halal."
@@ -81,13 +81,13 @@ def _build_batch_prompt(
         "- implicit_halal: the review implies halal demand, lack of halal "
         "options, or discusses a known halal concept without saying halal."
     )
-    lines.append("- not_related: halal demand is not clear from the review.")
+    lines.append("- not_related: halal-specific demand is not clear from the review.")
     lines.append(
         "Each review may include business name and categories before the review "
-        "text. Use that business context when judging halal relevance."
+        "text. Use that business context when judging healthy food relevance."
     )
     lines.append(
-        "Be conservative. Do not infer halal relevance from positive sentiment alone."
+        "Be conservative. Do not infer demand from positive sentiment alone."
     )
     lines.append("confidence must be a number from 0.0 to 1.0, not a word.")
     lines.append(f"Allowed subtypes: {subtype_list}.")

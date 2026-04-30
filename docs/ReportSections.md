@@ -1,4 +1,4 @@
-# CS473 Final Report: NYC Healthy-Food Restaurant White-Space Finder
+# CS473 Final Report: NYC Healthy-Food White-Space Finder
 
 Spring 2026 · Team: Catherine, Harsh, Tony, Siqi, Amanda
 
@@ -6,7 +6,7 @@ Spring 2026 · Team: Catherine, Harsh, Tony, Siqi, Amanda
 
 ## §1. Executive Summary
 
-Independent restaurant operators in New York City face a structural information asymmetry: national chains commission bespoke site-selection analytics while independent merchants make location decisions on intuition and anecdote. This project builds a decision-support tool that closes that gap for one concrete niche — healthy fast-casual food concepts. The system ingests eight official and supplemental NYC data sources, constructs a zone-year feature matrix across 30 curated micro-zones, and produces ranked shortlists of underserved locations for a user-specified concept subtype (e.g., Healthy Indian, Mediterranean Bowls, Salad Bowls). A Cox Proportional Hazards survival model gates each recommendation with a commercial-viability estimate, and a weighted Concept-Market-Fit (CMF) score integrates demand signals, competition density, rent pressure, and license velocity into a single interpretable ranking. Walk-forward temporal evaluation yields a mean NDCG@5 of 0.78 across 2020–2024 folds, a 43-percentage-point improvement over a random baseline. The full pipeline — from raw open data through trained models to a live Streamlit interface — is deployed end-to-end and available for instructor demo.
+Independent restaurant operators in New York City face a structural information asymmetry: national chains commission bespoke site-selection analytics while independent merchants make location decisions on intuition and anecdote. This project builds a decision-support tool that closes that gap for one concrete niche — healthy fast-casual food concepts. The system ingests eight official and supplemental NYC data sources, constructs a zone-year feature matrix across 30 curated micro-zones, and produces ranked shortlists of underserved locations for a user-specified concept subtype (e.g., Healthy Indian, Mediterranean Bowls, Salad Bowls). A Cox Proportional Hazards survival model gates each recommendation with a commercial-viability estimate, and a weighted Concept-Market-Fit (CMF) score integrates demand signals, competition density, rent pressure, and license velocity into a single interpretable ranking. The original project focus was identifying white-space demand for halal restaurant concepts, which has since been generalized to broader healthy-food categories. The full pipeline — from raw open data through trained models to a live Streamlit interface — is deployed end-to-end and available for instructor demo.
 
 ---
 
@@ -103,7 +103,7 @@ with open/close event dates, enabling accurate survival-time construction.
 | NYC 311 Complaints | `src/data/etl_311.py` | `month`, `community_district`, `complaint_type`, `count` | Primary `social_buzz` source; replaces Reddit if sparse |
 | Reddit (`r/nyc`, `r/AskNYC`) | `src/data/etl_reddit.py` | `month`, `community_district`, `mention_text` | Used only if ≥ 200 non-Unknown posts/month; else 311 |
 | Citi Bike trip data | `src/data/etl_citibike.py` | `year`, `nta_id`, `trip_count`, `station_count` | Mobility proxy; falls back to placeholder if download fails |
-| Inside Airbnb | `src/data/etl_airbnb.py` | `nta_id`, `listing_count`, `entire_home_ratio` | Static covariate (single snapshot year) |
+| Inside Airbnb | `src/data/etl_airbnb.py` | `nta_id` | (Deprecated) Historically used for housing-pressure enrichment |
 | NTA Boundaries | `src/data/etl_boundaries.py` | `zone_id`, `zone_type`, `geometry_wkt` | 30-code static fallback if GeoJSON download fails |
 | NYC DOB Permits | `src/data/etl_permits.py` | `permit_date`, `nta_id`, `permit_type`, `job_count` | Construction velocity signal for phase discovery |
 
@@ -141,7 +141,6 @@ The zone-year matrix currently implements these feature families:
 - **Inspection quality**: `inspection_grade_avg`, `restaurant_count`
 - **Construction velocity**: `permit_velocity` — from DOB permits
 - **Mobility**: `trip_count`, `station_count` — from Citi Bike
-- **Housing pressure**: `listing_count`, `entire_home_ratio` — from Airbnb (static)
 
 ### Coverage Audit Decisions
 

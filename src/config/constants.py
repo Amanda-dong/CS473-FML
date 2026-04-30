@@ -21,6 +21,7 @@ ACTIVE_DATASETS = (
 
 HEALTHY_SUBTYPES = (
     # healthy / wellness-focused
+    "halal_fast_casual",
     "salad_bowls",
     "mediterranean_bowls",
     "healthy_indian",

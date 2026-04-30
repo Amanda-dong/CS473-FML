@@ -9,7 +9,6 @@ import pandas as pd
 
 from src.config.constants import MODEL_DIR, PROCESSED_DIR
 from src.data.quality import prepare_survival_history
-from src.features.zone_crosswalk import ZONE_TO_NTA
 from src.models.survival_model import (
     SurvivalModelBundle,
     build_real_restaurant_history,
@@ -42,47 +41,28 @@ def _load_or_build_history() -> pd.DataFrame:
     licenses_df = pd.read_parquet(licenses_path)
     inspections_df = pd.read_parquet(inspections_path)
 
-    # zone_features.parquet uses zone_id format (e.g. "bk-crown-hts") but
-    # licenses use NTA codes (e.g. "BK09").  Expand via the crosswalk so the
-    # join inside build_real_restaurant_history actually connects.
+    # zone_features.parquet is keyed by NTA codes (e.g. "BK09") — same format
+    # used by the licenses nta_id column — so it joins directly.
     zone_features: pd.DataFrame | None = None
     if zone_path.exists():
-        zf = pd.read_parquet(zone_path)
-        feature_cols = [c for c in zf.columns if c != "zone_id"]
-        rows = []
-        for _, row in zf.iterrows():
-            for nta in ZONE_TO_NTA.get(str(row["zone_id"]), []):
-                rows.append({"zone_id": nta, **{c: row[c] for c in feature_cols}})
-        if rows:
-            zone_features = (
-                pd.DataFrame(rows)
-                .groupby("zone_id", as_index=False)
-                .mean(numeric_only=True)
-            )
+        zone_features = pd.read_parquet(zone_path)
 
-    # Add NTA-level inspection quality — licenses have no per-restaurant ID
-    # so we aggregate grade by NTA and merge as a zone covariate.
-    if "nta_id" in inspections_df.columns and "grade" in inspections_df.columns:
-        grade_num = {"A": 1.0, "B": 2.0, "C": 3.0}
-        nta_grade = (
-            inspections_df[inspections_df["grade"].isin(grade_num)]
-            .assign(grade_num=lambda d: d["grade"].map(grade_num))
-            .groupby("nta_id")["grade_num"]
-            .mean()
-            .reset_index()
-            .rename(columns={"nta_id": "zone_id", "grade_num": "inspection_grade_avg"})
-        )
-        if zone_features is not None:
-            zone_features = zone_features.merge(
-                nta_grade, on="zone_id", how="left", suffixes=("", "_nta")
+        # Enrich with NTA-level inspection quality (licenses lack per-restaurant
+        # IDs so we can only join at the NTA level).
+        if "nta_id" in inspections_df.columns and "grade" in inspections_df.columns:
+            grade_num = {"A": 1.0, "B": 2.0, "C": 3.0}
+            nta_grade = (
+                inspections_df[inspections_df["grade"].isin(grade_num)]
+                .assign(grade_num=lambda d: d["grade"].map(grade_num))
+                .groupby("nta_id")["grade_num"]
+                .mean()
+                .reset_index()
+                .rename(columns={"nta_id": "zone_id", "grade_num": "nta_inspection_grade"})
             )
-            if "inspection_grade_avg_nta" in zone_features.columns:
-                zone_features["inspection_grade_avg"] = zone_features[
-                    "inspection_grade_avg_nta"
-                ].fillna(zone_features.get("inspection_grade_avg", 2.0))
-                zone_features = zone_features.drop(columns=["inspection_grade_avg_nta"])
-        else:
-            zone_features = nta_grade
+            zone_features = zone_features.merge(nta_grade, on="zone_id", how="left")
+            zone_features["nta_inspection_grade"] = zone_features[
+                "nta_inspection_grade"
+            ].fillna(zone_features["nta_inspection_grade"].median())
 
     print("Building restaurant history from real data...")
     history = build_real_restaurant_history(licenses_df, inspections_df, zone_features)
@@ -165,9 +145,14 @@ def train_and_evaluate() -> None:
         print(f"  PH test: {ph_test['error']}")
 
     # --- RSF ---
-    print("\nFitting Random Survival Forest...")
+    # Subsample to 8 000 rows for RSF — full 37K rows causes OOM on constrained
+    # environments (RSF memory scales O(n × trees × features)).
+    _RSF_SAMPLE = 8_000
+    rng_rsf = np.random.default_rng(42)
+    train_rsf = train_df.sample(min(_RSF_SAMPLE, len(train_df)), random_state=rng_rsf.integers(1 << 31))
+    print(f"\nFitting Random Survival Forest (n={len(train_rsf)} subsample)...")
     rsf = SurvivalModelBundle(baseline="rsf")
-    rsf.fit(train_df)
+    rsf.fit(train_rsf)
     if rsf.uses_heuristic_:
         print("  (sksurv not available — fell back to heuristic)")
     c_rsf = rsf.concordance_index(test_df)
@@ -176,8 +161,9 @@ def train_and_evaluate() -> None:
     print(f"  Brier scores:\n{brier_rsf.to_string(index=False)}")
 
     if not rsf.uses_heuristic_:
-        cv_mean_rsf, cv_std_rsf = _cross_validate_cindex(history, "rsf")
-        print(f"  C-index (5-fold CV): {cv_mean_rsf:.4f} ± {cv_std_rsf:.4f}")
+        rsf_cv_sample = history.sample(min(_RSF_SAMPLE, len(history)), random_state=0)
+        cv_mean_rsf, cv_std_rsf = _cross_validate_cindex(rsf_cv_sample, "rsf")
+        print(f"  C-index (5-fold CV, subsample): {cv_mean_rsf:.4f} ± {cv_std_rsf:.4f}")
         results["rsf"] = {
             "c_index": c_rsf,
             "cv_mean": cv_mean_rsf,

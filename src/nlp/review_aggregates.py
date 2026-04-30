@@ -31,6 +31,15 @@ _FULL_HALAL_REQUIRED_COLUMNS: list[str] = [
     "confidence",
 ]
 
+FULL_HALAL_FEATURES = [
+    "healthy_food_share",
+    "salad_bowls_share",
+    "mediterranean_bowls_share",
+    "healthy_indian_share",
+    "smoothie_juice_share",
+    "halal_fast_casual_share",
+]
+
 
 def aggregate_review_labels(
     review_labels: pd.DataFrame,
@@ -162,11 +171,11 @@ def aggregate_nlp_features(
     return sentiment_agg
 
 
-def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate full Gemini labels into zone-time halal demand features.
+def aggregate_healthy_review_features(review_labels: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate full Gemini labels into zone-time healthy food demand features.
 
     This keeps ``not_related`` reviews as a negative baseline so downstream
-    modeling can compare halal-related and non-halal sentiment within the same
+    modeling can compare healthy food and non-healthy sentiment within the same
     zone-year panel.
     """
     if review_labels.empty:
@@ -195,7 +204,7 @@ def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.Data
                 "avg_confidence",
                 "dominant_subtype",
                 "subtype_gap",
-            ]
+            ] + FULL_HALAL_FEATURES
         )
 
     missing = [
@@ -240,6 +249,9 @@ def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.Data
             if len(halal_grp) > 0 and len(subtype_counts) > 1
             else 0.0
         )
+
+        HEALTHY_CORE_SUBTYPES = {'salad_bowls', 'mediterranean_bowls', 'healthy_indian', 'vegan_grab_and_go', 'smoothie_juice', 'protein_forward_lunch', 'halal_fast_casual'}
+        healthy_grp = grp[grp['concept_subtype'].isin(HEALTHY_CORE_SUBTYPES) | (grp['halal_relevance'] != 'not_related')]
 
         return pd.Series(
             {
@@ -286,6 +298,12 @@ def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.Data
                 "avg_confidence": float(grp["confidence"].mean()),
                 "dominant_subtype": dominant_subtype,
                 "subtype_gap": subtype_gap,
+                'healthy_food_share': float(len(healthy_grp) / total) if total else 0.0,
+                'salad_bowls_share': float((grp['concept_subtype'] == 'salad_bowls').sum() / total) if total else 0.0,
+                'mediterranean_bowls_share': float((grp['concept_subtype'] == 'mediterranean_bowls').sum() / total) if total else 0.0,
+                'healthy_indian_share': float((grp['concept_subtype'] == 'healthy_indian').sum() / total) if total else 0.0,
+                'smoothie_juice_share': float((grp['concept_subtype'] == 'smoothie_juice').sum() / total) if total else 0.0,
+                'halal_fast_casual_share': float((grp['halal_relevance'] != 'not_related').sum() / total) if total else 0.0,
             }
         )
 
@@ -295,3 +313,6 @@ def aggregate_full_halal_review_features(review_labels: pd.DataFrame) -> pd.Data
         .sort_values(["zone_id", "time_key"])
         .reset_index(drop=True)
     )
+
+aggregate_full_halal_review_features = aggregate_healthy_review_features  # backward compat alias
+

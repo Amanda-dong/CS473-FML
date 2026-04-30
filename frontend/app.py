@@ -14,6 +14,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from src.config import HEALTHY_SUBTYPES
 from frontend.components._form_keys import FORM_DEFAULTS, FORM_KEYS
 from frontend.components.data_freshness import render_data_freshness
 from frontend.components.input_form import render_input_form
@@ -23,6 +24,35 @@ from frontend.components.scenario_panel import render_scenario_panel
 from frontend.pages.methodology import render_methodology_page
 from src.api.routers.recommendations import _get_zone_type_clusters, predict_cmf_sync
 from src.schemas.requests import RecommendationRequest
+
+
+SUBTYPE_LABELS = {
+    'halal_fast_casual': 'Halal Fast Casual',
+    'salad_bowls': 'Salad Bowls',
+    'mediterranean_bowls': 'Mediterranean Bowls',
+    'healthy_indian': 'Healthy Indian',
+    'vegan_grab_and_go': 'Vegan Grab-and-Go',
+    'protein_forward_lunch': 'Protein-Forward Lunch',
+    'mexican': 'Mexican',
+    'chinese': 'Chinese',
+    'japanese': 'Japanese',
+    'korean': 'Korean',
+    'thai': 'Thai',
+    'italian': 'Italian',
+    'greek': 'Greek',
+    'middle_eastern': 'Middle Eastern',
+    'caribbean': 'Caribbean',
+    'ethiopian': 'Ethiopian',
+    'west_african': 'West African',
+    'american_comfort': 'American Comfort',
+    'burgers': 'Burgers',
+    'pizza': 'Pizza',
+    'seafood': 'Seafood',
+    'ramen': 'Ramen',
+    'dim_sum': 'Dim Sum',
+    'bakery_cafe': 'Bakery & Cafe',
+    'smoothie_juice': 'Smoothie & Juice',
+}
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +95,8 @@ def _fetch_clusters(
 def _reset_filters() -> None:
     for key, default in FORM_DEFAULTS.items():
         widget_key = FORM_KEYS[key]
-        st.session_state[widget_key] = default
+        if widget_key in st.session_state:
+            st.session_state[widget_key] = default
 
 
 def _render_zone_overview(recs: list[dict]) -> None:
@@ -120,14 +151,27 @@ def _render_data_sources_tab() -> None:
 # ---------------------------------------------------------------------------
 def main() -> None:
     st.set_page_config(page_title="NYC Healthy-Food White-Space", layout="wide")
-    st.title("🥗 NYC Healthy-Food Restaurant White-Space Finder")
+    st.title("🥗 NYC Healthy-Food White-Space Finder")
 
     # Sidebar
     with st.sidebar:
         st.header("Search Filters")
+        
+        PICKER_SUBTYPES = [s for s in HEALTHY_SUBTYPES if s in SUBTYPE_LABELS]
+        concept_subtype = st.sidebar.selectbox(
+            'Food Concept',
+            options=PICKER_SUBTYPES,
+            format_func=lambda s: SUBTYPE_LABELS.get(s, s.replace('_', ' ').title()),
+            key='concept_subtype'
+        )
+        
         form_state = render_input_form()
+        # Remove concept_subtype from form_state if it's there to avoid overriding
+        if 'concept_subtype' in form_state:
+            del form_state['concept_subtype']
+            
         scenario_state = render_scenario_panel()
-        user_state = {**form_state, **scenario_state}
+        user_state = {**form_state, **scenario_state, "concept_subtype": concept_subtype}
         st.divider()
         st.button(
             "🔄 Reset filters",

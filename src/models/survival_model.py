@@ -143,7 +143,9 @@ class SurvivalModelBundle:
             dtype=[("event", bool), ("duration", float)],
         )
         X = model_frame[self.feature_columns_].values
-        self.rsf_model_ = RandomSurvivalForest(n_estimators=100, random_state=42)
+        self.rsf_model_ = RandomSurvivalForest(
+            n_estimators=50, random_state=42, n_jobs=1, max_samples=0.8
+        )
         self.rsf_model_.fit(X, y)  # type: ignore[union-attr]
 
     def predict_risk(self, candidate_frame: pd.DataFrame) -> pd.Series:
