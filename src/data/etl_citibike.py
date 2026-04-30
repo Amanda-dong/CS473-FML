@@ -123,7 +123,10 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
             merged = pd.concat(frames, ignore_index=True)
             merged = (
                 merged.groupby(["year", "nta_id"], as_index=False)
-                .agg(trip_count=("trip_count", "sum"), station_count=("station_count", "max"))
+                .agg(
+                    trip_count=("trip_count", "sum"),
+                    station_count=("station_count", "max"),
+                )
                 .sort_values(["year", "nta_id"])
                 .reset_index(drop=True)
             )

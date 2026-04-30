@@ -49,8 +49,12 @@ def _load_local() -> pd.DataFrame:
     if glob_str:
         paths = sorted(Path().glob(glob_str))
         if not paths:
-            raise FileNotFoundError(f"etl_acs: ACS_DATA_GLOB={glob_str} matched no files")
-        logger.info("etl_acs: loading %d files from ACS_DATA_GLOB=%s", len(paths), glob_str)
+            raise FileNotFoundError(
+                f"etl_acs: ACS_DATA_GLOB={glob_str} matched no files"
+            )
+        logger.info(
+            "etl_acs: loading %d files from ACS_DATA_GLOB=%s", len(paths), glob_str
+        )
         frames = [pd.read_csv(path) for path in paths if path.is_file()]
         if not frames:
             raise RuntimeError("etl_acs: ACS_DATA_GLOB produced no readable files")
