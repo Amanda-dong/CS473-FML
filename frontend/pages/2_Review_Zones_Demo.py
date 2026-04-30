@@ -1,4 +1,4 @@
-"""Demo page: Yelp reviews × micro-zones with a map.
+"""Demo page: Gemini-labeled reviews × micro-zones with a map.
 
 Run from repo root::
 
@@ -6,7 +6,7 @@ Run from repo root::
 
 Open **Review Zones Demo** in the sidebar. Requires:
 
-- ``data/raw/yelp_reviews_with_zones.csv`` (from ``scripts/join_reviews_to_zones.py``)
+- ``data/raw/gemini_labels_full.csv`` (Gemini-labeled review rows with zone columns)
 - ``data/raw/yelp_business.csv`` (for coordinates on the map)
 """
 
@@ -18,7 +18,7 @@ import pandas as pd
 import streamlit as st
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REVIEWS_PATH = REPO_ROOT / "data" / "raw" / "yelp_reviews_with_zones.csv"
+REVIEWS_PATH = REPO_ROOT / "data" / "raw" / "gemini_labels_full.csv"
 BUSINESS_PATH = REPO_ROOT / "data" / "raw" / "yelp_business.csv"
 
 _MAP_KEY = "reviews_zone_map_plotly"
@@ -78,7 +78,7 @@ def _restaurant_id_from_plotly_state(
 
 st.set_page_config(page_title="Review × Zones Demo", layout="wide")
 
-st.title("Reviews × Micro-zones")
+st.title("Gemini-Labeled Reviews × Micro-zones")
 st.caption(
     "`zone_id` is filled only when the business falls in a modeled micro-zone "
     "(see `zone_crosswalk.py`); `nta` may still be set for any NYC NTA."
@@ -86,7 +86,7 @@ st.caption(
 
 if not REVIEWS_PATH.is_file():
     st.error(f"Missing dataset: `{REVIEWS_PATH}`")
-    st.info("Run from the repo root: `python scripts/join_reviews_to_zones.py`")
+    st.info("Place the Gemini-labeled file under `data/raw/` and rerun.")
     st.stop()
 
 df = pd.read_csv(REVIEWS_PATH)
@@ -306,7 +306,7 @@ if {"latitude", "longitude"}.issubset(df.columns):
                         0
                     ]
                 )
-                b5.metric("Rows in Fusion CSV", n_fusion)
+                b5.metric("Rows in Gemini CSV", n_fusion)
                 st.write(
                     f"**Categories:** {b.get('categories', '—')}  \n"
                     f"**Coordinates:** `{b.get('latitude', '—')}`, `{b.get('longitude', '—')}`  \n"
@@ -321,7 +321,7 @@ if {"latitude", "longitude"}.issubset(df.columns):
                     )
 
         st.subheader("Reviews in this dataset")
-        st.metric("Review rows (Fusion export)", len(sub))
+        st.metric("Review rows (Gemini labels)", len(sub))
         rcols = [
             c for c in ("time_key", "rating", "zone_id", "nta") if c in sub.columns
         ]
