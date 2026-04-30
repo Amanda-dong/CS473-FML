@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 import zipfile
 from pathlib import Path
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 _RAW_ZIP = Path("data/raw/202603-citibike-tripdata.zip")
 _S3_URL = "https://s3.amazonaws.com/tripdata/202603-citibike-tripdata.zip"
 _TRIP_YEAR = 2026
+_RAW_GLOB = "*-citibike-tripdata.zip"
 
 DATASET_SPEC = DatasetSpec(
     name="citibike",
@@ -89,15 +91,43 @@ def _load_zip(zip_bytes: bytes, year: int, nrows: int) -> pd.DataFrame:
     return _transform(df, year)
 
 
+def _year_from_zip_name(path: Path) -> int | None:
+    match = re.match(r"^(\d{4})\d{2}-citibike-tripdata\.zip$", path.name)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
 def run_etl(limit: int = 50000) -> pd.DataFrame:
-    """Load Citi Bike trip data. Downloads from S3 if local zip is an LFS pointer."""
-    if _RAW_ZIP.exists():
-        with open(_RAW_ZIP, "rb") as fh:
-            magic = fh.read(2)
-            if magic == b"PK":
+    """Load Citi Bike trip data.
+
+    Prefers all local monthly zip snapshots under data/raw/*-citibike-tripdata.zip
+    to maximize year coverage. Falls back to downloading the default snapshot.
+    """
+    local_zips = sorted(_RAW_ZIP.parent.glob(_RAW_GLOB))
+    if local_zips:
+        frames: list[pd.DataFrame] = []
+        per_file_nrows = max(5000, limit // max(1, len(local_zips)))
+        for zip_path in local_zips:
+            with open(zip_path, "rb") as fh:
+                magic = fh.read(2)
+                if magic != b"PK":
+                    logger.info("etl_citibike: skipping non-zip pointer %s", zip_path)
+                    continue
                 fh.seek(0)
-                return _load_zip(fh.read(), _TRIP_YEAR, limit)
-            logger.info("etl_citibike: local file is LFS pointer, downloading from S3")
+                year = _year_from_zip_name(zip_path) or _TRIP_YEAR
+                frame = _load_zip(fh.read(), year, per_file_nrows)
+                if not frame.empty:
+                    frames.append(frame)
+        if frames:
+            merged = pd.concat(frames, ignore_index=True)
+            merged = (
+                merged.groupby(["year", "nta_id"], as_index=False)
+                .agg(trip_count=("trip_count", "sum"), station_count=("station_count", "max"))
+                .sort_values(["year", "nta_id"])
+                .reset_index(drop=True)
+            )
+            return merged[list(DATASET_SPEC.columns)]
 
     try:
         import requests

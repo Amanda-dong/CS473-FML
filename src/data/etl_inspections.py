@@ -38,6 +38,8 @@ def run_placeholder_etl() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 _DATASET_ID = "43nn-pn8j"
+_DEFAULT_START_DATE = "2015-01-01"
+_API_BATCH_LIMIT = 50_000
 
 
 # Zipcode → NTA mapping built from NYC licenses dataset (which has both fields).
@@ -78,17 +80,42 @@ def _get_zip_to_nta() -> dict[str, str]:
 
 
 def fetch(limit: int = 50000) -> pd.DataFrame:
-    """Fetch restaurant inspection records with zipcode for NTA mapping."""
+    """Fetch restaurant inspection records with zipcode for NTA mapping.
+
+    Uses paginated pulls ordered by ascending inspection_date so a single ``limit``
+    still covers a broader historical range instead of only newest rows.
+    """
     url = f"https://data.cityofnewyork.us/resource/{_DATASET_ID}.json"
-    params = {
-        "$limit": limit,
-        "$select": "inspection_date,camis,grade,critical_flag,boro,zipcode,cuisine_description,dba",
-        "$where": "inspection_date > '2018-01-01'",
-        "$order": "inspection_date DESC",
-    }
-    resp = requests.get(url, params=params, timeout=60)
-    resp.raise_for_status()
-    return pd.DataFrame(resp.json())
+    start_date = _DEFAULT_START_DATE
+    rows: list[pd.DataFrame] = []
+    fetched = 0
+    offset = 0
+
+    while fetched < limit:
+        batch_size = min(_API_BATCH_LIMIT, limit - fetched)
+        params = {
+            "$limit": batch_size,
+            "$offset": offset,
+            "$select": "inspection_date,camis,grade,critical_flag,boro,zipcode,cuisine_description,dba",
+            "$where": f"inspection_date >= '{start_date}'",
+            "$order": "inspection_date ASC",
+        }
+        resp = requests.get(url, params=params, timeout=60)
+        resp.raise_for_status()
+        payload = resp.json()
+        if not payload:
+            break
+        frame = pd.DataFrame(payload)
+        rows.append(frame)
+        batch_n = len(frame)
+        fetched += batch_n
+        offset += batch_n
+        if batch_n < batch_size:
+            break
+
+    if not rows:
+        return pd.DataFrame()
+    return pd.concat(rows, ignore_index=True)
 
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:

@@ -7,6 +7,7 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
+from src.config.constants import MODEL_CONFIG
 
 from src.data.base import DatasetSpec
 
@@ -99,6 +100,12 @@ def prepare_training_frame(
 
     frame = feature_matrix.copy()
     input_rows = len(frame)
+
+    year_start = int(MODEL_CONFIG.get("temporal_data_start_year", 2020))
+    year_end = int(MODEL_CONFIG.get("temporal_data_end_year", 2024))
+    if "time_key" in frame.columns:
+        time_key = pd.to_numeric(frame["time_key"], errors="coerce")
+        frame = frame[time_key.between(year_start, year_end, inclusive="both")].copy()
 
     present_key_columns = [column for column in key_columns if column in frame.columns]
     if present_key_columns:

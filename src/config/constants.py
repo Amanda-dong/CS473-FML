@@ -79,6 +79,8 @@ MODEL_CONFIG = {
     "outlier_clip_sigma": 3.0,
     "temporal_val_year": 2022,
     "temporal_test_year": 2023,
+    "temporal_data_start_year": 2020,
+    "temporal_data_end_year": 2024,
 }
 
 MODEL_DIR = "data/models"

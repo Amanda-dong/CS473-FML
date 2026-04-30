@@ -55,6 +55,7 @@ def run_etl_stage(limit: int) -> dict[str, pd.DataFrame]:
 
 
 def build_feature_matrix_stage(etl_outputs: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    from src.config.constants import MODEL_CONFIG
     from src.features.feature_matrix import build_zone_year_matrix
     from src.features.ground_truth import build_ground_truth
 
@@ -70,6 +71,29 @@ def build_feature_matrix_stage(etl_outputs: dict[str, pd.DataFrame]) -> pd.DataF
 
     gt = build_ground_truth(licenses_df, yelp_df, inspections_df)
     logger.info("Ground truth: %d rows", len(gt))
+
+    # Enforce a stable temporal window to avoid placeholder/edge years (e.g., 1900).
+    year_start = int(MODEL_CONFIG.get("temporal_data_start_year", 2020))
+    year_end = int(MODEL_CONFIG.get("temporal_data_end_year", 2024))
+    if "time_key" in features.columns:
+        features = features[
+            pd.to_numeric(features["time_key"], errors="coerce").between(
+                year_start, year_end, inclusive="both"
+            )
+        ].copy()
+    if "time_key" in gt.columns:
+        gt = gt[
+            pd.to_numeric(gt["time_key"], errors="coerce").between(
+                year_start, year_end, inclusive="both"
+            )
+        ].copy()
+    logger.info(
+        "Temporal window applied: %d-%d (features=%d rows, gt=%d rows)",
+        year_start,
+        year_end,
+        len(features),
+        len(gt),
+    )
 
     if gt.empty or features.empty:
         logger.warning(

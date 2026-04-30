@@ -39,7 +39,23 @@ def run_placeholder_etl() -> pd.DataFrame:
 
 
 def _load_local() -> pd.DataFrame:
-    """Load ACS data from a local CSV specified by env var."""
+    """Load ACS data from local CSV(s) specified by env vars.
+
+    Priority:
+    1) ``ACS_DATA_GLOB``: glob pattern for multiple yearly files (concatenated)
+    2) ``ACS_DATA_PATH``: single CSV path
+    """
+    glob_str = os.environ.get("ACS_DATA_GLOB", "").strip()
+    if glob_str:
+        paths = sorted(Path().glob(glob_str))
+        if not paths:
+            raise FileNotFoundError(f"etl_acs: ACS_DATA_GLOB={glob_str} matched no files")
+        logger.info("etl_acs: loading %d files from ACS_DATA_GLOB=%s", len(paths), glob_str)
+        frames = [pd.read_csv(path) for path in paths if path.is_file()]
+        if not frames:
+            raise RuntimeError("etl_acs: ACS_DATA_GLOB produced no readable files")
+        return pd.concat(frames, ignore_index=True)
+
     path_str = os.environ.get("ACS_DATA_PATH", "")
     if not path_str:
         raise RuntimeError("etl_acs: ACS_DATA_PATH env var not set")

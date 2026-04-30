@@ -75,6 +75,8 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     if "restaurant_id" not in df.columns:
         df["restaurant_id"] = pd.NA
     df["event_date"] = pd.to_datetime(df["event_date"], errors="coerce")
+    # Drop placeholder / clearly invalid dates (e.g., 1900-12-31 sentinels).
+    df = df[df["event_date"].dt.year >= 2000]
     df["nta_id"] = df["nta_id"].fillna("UNKNOWN")
     df["category"] = df["category"].fillna("Restaurant")
     df["business_unique_id"] = df["business_unique_id"].fillna("UNKNOWN")
