@@ -1233,8 +1233,6 @@ def test_build_zone_year_matrix_hygiene_exception(monkeypatch) -> None:
     # Prevent interference from Gemini or Phase1
     monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
 
-    original_exists = Path.exists
-
     def mock_exists(self):
         if "hygiene_nta_features.csv" in str(self):
             return True

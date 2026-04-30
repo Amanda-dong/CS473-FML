@@ -1148,9 +1148,7 @@ def test_label_reviews_json_decode_error_wraps(monkeypatch) -> None:
 
 
 def test_aggregate_full_halal_empty_after_dropna_zone(sample_review_labels) -> None:
-    from src.nlp.review_aggregates import (
-        aggregate_full_halal_review_features,
-    )
+    from src.nlp.review_aggregates import aggregate_full_halal_review_features
 
     # All zone_id=NaN → groupby drops NaN keys → result empty
     # Other columns use valid typed values so astype/mean don't fail
