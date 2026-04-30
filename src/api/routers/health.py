@@ -11,6 +11,7 @@ router = APIRouter(tags=["health"])
 _FM_PATH = Path("data/processed/feature_matrix.parquet")
 _COUNTS = {"fm_row_count": 0, "feature_count": 0}
 
+
 def _refresh_counts():
     try:
         if _FM_PATH.exists():
@@ -19,6 +20,7 @@ def _refresh_counts():
             _COUNTS["feature_count"] = len(df.columns)
     except Exception:
         logging.getLogger(__name__).warning("health: failed to read feature matrix")
+
 
 _refresh_counts()
 
