@@ -5,7 +5,10 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from src.data.enrich_zone_features import _cuisine_diversity_features, _yelp_nta_features
+from src.data.enrich_zone_features import (
+    _cuisine_diversity_features,
+    _yelp_nta_features,
+)
 
 
 # ── _cuisine_diversity_features ───────────────────────────────────────────────
@@ -33,7 +36,14 @@ def test_cuisine_diversity_entropy_range() -> None:
     df = pd.DataFrame(
         {
             "nta_id": ["MN2601"] * 6,
-            "cuisine_type": ["Chinese", "American", "Mexican", "Italian", "Thai", "Greek"],
+            "cuisine_type": [
+                "Chinese",
+                "American",
+                "Mexican",
+                "Italian",
+                "Thai",
+                "Greek",
+            ],
         }
     )
     result = _cuisine_diversity_features(df)
@@ -98,7 +108,9 @@ def test_cuisine_diversity_drops_null_nta_and_cuisine() -> None:
 
 
 def test_cuisine_diversity_empty_input() -> None:
-    result = _cuisine_diversity_features(pd.DataFrame(columns=["nta_id", "cuisine_type"]))
+    result = _cuisine_diversity_features(
+        pd.DataFrame(columns=["nta_id", "cuisine_type"])
+    )
     assert isinstance(result, pd.DataFrame)
     assert result.empty
 
