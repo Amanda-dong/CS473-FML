@@ -17,7 +17,9 @@ def test_resolve_effective_search_settings_uses_nlp_values_when_enabled() -> Non
     assert risk == "aggressive"
 
 
-def test_resolve_effective_search_settings_uses_selected_values_when_structured() -> None:
+def test_resolve_effective_search_settings_uses_selected_values_when_structured() -> (
+    None
+):
     price, risk = resolve_effective_search_settings(
         mode="Use structured controls",
         has_description=False,

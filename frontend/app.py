@@ -19,7 +19,10 @@ from frontend.components.data_freshness import render_data_freshness
 from frontend.components.input_form import render_input_form
 from frontend.components.map_view import render_map_view
 from frontend.components.page_intro import render_page_intro
-from frontend.components.results_panel import render_results_panel, render_top_match_panel
+from frontend.components.results_panel import (
+    render_results_panel,
+    render_top_match_panel,
+)
 from frontend.components.scenario_panel import render_scenario_panel
 from src.api.routers.recommendations import _get_zone_type_clusters, predict_cmf_sync
 from src.schemas.requests import RecommendationRequest
@@ -183,7 +186,9 @@ def _render_current_query(active_query: dict) -> None:
     )
     mode_label = concept_mode
     if concept_mode == "Describe my halal concept" and concept_description:
-        mode_label += " (NLP suggestions on)" if use_nlp_suggestions else " (manual price/risk)"
+        mode_label += (
+            " (NLP suggestions on)" if use_nlp_suggestions else " (manual price/risk)"
+        )
     st.markdown(f"**Input mode:** {mode_label}")
     if concept_description:
         st.markdown(f"**Merchant description:** {concept_description}")

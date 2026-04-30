@@ -54,7 +54,9 @@ def render_top_match_panel(
         return None
 
     zone_id = str(recommendation.get("zone_id", ""))
-    zone_name = str(recommendation.get("zone_name", recommendation.get("zone_label", "Top Match")))
+    zone_name = str(
+        recommendation.get("zone_name", recommendation.get("zone_label", "Top Match"))
+    )
     score = float(recommendation.get("opportunity_score", 0.0) or 0.0)
     survival_risk = float(recommendation.get("survival_risk", 0.0) or 0.0)
     confidence = str(recommendation.get("confidence_bucket", "—")).title()
@@ -62,13 +64,22 @@ def render_top_match_panel(
     zone_type = str(recommendation.get("zone_type", ""))
     cluster = (cluster_map or {}).get(zone_type, "")
     summary = str(recommendation.get("healthy_gap_summary", "") or "")
-    positives = recommendation.get("positive_drivers") or recommendation.get("positives") or []
+    positives = (
+        recommendation.get("positive_drivers") or recommendation.get("positives") or []
+    )
 
     st.subheader("Top Match")
     st.caption("Start here. This is the strongest match for your current query.")
     with st.container(border=True):
         st.markdown(f"#### {zone_name}")
-        meta_bits = [bit for bit in [zone_type.replace("_", " ").title() if zone_type else "", cluster.title() if cluster else ""] if bit]
+        meta_bits = [
+            bit
+            for bit in [
+                zone_type.replace("_", " ").title() if zone_type else "",
+                cluster.title() if cluster else "",
+            ]
+            if bit
+        ]
         if meta_bits:
             st.caption(" | ".join(meta_bits))
 
@@ -78,9 +89,13 @@ def render_top_match_panel(
         m3.metric("Confidence", confidence)
 
         if concept:
-            st.markdown(f"**Why it stands out:** {summary or f'This zone ranked first for {concept}.'}")
+            st.markdown(
+                f"**Why it stands out:** {summary or f'This zone ranked first for {concept}.'}"
+            )
         if positives:
-            st.markdown("**Key strengths:** " + "; ".join(str(item) for item in positives[:3]))
+            st.markdown(
+                "**Key strengths:** " + "; ".join(str(item) for item in positives[:3])
+            )
     return zone_id or None
 
 
@@ -99,15 +114,15 @@ def render_results_panel(
         return
 
     st.subheader("Recommended Zones")
-    st.caption(
-        "Use these cards to compare the rest of your shortlist."
-    )
+    st.caption("Use these cards to compare the rest of your shortlist.")
 
     _render_summary_row(recommendations)
     st.divider()
 
     remaining = [
-        rec for rec in recommendations if str(rec.get("zone_id", "")) != str(featured_zone_id or "")
+        rec
+        for rec in recommendations
+        if str(rec.get("zone_id", "")) != str(featured_zone_id or "")
     ]
     if featured_zone_id and remaining:
         st.caption("Compare the remaining options below.")

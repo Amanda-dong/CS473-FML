@@ -143,7 +143,9 @@ def _render_structured_concept_picker(subtypes: list[str]) -> str:
     return selected
 
 
-def _extract_keyword_match(prompt: str, keyword_map: dict[str, tuple[str, ...]], fallback: str) -> str:
+def _extract_keyword_match(
+    prompt: str, keyword_map: dict[str, tuple[str, ...]], fallback: str
+) -> str:
     lowered = prompt.lower()
     for label, keywords in keyword_map.items():
         if any(keyword in lowered for keyword in keywords):
@@ -151,10 +153,14 @@ def _extract_keyword_match(prompt: str, keyword_map: dict[str, tuple[str, ...]],
     return fallback
 
 
-def _extract_multi_matches(prompt: str, keyword_map: dict[str, tuple[str, ...]]) -> list[str]:
+def _extract_multi_matches(
+    prompt: str, keyword_map: dict[str, tuple[str, ...]]
+) -> list[str]:
     lowered = prompt.lower()
     matches = [
-        label for label, keywords in keyword_map.items() if any(keyword in lowered for keyword in keywords)
+        label
+        for label, keywords in keyword_map.items()
+        if any(keyword in lowered for keyword in keywords)
     ]
     return matches
 
@@ -190,9 +196,7 @@ def _render_nlp_concept_input() -> tuple[str, str, str, str]:
     cleaned_prompt = _normalize_prompt(user_prompt)
     normalized = canonical_subtype(cleaned_prompt) if cleaned_prompt else "halal"
     if not cleaned_prompt:
-        st.info(
-            "Describe your halal restaurant idea to get a suggested match."
-        )
+        st.info("Describe your halal restaurant idea to get a suggested match.")
         return normalized, cleaned_prompt, "mid", "balanced"
     label = _DISPLAY_NAMES.get(normalized, normalized.replace("_", " ").title())
     suggested_price = _extract_keyword_match(cleaned_prompt, _PRICE_KEYWORDS, "mid")
@@ -262,7 +266,8 @@ def render_scenario_panel() -> dict[str, str | bool | None]:
         if compare_mode:
             compare_subtypes = list(all_known_subtypes())
             compare_labels = [
-                _DISPLAY_NAMES.get(s, s.replace("_", " ").title()) for s in compare_subtypes
+                _DISPLAY_NAMES.get(s, s.replace("_", " ").title())
+                for s in compare_subtypes
             ]
             default_idx = 1 if len(compare_subtypes) > 1 else 0
             compare_idx = st.selectbox(
@@ -275,7 +280,9 @@ def render_scenario_panel() -> dict[str, str | bool | None]:
             compare_concept = compare_subtypes[compare_idx]
         use_nlp_suggestions = False
     else:
-        concept_subtype, user_concept_text, parsed_price_tier, parsed_risk_tolerance = _render_nlp_concept_input()
+        concept_subtype, user_concept_text, parsed_price_tier, parsed_risk_tolerance = (
+            _render_nlp_concept_input()
+        )
         price_tier = parsed_price_tier
         risk_tolerance = parsed_risk_tolerance
         use_nlp_suggestions = True
