@@ -1,4 +1,4 @@
-"""Input form — zone type, borough, and limit controls."""
+"""Input form — location and shortlist controls."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ _BOROUGH_HELP = (
 
 
 def render_input_form() -> dict[str, str | int]:
-    """Render zone/borough filters and return user selections."""
+    """Render location filters and shortlist size."""
     zone_options = [
         "All",
         "campus_walkshed",
@@ -31,7 +31,7 @@ def render_input_form() -> dict[str, str | int]:
         "nta_fallback",
     ]
     zone_type = st.selectbox(
-        "Zone type",
+        "Preferred zone type",
         zone_options,
         key=FORM_KEYS["zone_type"],
         help="Filter recommendations to a specific micro-zone type. "
@@ -41,14 +41,14 @@ def render_input_form() -> dict[str, str | int]:
         st.caption(_ZONE_TYPE_HELP.get(zone_type, ""))
 
     borough = st.selectbox(
-        "Borough",
+        "Preferred borough",
         ["Any", "Brooklyn", "Manhattan", "Queens", "Bronx", "Staten Island"],
         key=FORM_KEYS["borough"],
         help=_BOROUGH_HELP,
     )
 
     limit = st.slider(
-        "Max results to show",
+        "Shortlist size",
         min_value=1,
         max_value=50,
         value=5,

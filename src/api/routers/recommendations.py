@@ -328,7 +328,7 @@ def _get_zone_type_clusters(
     labels = model.predict(frame)
     label_names = {
         "cluster_0": "emerging",
-        "cluster_1": "gentrifying",
+        "cluster_1": "fast-growing",
         "cluster_2": "stable",
         "cluster_3": "declining",
     }
@@ -717,7 +717,7 @@ async def predict_trajectory(request: RecommendationRequest) -> dict[str, str]:
 
     label_names = {
         "cluster_0": "emerging",
-        "cluster_1": "gentrifying",
+        "cluster_1": "fast-growing",
         "cluster_2": "stable",
         "cluster_3": "declining",
     }

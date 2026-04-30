@@ -6,6 +6,8 @@ import joblib
 import pandas as pd
 import streamlit as st
 
+from frontend.components.page_intro import render_page_intro
+
 
 @st.cache_resource(show_spinner=False)
 def _load_model_info() -> dict:
@@ -29,20 +31,16 @@ def _load_model_info() -> dict:
 
 def render_methodology_page() -> None:
     st.header("📖 Methodology")
-    st.markdown(
-        """
-        This page documents how the NYC Healthy-Food White-Space Finder scores and ranks
-        micro-zones for new quick-service healthy-food concepts, from raw data ingestion
-        through opportunity ranking, survival-risk estimation, and trajectory clustering.
-        """
+    render_page_intro(
+        "What this page covers",
+        "Use this page to understand the scoring. Go back to Top Picks when you want results.",
     )
 
-    # Section 1: Problem Framing
     st.subheader("1. Problem Framing")
     st.markdown(
         """
         We operate at the granularity of NYC **micro-zones** — Neighborhood Tabulation
-        Areas (NTAs) — and look for places where a healthy-food concept has the strongest
+        Areas (NTAs) — and look for places where a halal food concept has the strongest
         combination of underserved demand, viable merchant economics, and low survival
         risk. Each zone is classified into one of four zone types:
 
@@ -53,7 +51,6 @@ def render_methodology_page() -> None:
         """
     )
 
-    # Section 2: Data Sources
     st.subheader("2. Data Sources")
     st.markdown(
         "Sources are organized into two tiers: **Tier 1 (Core)** drives the CMF score "
@@ -100,7 +97,6 @@ def render_methodology_page() -> None:
     )
     st.dataframe(sources, hide_index=True, use_container_width=True)
 
-    # Section 3: Zone Typing
     st.subheader("3. Zone Typing")
     st.markdown(
         """
@@ -112,7 +108,6 @@ def render_methodology_page() -> None:
         """
     )
 
-    # Section 4: CMF Opportunity Score
     st.subheader("4. CMF Opportunity Score")
     st.markdown(
         """
@@ -138,7 +133,6 @@ def render_methodology_page() -> None:
     )
     st.dataframe(weights, hide_index=True, use_container_width=True)
 
-    # Section 5: Survival Risk
     st.subheader("5. Survival Risk")
     st.markdown(
         """
@@ -152,19 +146,17 @@ def render_methodology_page() -> None:
         """
     )
 
-    # Section 6: Zone Trajectory Clustering
     st.subheader("6. Zone Trajectory Clustering")
     st.markdown(
         """
         Zones are grouped by trajectory using **K-Means** over a time-windowed feature
         vector (license velocity deltas, review-volume growth, demographic drift). The
-        resulting clusters map to four trajectory labels — **emerging**, **gentrifying**,
+        resulting clusters map to four trajectory labels — **emerging**, **fast-growing**,
         **stable**, and **declining** — and are displayed on each recommendation card as
         a trajectory badge.
         """
     )
 
-    # Section 7: Model Configuration
     with st.expander("7. Model Configuration"):
         info = _load_model_info()
         st.json(info)
