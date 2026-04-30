@@ -114,17 +114,6 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
     end_year = int(MODEL_CONFIG.get("temporal_data_end_year", 2026))
 
     def _year_backfill(base: pd.DataFrame) -> pd.DataFrame:
-        # Normalize 6-char 2020 NTA codes to 4-char 2010 codes before backfill
-        nta_series = base["nta"].astype(str)
-        if nta_series.str.len().max() > 4:
-            base = base.copy()
-            base["nta"] = nta_series.str[:4]
-            base = base.groupby("nta", as_index=False).agg(
-                trip_count=("trip_count", "sum"),
-                unique_start_station_count=("unique_start_station_count", "sum")
-                if "unique_start_station_count" in base.columns
-                else ("trip_count", "count"),
-            )
         frames: list[pd.DataFrame] = []
         for year in range(start_year, end_year + 1):
             frames.append(

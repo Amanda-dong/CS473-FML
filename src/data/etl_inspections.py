@@ -139,7 +139,7 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["nta_id"] = pd.Series(dtype=str)
 
-    # Fallback for unmapped zips: use boro prefix + "01"
+    # Fallback for unmapped zips: use boro prefix + "0101" (for 2020 NTA)
     _boro_prefix = {
         "manhattan": "MN",
         "bronx": "BX",
@@ -161,9 +161,8 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
             .str.lower()
             .map(_boro_prefix)
             .fillna("MN")
-            + "01"
+            + "0101"
         )
-
     df["grade"] = df["grade"].fillna("N")
     df["critical_flag"] = df["critical_flag"].fillna("Not Applicable")
     df["restaurant_id"] = df["restaurant_id"].fillna("UNKNOWN")

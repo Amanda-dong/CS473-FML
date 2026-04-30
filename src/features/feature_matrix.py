@@ -177,20 +177,7 @@ def build_zone_year_matrix(
             if not ds_zone.empty:
                 feature_tables["demand_signals"] = ds_zone
 
-    # --- ACS demographics (aggregate NTA -> zone) ---
-    acs_df = etl_outputs.get("acs", pd.DataFrame())
-    if not acs_df.empty:
-        acs_zone = aggregate_nta_to_zone(
-            acs_df,
-            zone_col="nta_id",
-            agg_rules={
-                "population": "sum",
-                "median_income": "mean",
-                "rent_burden": "mean",
-            },
-        )
-        if not acs_zone.empty:
-            feature_tables["acs"] = acs_zone
+    # ACS handled via left-join after main build to prevent zone count inflation
 
     # --- Inspections: grade distribution per zone ---
     if not inspections_df.empty and "grade" in inspections_df.columns:
@@ -229,49 +216,6 @@ def build_zone_year_matrix(
                 )
                 if not _hyg_zone.empty:
                     feature_tables["hygiene_static"] = _hyg_zone
-        except Exception:
-            pass
-
-    _phase1_path = Path("data/raw/phase1_neighborhood_finding.csv")
-    if _phase1_path.exists():
-        try:
-            _p1 = pd.read_csv(_phase1_path)
-            if {"nta", "restaurant_count", "population_16plus"}.issubset(_p1.columns):
-                _p1 = _p1.rename(
-                    columns={
-                        "nta": "nta_id",
-                        "population_16plus": "population_static",
-                        "restaurant_count": "restaurant_count_static",
-                        "halal_count": "halal_count_static",
-                    }
-                )
-                if "median_household_income" in _p1.columns:
-                    _p1 = _p1.rename(
-                        columns={"median_household_income": "median_income_static"}
-                    )
-                _keep_p1 = [
-                    c
-                    for c in [
-                        "nta_id",
-                        "population_static",
-                        "restaurant_count_static",
-                        "halal_count_static",
-                        "median_income_static",
-                    ]
-                    if c in _p1.columns
-                ]
-                _p1_zone = aggregate_nta_to_zone(
-                    _p1[_keep_p1],
-                    zone_col="nta_id",
-                    agg_rules={
-                        "population_static": "sum",
-                        "restaurant_count_static": "sum",
-                        "halal_count_static": "sum",
-                        "median_income_static": "mean",
-                    },
-                )
-                if not _p1_zone.empty:
-                    feature_tables["phase1_static"] = _p1_zone
         except Exception:
             pass
 
@@ -331,6 +275,78 @@ def build_zone_year_matrix(
         merged = build_feature_matrix(feature_tables)
     else:
         merged = pd.DataFrame(columns=["zone_id", "time_key"])
+
+    # Left-join ACS after main build (prevents zone count inflation)
+    acs_df = etl_outputs.get("acs", pd.DataFrame())
+    if not acs_df.empty:
+        acs_zone = aggregate_nta_to_zone(
+            acs_df,
+            zone_col="nta_id",
+            agg_rules={
+                "population": "sum",
+                "median_income": "mean",
+                "rent_burden": "mean",
+            },
+        )
+        if not acs_zone.empty and not merged.empty:
+            time_join = (
+                ["zone_id", "time_key"]
+                if "time_key" in merged.columns and "time_key" in acs_zone.columns
+                else ["zone_id"]
+            )
+            # Drop existing columns if they exist in merged before merge to avoid suffixing
+            overlap = [
+                c
+                for c in acs_zone.columns
+                if c in merged.columns and c not in time_join
+            ]
+            if overlap:
+                merged = merged.drop(columns=overlap)
+            merged = merged.merge(acs_zone, on=time_join, how="left")
+
+    # Left-join phase1_static after main build
+    _phase1_path = Path("data/raw/phase1_neighborhood_finding.csv")
+    if _phase1_path.exists():
+        try:
+            _p1 = pd.read_csv(_phase1_path)
+            if {"nta", "restaurant_count", "population_16plus"}.issubset(_p1.columns):
+                _p1 = _p1.rename(
+                    columns={
+                        "nta": "nta_id",
+                        "population_16plus": "population_static",
+                        "restaurant_count": "restaurant_count_static",
+                        "halal_count": "halal_count_static",
+                    }
+                )
+                if "median_household_income" in _p1.columns:
+                    _p1 = _p1.rename(
+                        columns={"median_household_income": "median_income_static"}
+                    )
+                _keep_p1 = [
+                    c
+                    for c in [
+                        "nta_id",
+                        "population_static",
+                        "restaurant_count_static",
+                        "halal_count_static",
+                        "median_income_static",
+                    ]
+                    if c in _p1.columns
+                ]
+                _p1_zone = aggregate_nta_to_zone(
+                    _p1[_keep_p1],
+                    zone_col="nta_id",
+                    agg_rules={
+                        "population_static": "sum",
+                        "restaurant_count_static": "sum",
+                        "halal_count_static": "sum",
+                        "median_income_static": "mean",
+                    },
+                )
+                if not _p1_zone.empty and not merged.empty:
+                    merged = merged.merge(_p1_zone, on="zone_id", how="left")
+        except Exception:
+            pass
 
     # Cross-join static rent features onto every (zone_id, time_key) row
     if rent_static is not None and not merged.empty:
