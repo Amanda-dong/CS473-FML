@@ -1884,18 +1884,16 @@ def test_etl_citibike_run_etl_lfs_pointer(
     lfs_file = tmp_path / "citibike.zip"
     lfs_file.write_bytes(b"version https://git-lfs.github.com/spec/v1\n")
     monkeypatch.setattr(etl_citibike, "_RAW_ZIP", lfs_file)
+    # Also clear the fallback CSV so there's no secondary source to fall back to
+    monkeypatch.setattr(etl_citibike, "_FALLBACK_FEATURES_CSV", tmp_path / "nonexistent.csv")
 
-    # Mock requests.get to raise RuntimeError to abort the download path
     def mock_get(*args, **kwargs):
         raise RuntimeError("Abort download after LFS detection")
 
     monkeypatch.setattr("requests.get", mock_get)
 
-    # We expect the RuntimeError we raised to be caught by etl_citibike and return placeholder
-    # OR we can explicitly check that line 100 was hit by catching the RuntimeError if it bubbled up.
-    # Looking at etl_citibike.py, it catches Exception and returns run_placeholder_etl().
     result = etl_citibike.run_etl()
-    assert result.empty  # Placeholder returns empty frame
+    assert result.empty  # No local zips + no fallback CSV + failed download → placeholder
 
 
 # ── etl_licenses — business_unique_id fallback ───────────────────────────────
