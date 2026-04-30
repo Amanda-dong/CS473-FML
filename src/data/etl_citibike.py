@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.config.constants import MODEL_CONFIG
 from src.utils.geospatial import lat_lon_to_nta
 
 from .base import DatasetSpec, build_empty_frame
@@ -24,6 +25,7 @@ _RAW_ZIP = Path("data/raw/202603-citibike-tripdata.zip")
 _S3_URL = "https://s3.amazonaws.com/tripdata/202603-citibike-tripdata.zip"
 _TRIP_YEAR = 2026
 _RAW_GLOB = "*-citibike-tripdata.zip"
+_FALLBACK_FEATURES_CSV = Path("data/raw/citibike_nta_features.csv")
 
 DATASET_SPEC = DatasetSpec(
     name="citibike",
@@ -104,6 +106,29 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
     Prefers all local monthly zip snapshots under data/raw/*-citibike-tripdata.zip
     to maximize year coverage. Falls back to downloading the default snapshot.
     """
+    start_year = int(MODEL_CONFIG.get("temporal_data_start_year", 2022))
+    end_year = int(MODEL_CONFIG.get("temporal_data_end_year", 2026))
+
+    def _year_backfill(base: pd.DataFrame) -> pd.DataFrame:
+        frames: list[pd.DataFrame] = []
+        for year in range(start_year, end_year + 1):
+            frames.append(
+                pd.DataFrame(
+                    {
+                        "year": year,
+                        "nta_id": base["nta"].astype(str),
+                        "trip_count": pd.to_numeric(
+                            base["trip_count"], errors="coerce"
+                        ).fillna(0),
+                        "station_count": pd.to_numeric(
+                            base.get("unique_start_station_count", 0),
+                            errors="coerce",
+                        ).fillna(0),
+                    }
+                )
+            )
+        return pd.concat(frames, ignore_index=True)
+
     local_zips = sorted(_RAW_ZIP.parent.glob(_RAW_GLOB))
     if local_zips:
         frames: list[pd.DataFrame] = []
@@ -130,6 +155,27 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
                 .sort_values(["year", "nta_id"])
                 .reset_index(drop=True)
             )
+            if _FALLBACK_FEATURES_CSV.is_file():
+                try:
+                    base = pd.read_csv(_FALLBACK_FEATURES_CSV)
+                    if {"nta", "trip_count"}.issubset(base.columns):
+                        present_years = set(pd.to_numeric(merged["year"], errors="coerce").dropna().astype(int).tolist())
+                        needed_years = set(range(start_year, end_year + 1))
+                        if not needed_years.issubset(present_years):
+                            backfill = _year_backfill(base)
+                            backfill = backfill[~backfill["year"].isin(present_years)]
+                            merged = (
+                                pd.concat([merged, backfill], ignore_index=True)
+                                .groupby(["year", "nta_id"], as_index=False)
+                                .agg(
+                                    trip_count=("trip_count", "sum"),
+                                    station_count=("station_count", "max"),
+                                )
+                                .sort_values(["year", "nta_id"])
+                                .reset_index(drop=True)
+                            )
+                except Exception as csv_exc:  # pragma: no cover
+                    logger.warning("etl_citibike: year backfill failed (%s)", csv_exc)
             return merged[list(DATASET_SPEC.columns)]
 
     try:
@@ -146,4 +192,14 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:
         logger.warning(
             "etl_citibike: download failed (%s) — returning placeholder", exc
         )
+        if _FALLBACK_FEATURES_CSV.is_file():
+            try:
+                base = pd.read_csv(_FALLBACK_FEATURES_CSV)
+                if {"nta", "trip_count"}.issubset(base.columns):
+                    expanded = _year_backfill(base)
+                    return expanded[list(DATASET_SPEC.columns)]
+            except Exception as csv_exc:  # pragma: no cover - best effort fallback
+                logger.warning(
+                    "etl_citibike: fallback features csv failed (%s)", csv_exc
+                )
         return run_placeholder_etl()

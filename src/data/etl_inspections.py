@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 import pandas as pd
 import requests
 
 from .base import DatasetSpec, build_empty_frame
+from src.config.constants import MODEL_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,6 @@ def run_placeholder_etl() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 _DATASET_ID = "43nn-pn8j"
-_DEFAULT_START_DATE = "2015-01-01"
 _API_BATCH_LIMIT = 50_000
 
 
@@ -86,7 +87,10 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
     still covers a broader historical range instead of only newest rows.
     """
     url = f"https://data.cityofnewyork.us/resource/{_DATASET_ID}.json"
-    start_date = _DEFAULT_START_DATE
+    start_year = int(MODEL_CONFIG.get("temporal_data_start_year", 2022))
+    end_year = int(MODEL_CONFIG.get("temporal_data_end_year", datetime.now().year))
+    start_date = f"{start_year}-01-01"
+    end_date = f"{end_year}-12-31"
     rows: list[pd.DataFrame] = []
     fetched = 0
     offset = 0
@@ -97,8 +101,8 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
             "$limit": batch_size,
             "$offset": offset,
             "$select": "inspection_date,camis,grade,critical_flag,boro,zipcode,cuisine_description,dba",
-            "$where": f"inspection_date >= '{start_date}'",
-            "$order": "inspection_date ASC",
+            "$where": f"inspection_date >= '{start_date}' AND inspection_date <= '{end_date}'",
+            "$order": "inspection_date DESC",
         }
         resp = requests.get(url, params=params, timeout=60)
         resp.raise_for_status()
