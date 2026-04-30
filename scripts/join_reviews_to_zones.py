@@ -11,8 +11,8 @@ Usage (from repo root)::
     python scripts/join_reviews_to_zones.py
 
     python scripts/join_reviews_to_zones.py --reviews data/raw/yelp_reviews_fusion_2022_2026.csv \\
-        --zones data/processed/yelp_business_zones.csv \\
-        --output data/processed/yelp_reviews_with_zones.csv
+        --zones data/raw/yelp_business_zones.csv \\
+        --output data/raw/yelp_reviews_with_zones.csv
 """
 
 from __future__ import annotations
@@ -27,9 +27,8 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
 RAW = REPO / "data" / "raw"
-PROC = REPO / "data" / "processed"
-DEFAULT_ZONES = PROC / "yelp_business_zones.csv"
-DEFAULT_OUTPUT = PROC / "yelp_reviews_with_zones.csv"
+DEFAULT_ZONES = RAW / "yelp_business_zones.csv"
+DEFAULT_OUTPUT = RAW / "yelp_reviews_with_zones.csv"
 
 
 def _default_reviews_path() -> Path:

@@ -69,7 +69,7 @@ def _resolve_scoring_version(model: object, path: str) -> str:
 
 _SCORING_MODEL_VERSION = _resolve_scoring_version(_SCORING_MODEL, _SCORING_MODEL_PATH)
 
-_GEMINI_ZONE_PATH = Path("data/processed/gemini_full_zone_features.csv")
+_GEMINI_ZONE_PATH = Path("data/raw/gemini_full_zone_features.csv")
 
 
 def _load_gemini_zone_cache() -> dict[str, dict[str, float]]:

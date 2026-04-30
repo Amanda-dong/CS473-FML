@@ -12,7 +12,7 @@ from src.features.zone_crosswalk import ZONE_TO_NTA, aggregate_nta_to_zone
 
 logger = logging.getLogger(__name__)
 
-_GEMINI_CACHE = Path("data/processed/gemini_labels_full.csv")
+_GEMINI_CACHE = Path("data/raw/gemini_labels_full.csv")
 _GEMINI_FALLBACK_TIME_KEY = 2024
 
 

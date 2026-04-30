@@ -6,7 +6,7 @@ Run from repo root::
 
 Open **Review Zones Demo** in the sidebar. Requires:
 
-- ``data/processed/yelp_reviews_with_zones.csv`` (from ``scripts/join_reviews_to_zones.py``)
+- ``data/raw/yelp_reviews_with_zones.csv`` (from ``scripts/join_reviews_to_zones.py``)
 - ``data/raw/yelp_business.csv`` (for coordinates on the map)
 """
 
@@ -18,7 +18,7 @@ import pandas as pd
 import streamlit as st
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REVIEWS_PATH = REPO_ROOT / "data" / "processed" / "yelp_reviews_with_zones.csv"
+REVIEWS_PATH = REPO_ROOT / "data" / "raw" / "yelp_reviews_with_zones.csv"
 BUSINESS_PATH = REPO_ROOT / "data" / "raw" / "yelp_business.csv"
 
 _MAP_KEY = "reviews_zone_map_plotly"
