@@ -2251,3 +2251,134 @@ def test_etl_yelp_env_helpers_additional_coverage(
     # Test invalid integer parsing (Line 52-53)
     monkeypatch.setenv("YELP_TEST_INT_VAL", "not_an_int")
     assert _env_int("YELP_TEST_INT_VAL", 50) == 50
+
+
+# ── etl_pluto (Added tests) ──────────────────────────────────────────────────
+
+
+def test_etl_pluto_transform_renames_columns(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_pluto
+    import src.data.etl_inspections as etl_insp
+
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"10001": "MN0604"})
+    raw = pd.DataFrame(
+        {
+            "zipcode": ["10001"],
+            "borough": ["MN"],
+            "lotarea": ["1000"],
+            "bldgarea": ["1000"],
+            "comarea": ["500"],
+            "retailarea": ["100"],
+            "assesstot": ["100000"],
+        }
+    )
+    transformed = etl_pluto.transform(raw)
+    assert "commercial_sqft" in transformed.columns
+    assert "assessed_value" in transformed.columns
+    assert "comarea" not in transformed.columns
+    assert "assesstot" not in transformed.columns
+
+
+def test_etl_pluto_transform_drops_unmapped_nta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.data import etl_pluto
+    import src.data.etl_inspections as etl_insp
+
+    # Mock only 11201 as mapped
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"11201": "BK09"})
+    raw = pd.DataFrame(
+        {
+            "zipcode": ["11201", "99999"],  # 11201 mapped, 99999 unmapped
+            "borough": ["BK", "MN"],
+            "lotarea": ["1000", "1000"],
+            "bldgarea": ["1000", "1000"],
+            "comarea": ["500", "500"],
+            "retailarea": ["100", "100"],
+            "assesstot": ["100000", "100000"],
+        }
+    )
+    transformed = etl_pluto.transform(raw)
+    # Only 1 NTA in output
+    assert len(transformed["nta_id"].unique()) == 1
+    assert transformed["nta_id"].unique()[0] == "BK09"
+
+
+def test_etl_pluto_transform_aggregates_by_nta(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_pluto
+    import src.data.etl_inspections as etl_insp
+
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"11201": "BK09"})
+    raw = pd.DataFrame(
+        {
+            "zipcode": ["11201", "11201"],
+            "borough": ["BK", "BK"],
+            "lotarea": ["1000", "1000"],
+            "bldgarea": ["1000", "1000"],
+            "comarea": ["500", "500"],  # sum = 1000
+            "retailarea": ["100", "100"],
+            "assesstot": ["100000", "200000"],  # sum = 300000
+        }
+    )
+    transformed = etl_pluto.transform(raw)
+    # Filter for one year, e.g., 2020
+    row = transformed[transformed["year"] == 2020].iloc[0]
+    assert row["commercial_sqft"] == 1000
+    assert row["assessed_value"] == 300000
+
+
+def test_etl_pluto_transform_expands_years(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.data import etl_pluto
+    import src.data.etl_inspections as etl_insp
+
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"11201": "BK09"})
+    raw = pd.DataFrame(
+        {
+            "zipcode": ["11201"],
+            "borough": ["BK"],
+            "lotarea": ["1000"],
+            "bldgarea": ["1000"],
+            "comarea": ["500"],
+            "retailarea": ["100"],
+            "assesstot": ["100000"],
+        }
+    )
+    transformed = etl_pluto.transform(raw)
+    assert set(transformed["year"].unique()) == {2020, 2021, 2022, 2023, 2024}
+
+
+def test_etl_pluto_transform_produces_correct_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.data import etl_pluto
+    import src.data.etl_inspections as etl_insp
+
+    monkeypatch.setattr(etl_insp, "_ZIP_TO_NTA", {"11201": "BK09", "10001": "MN06"})
+    raw = pd.DataFrame(
+        {
+            "zipcode": ["11201", "10001"],
+            "borough": ["BK", "MN"],
+            "lotarea": ["1000", "1000"],
+            "bldgarea": ["1000", "1000"],
+            "comarea": ["500", "500"],
+            "retailarea": ["100", "100"],
+            "assesstot": ["100000", "100000"],
+        }
+    )
+    transformed = etl_pluto.transform(raw)
+    # 2 NTAs * 5 years = 10 rows
+    assert len(transformed) == 10
+
+
+def test_etl_pluto_fetch_raises_on_http_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    import requests
+    from src.data import etl_pluto
+
+    def mock_get(*args, **kwargs):
+        resp = requests.Response()
+        resp.status_code = 500
+        return resp
+
+    monkeypatch.setattr(requests, "get", mock_get)
+    with pytest.raises(requests.exceptions.HTTPError):
+        etl_pluto.fetch()

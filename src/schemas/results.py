@@ -6,17 +6,21 @@ from pydantic import BaseModel, Field
 
 
 class ZoneRecommendation(BaseModel):
-    """A single placeholder recommendation card."""
+    """A detailed recommendation card."""
 
     zone_id: str
     zone_name: str
-    concept_subtype: str
+    rank: int = Field(default=0)
+    score: float = Field(default=0.0)
     opportunity_score: float = Field(default=0.0)
-    confidence_bucket: str = Field(default="low")
+    confidence_tier: str = Field(default="low")
+    concept_subtype: str
+    positive_drivers: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+    similar_restaurants: list[str] = Field(default_factory=list)
+    data_freshness: str = Field(default="2026-04")
     zone_type: str = Field(default="")
     healthy_gap_summary: str = Field(default="")
-    positives: list[str] = Field(default_factory=list)
-    risks: list[str] = Field(default_factory=list)
     freshness_note: str = Field(default="No source refresh recorded yet.")
     feature_contributions: dict[str, float] = Field(default_factory=dict)
     survival_risk: float = Field(default=0.0)

@@ -65,6 +65,11 @@ def build_feature_matrix_stage(etl_outputs: dict[str, pd.DataFrame]) -> pd.DataF
         "Zone-year matrix: %d rows × %d cols", len(features), len(features.columns)
     )
 
+    from src.data.quality import fill_feature_matrix_nulls
+    acs_df = etl_outputs.get("acs")
+    features = fill_feature_matrix_nulls(features, acs_df=acs_df)
+    logger.info("Feature matrix nulls filled.")
+
     licenses_df = etl_outputs.get("licenses", pd.DataFrame())
     yelp_df = etl_outputs.get("yelp", pd.DataFrame())
     inspections_df = etl_outputs.get("inspections", pd.DataFrame())

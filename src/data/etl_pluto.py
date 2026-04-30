@@ -37,7 +37,7 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
     url = f"https://data.cityofnewyork.us/resource/{_DATASET_ID}.json"
     params = {
         "$limit": limit,
-        "$select": "yearbuilt,zipcode,borough,lotarea,bldgarea,comarea,retailarea,assesstot",
+        "$select": "zipcode,borough,lotarea,bldgarea,comarea,retailarea,assesstot",
         "$where": "comarea > '0' OR retailarea > '0'",  # commercial properties only
     }
     resp = requests.get(url, params=params, timeout=60)
@@ -47,6 +47,11 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
 
 def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
+
+    # Ensure correct column names from API
+    df = df.rename(
+        columns={"comarea": "commercial_sqft", "assesstot": "assessed_value"}
+    )
 
     # Map zipcode → NTA using the inspections module's shared crosswalk
     try:
@@ -61,25 +66,15 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["nta_id"] = pd.Series(dtype=str)
 
-    # Fallback: boro prefix + "01"
-    _boro_prefix = {"MN": "MN", "BK": "BK", "QN": "QN", "BX": "BX", "SI": "SI"}
-    unmapped = df["nta_id"].isna()
-    if unmapped.any() and "borough" in df.columns:
-        df.loc[unmapped, "nta_id"] = (
-            df.loc[unmapped, "borough"].map(_boro_prefix).fillna("MN") + "01"
-        )
+    # Drop unmapped rows
+    df = df[df["nta_id"].notna() & (df["nta_id"] != "")]
 
-    df = df.rename(
-        columns={
-            "yearbuilt": "year",
-            "comarea": "commercial_sqft",
-            "assesstot": "assessed_value",
-        }
-    )
-    for col in ("year", "commercial_sqft", "bldgarea", "assessed_value"):
+    # Set numeric columns
+    for col in ("commercial_sqft", "bldgarea", "assessed_value"):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
+    # Calculate metrics
     if "bldgarea" in df.columns:
         df["mixed_use_ratio"] = df.apply(
             lambda r: (
@@ -90,9 +85,28 @@ def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["mixed_use_ratio"] = 0.0
 
-    df["year"] = df["year"].astype(int)
-    # Drop unmapped rows
-    df = df[df["nta_id"].notna() & (df["nta_id"] != "")]
+    # Aggregate by NTA
+    df = (
+        df.groupby("nta_id")
+        .agg(
+            {
+                "commercial_sqft": "sum",
+                "mixed_use_ratio": "mean",
+                "assessed_value": "sum",
+            }
+        )
+        .reset_index()
+    )
+
+    # Replicate for each year 2020-2024
+    years = [2020, 2021, 2022, 2023, 2024]
+    expanded_rows = []
+    for year in years:
+        year_df = df.copy()
+        year_df["year"] = year
+        expanded_rows.append(year_df)
+
+    df = pd.concat(expanded_rows, ignore_index=True)
     return df[list(DATASET_SPEC.columns)].reset_index(drop=True)
 
 

@@ -1222,7 +1222,38 @@ def test_build_zone_year_matrix_merges_gemini_zone_features(monkeypatch, tmp_pat
     assert row["halal_related_share"] == pytest.approx(0.5)
 
 
-# ── feature_matrix coverage gaps ──────────────────────────────────────────────
+# ── fill_fm nulls ─────────────────────────────────────────────────────────────
+
+
+def test_fill_fm_nulls_fills_share_cols():
+    from src.data.quality import fill_feature_matrix_nulls
+
+    df = pd.DataFrame({"zone_id": ["nta-bk0101"], "halal_related_share": [None]})
+    res = fill_feature_matrix_nulls(df)
+    assert res["halal_related_share"].iloc[0] == 0.0
+
+
+def test_fill_fm_nulls_fills_trip_count():
+    from src.data.quality import fill_feature_matrix_nulls
+
+    df = pd.DataFrame({"zone_id": ["nta-bk0101"], "trip_count": [None]})
+    res = fill_feature_matrix_nulls(df)
+    assert res["trip_count"].iloc[0] == 0.0
+
+
+def test_fill_fm_nulls_fills_dominant_subtype():
+    from src.data.quality import fill_feature_matrix_nulls
+
+    df = pd.DataFrame({"zone_id": ["nta-bk0101"], "dominant_subtype": [None]})
+    res = fill_feature_matrix_nulls(df)
+    assert res["dominant_subtype"].iloc[0] == "unknown"
+
+
+def test_fill_fm_nulls_no_crash_on_empty():
+    from src.data.quality import fill_feature_matrix_nulls
+
+    res = fill_feature_matrix_nulls(pd.DataFrame(), None)
+    assert res.empty
 
 
 def test_build_zone_year_matrix_hygiene_exception(monkeypatch) -> None:

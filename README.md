@@ -8,7 +8,7 @@
 - Siqi Zhu (`sz3950`) - [GitHub](https://github.com/HelenZhutt)
 - Catherine Yi (`cgy2014`)- [GitHub](https://github.com/catherinegyi)
 
-Updated: April 26, 2026<br>
+Updated: April 30, 2026<br>
 Course project · Spring 2026<br>
 Team: Catherine, Harsh, Tony, Siqi, Amanda
 
@@ -112,31 +112,33 @@ Primary sources:
 - NYC PLUTO / MapPLUTO
 - Inside Airbnb, subject to historical coverage limits
 - Citi Bike trip or station data
+- NYC 311 complaints
 
 Conditional enrichment sources:
 
 - Yelp Fusion API and Yelp Open Dataset, only after NYC coverage audit
 - Reddit neighborhood mentions at Community District level
-- NYC 311 complaints as the documented fallback if Reddit is sparse
 
 ## Repository Status
 
 The implementation is complete. All eight planned stages have been delivered:
 
-1. **Data source audit** — 10 ETL modules with real NYC Open Data integrations (permits, licenses, inspections, ACS, PLUTO, Citi Bike, Airbnb, Yelp, 311, boundaries)
-2. **Canonical neighborhood feature matrix** — 681 zone-year rows, 47 features across all data sources
-3. **Micro-zone layer** — 137 campus, lunch-corridor, transit-catchment, and business-district zones across all 5 boroughs
+1. **Data source audit** — 10 ETL modules with real NYC Open Data integrations
+2. **Canonical neighborhood feature matrix** — 726 zone-year rows, 49 features across all data sources
+3. **Micro-zone layer** — 137 campus, lunch-corridor, transit-catchment, and business-district zones
 4. **Phase discovery** — k-means and GMM trajectory clustering (k=3 and k=4 evaluated); NTA healthy food-story cluster assignments
 5. **Survival modeling** — Cox PH + Random Survival Forest; `survival_model.joblib` trained and evaluated
 6. **NLP labeling and aggregation** — Gemini Flash silver labels on full Yelp corpus; zone-level healthy-demand features in `gemini_full_zone_features.csv`
-7. **Healthy-food white-space ranking** — XGBoost scoring model + LambdaMART ranker; interpretable CMF score with subtype-gap, survival-risk, and positive-driver explanations
-8. **API and Streamlit integration** — FastAPI backend (`/predict/cmf`, `/predict/trajectory`), Streamlit frontend with recommendation cards, map view, and scenario panel
+7. **Healthy-food white-space ranking** — XGBoost scoring model + LambdaMART ranker; interpretable CMF score
+8. **API and Streamlit integration** — FastAPI backend, Streamlit frontend
 
 Model artifacts: `data/models/scoring_model.joblib`, `survival_model.joblib`, `ranking_model.joblib`
 
+Model Performance: Survival C-index ~0.80
+
 Evaluation artifacts: `data/processed/backtest_results.parquet`, `ablation_results.parquet`, `docs/EvaluationResults.md`, `docs/CausalMLEvaluationReport.md`
 
-Test suite: 562 tests, all passing (`uv run pytest`)
+Test suite: 564 tests, all passing (`uv run pytest`)
 
 ## Repository Structure
 

@@ -39,6 +39,7 @@ inherently higher than on a large catalog because the chance of a random model
 hitting a relevant zone by coincidence is non-trivial.  This is acknowledged
 as a limitation in Section 5.4.
 
+
 **Precision@5** is the fraction of the top-5 recommended zones that are
 genuinely attractive (labelled positive in the composite ground truth).  It is
 complementary to NDCG because it treats all top-5 positions equally, making it
@@ -212,6 +213,7 @@ inflates all metrics relative to large-catalog recommenders (where k=5 out of
 millions of items.  The meaningful comparison is against the random baseline
 (expected NDCG@5 ≈ 0.55 for 137 zones with ~20% relevant) and the popularity
 baseline (NDCG@5 ≈ 0.63), both of which the heuristic scorer exceeds.
+
 
 ### Baseline comparison summary
 
