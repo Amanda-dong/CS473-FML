@@ -25,7 +25,9 @@ class GeminiReviewLabel:
 
     review_id: str
     sentiment: str
-    halal_relevance: str  # Note: Retained as 'halal_relevance' for data schema compatibility.
+    halal_relevance: (
+        str  # Note: Retained as 'halal_relevance' for data schema compatibility.
+    )
     concept_subtype: str
     confidence: float
     rationale: str = ""
@@ -72,7 +74,9 @@ def _build_batch_prompt(
     lines.append(
         "halal_relevance must be one of: explicit_halal, implicit_halal, not_related."
     )
-    lines.append("Definitions (Note: Halal is one of many healthy food subtypes. concept_subtype will identify the category):")
+    lines.append(
+        "Definitions (Note: Halal is one of many healthy food subtypes. concept_subtype will identify the category):"
+    )
     lines.append(
         "- explicit_halal: the review text, business name, or business "
         "categories clearly mention halal."
@@ -86,9 +90,7 @@ def _build_batch_prompt(
         "Each review may include business name and categories before the review "
         "text. Use that business context when judging healthy food relevance."
     )
-    lines.append(
-        "Be conservative. Do not infer demand from positive sentiment alone."
-    )
+    lines.append("Be conservative. Do not infer demand from positive sentiment alone.")
     lines.append("confidence must be a number from 0.0 to 1.0, not a word.")
     lines.append(f"Allowed subtypes: {subtype_list}.")
     lines.append("Do not create new concept_subtype labels. If none fit, use other.")

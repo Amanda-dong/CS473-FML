@@ -57,7 +57,9 @@ def _load_or_build_history() -> pd.DataFrame:
                 .groupby("nta_id")["grade_num"]
                 .mean()
                 .reset_index()
-                .rename(columns={"nta_id": "zone_id", "grade_num": "nta_inspection_grade"})
+                .rename(
+                    columns={"nta_id": "zone_id", "grade_num": "nta_inspection_grade"}
+                )
             )
             zone_features = zone_features.merge(nta_grade, on="zone_id", how="left")
             zone_features["nta_inspection_grade"] = zone_features[
@@ -149,7 +151,9 @@ def train_and_evaluate() -> None:
     # environments (RSF memory scales O(n × trees × features)).
     _RSF_SAMPLE = 8_000
     rng_rsf = np.random.default_rng(42)
-    train_rsf = train_df.sample(min(_RSF_SAMPLE, len(train_df)), random_state=rng_rsf.integers(1 << 31))
+    train_rsf = train_df.sample(
+        min(_RSF_SAMPLE, len(train_df)), random_state=rng_rsf.integers(1 << 31)
+    )
     print(f"\nFitting Random Survival Forest (n={len(train_rsf)} subsample)...")
     rsf = SurvivalModelBundle(baseline="rsf")
     rsf.fit(train_rsf)

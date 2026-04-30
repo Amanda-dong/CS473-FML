@@ -27,31 +27,31 @@ from src.schemas.requests import RecommendationRequest
 
 
 SUBTYPE_LABELS = {
-    'halal_fast_casual': 'Halal Fast Casual',
-    'salad_bowls': 'Salad Bowls',
-    'mediterranean_bowls': 'Mediterranean Bowls',
-    'healthy_indian': 'Healthy Indian',
-    'vegan_grab_and_go': 'Vegan Grab-and-Go',
-    'protein_forward_lunch': 'Protein-Forward Lunch',
-    'mexican': 'Mexican',
-    'chinese': 'Chinese',
-    'japanese': 'Japanese',
-    'korean': 'Korean',
-    'thai': 'Thai',
-    'italian': 'Italian',
-    'greek': 'Greek',
-    'middle_eastern': 'Middle Eastern',
-    'caribbean': 'Caribbean',
-    'ethiopian': 'Ethiopian',
-    'west_african': 'West African',
-    'american_comfort': 'American Comfort',
-    'burgers': 'Burgers',
-    'pizza': 'Pizza',
-    'seafood': 'Seafood',
-    'ramen': 'Ramen',
-    'dim_sum': 'Dim Sum',
-    'bakery_cafe': 'Bakery & Cafe',
-    'smoothie_juice': 'Smoothie & Juice',
+    "halal_fast_casual": "Halal Fast Casual",
+    "salad_bowls": "Salad Bowls",
+    "mediterranean_bowls": "Mediterranean Bowls",
+    "healthy_indian": "Healthy Indian",
+    "vegan_grab_and_go": "Vegan Grab-and-Go",
+    "protein_forward_lunch": "Protein-Forward Lunch",
+    "mexican": "Mexican",
+    "chinese": "Chinese",
+    "japanese": "Japanese",
+    "korean": "Korean",
+    "thai": "Thai",
+    "italian": "Italian",
+    "greek": "Greek",
+    "middle_eastern": "Middle Eastern",
+    "caribbean": "Caribbean",
+    "ethiopian": "Ethiopian",
+    "west_african": "West African",
+    "american_comfort": "American Comfort",
+    "burgers": "Burgers",
+    "pizza": "Pizza",
+    "seafood": "Seafood",
+    "ramen": "Ramen",
+    "dim_sum": "Dim Sum",
+    "bakery_cafe": "Bakery & Cafe",
+    "smoothie_juice": "Smoothie & Juice",
 }
 
 
@@ -156,22 +156,26 @@ def main() -> None:
     # Sidebar
     with st.sidebar:
         st.header("Search Filters")
-        
+
         PICKER_SUBTYPES = [s for s in HEALTHY_SUBTYPES if s in SUBTYPE_LABELS]
         concept_subtype = st.sidebar.selectbox(
-            'Food Concept',
+            "Food Concept",
             options=PICKER_SUBTYPES,
-            format_func=lambda s: SUBTYPE_LABELS.get(s, s.replace('_', ' ').title()),
-            key='concept_subtype'
+            format_func=lambda s: SUBTYPE_LABELS.get(s, s.replace("_", " ").title()),
+            key="concept_subtype",
         )
-        
+
         form_state = render_input_form()
         # Remove concept_subtype from form_state if it's there to avoid overriding
-        if 'concept_subtype' in form_state:
-            del form_state['concept_subtype']
-            
+        if "concept_subtype" in form_state:
+            del form_state["concept_subtype"]
+
         scenario_state = render_scenario_panel()
-        user_state = {**form_state, **scenario_state, "concept_subtype": concept_subtype}
+        user_state = {
+            **form_state,
+            **scenario_state,
+            "concept_subtype": concept_subtype,
+        }
         st.divider()
         st.button(
             "🔄 Reset filters",

@@ -11,7 +11,9 @@ def score_healthy_gap(zone_features: Mapping[str, float]) -> dict[str, float]:
     healthy_supply_ratio = zone_features.get("healthy_supply_ratio", 0.0)
     subtype_gap = zone_features.get("subtype_gap", 0.0)
     quick_lunch_demand = zone_features.get("quick_lunch_demand", 0.0)
-    healthy_food_share = zone_features.get("healthy_food_share", zone_features.get("halal_related_share", 0.0))
+    healthy_food_share = zone_features.get(
+        "healthy_food_share", zone_features.get("halal_related_share", 0.0)
+    )
 
     score = max(
         0.0,
