@@ -164,6 +164,8 @@ def build_demand() -> pd.DataFrame:
     # Join population for per-capita demand and Bayesian confidence intervals
     if NTA_DEMOGRAPHICS.exists():
         pop_df = pd.read_csv(NTA_DEMOGRAPHICS)
+        pop_df["nta_id"] = pop_df["nta_id"].astype(str).str[:4]
+        pop_df = pop_df.groupby("nta_id", as_index=False)["population"].sum()
         grouped = grouped.merge(pop_df, on="nta_id", how="left")
         grouped["population"] = grouped["population"].fillna(grouped["population"].median())
     else:
