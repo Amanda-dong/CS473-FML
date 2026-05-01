@@ -36,7 +36,7 @@ def main() -> None:
     print(risk_diag["bic_table"].to_string(index=False))
 
     print(
-        f"\nRidge R² (cross-val): {forecast_diag['r2_mean']:.4f} ± {forecast_diag['r2_std']:.4f}"
+        f"\nRidge R² (in-sample): {forecast_diag['r2']:.4f}"
     )
     print(f"Ridge persistence baseline R²: {forecast_diag['baseline_r2']:.4f}")
     print("\nRidge feature coefficients:")
@@ -53,7 +53,7 @@ def main() -> None:
     print(forecast_diag["bottom_actual"].to_string(index=False))
 
     print(
-        f"\nEntry Ridge R² (cross-val): {entry_diag['r2_mean']:.4f} ± {entry_diag['r2_std']:.4f}"
+        f"\nEntry Ridge R² (in-sample): {entry_diag['r2']:.4f}"
     )
     print(f"Entry Ridge persistence baseline R²: {entry_diag['baseline_r2']:.4f}")
     print("\nEntry Ridge feature coefficients:")
@@ -101,14 +101,16 @@ def main() -> None:
     )
     if lisa_available and lisa_df is not None:
         final = final.merge(lisa_df, on="nta_id", how="left")
-        for col in ["lisa_q", "lisa_p", "lisa_sig", "lisa_opportunity"]:
+        for col in ["moran_ii", "moran_p", "moran_q", "lisa_opportunity"]:
             if col in final.columns:
                 if col == "lisa_opportunity":
                     final[col] = final[col].fillna(False)
-                elif col == "lisa_q":
-                    final[col] = final[col].fillna(0)
-                else:
+                elif col == "moran_ii":
+                    final[col] = final[col].fillna(0.0)
+                elif col == "moran_p":
                     final[col] = final[col].fillna(1.0)
+                else:
+                    final[col] = final[col].fillna("LL")
 
     final["high_risk_prob"] = final["high_risk_prob"].fillna(0.5)
     median_forecast = (

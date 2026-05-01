@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from pathlib import Path
 
 import pandas as pd
@@ -29,6 +30,7 @@ LABEL_CANDIDATES = [
 ]
 
 
+@functools.lru_cache(maxsize=1)
 def _load_yearly_nta_signals() -> pd.DataFrame:
     reviews = pd.read_csv(YELP_REVIEWS)
     gemini = pd.read_csv(GEMINI_LABELS)
@@ -165,7 +167,7 @@ def build_forecast():
 
     forecast_df = model_df[["nta_id", "halal_demand_forecast"]].copy()
     diagnostics = {
-        "r2_mean": r2_score(y, model.predict(X)),
+        "r2_insample": r2_score(y, model.predict(X)),
         "r2_std": 0.0,
         "best_alpha": best_alpha,
         "baseline_r2": baseline_r2,
@@ -313,7 +315,7 @@ def build_entry_forecast():
 
     forecast_df = model_df[["nta_id", "new_halal_entry_forecast"]].copy()
     diagnostics = {
-        "r2_mean": r2_score(y, model.predict(X)),
+        "r2_insample": r2_score(y, model.predict(X)),
         "r2_std": 0.0,
         "best_alpha": best_alpha,
         "baseline_r2": baseline_r2,

@@ -172,7 +172,7 @@ def build_demand() -> pd.DataFrame:
         (grouped["halal_count"] / grouped["population"].replace(0, pd.NA)) * 1000
     ).fillna(0.0).clip(lower=0.0)
     # Bayesian Beta credible intervals (80%) for halal share
-    h = grouped["halal_count"].round().clip(lower=0)
+    h = grouped['halal_count'].clip(lower=0)
     n = grouped["total_reviews"].clip(lower=1)
     grouped["demand_ci_lo"] = _beta_dist.ppf(0.1, h + 1, n - h + 1)
     grouped["demand_ci_hi"] = _beta_dist.ppf(0.9, h + 1, n - h + 1)

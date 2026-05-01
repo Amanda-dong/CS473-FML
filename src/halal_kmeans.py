@@ -26,8 +26,11 @@ class HalalKMeans:
         first_idx = int(rng.integers(0, len(X)))
         centroids = [X[first_idx].copy()]
         for _ in range(1, self.k):
-            dists = np.array([min(np.sum((x - c) ** 2) for c in centroids) for x in X])
-            probs = dists / dists.sum()
+            C = np.array(centroids)  # shape (len_so_far, d)
+            sq_dists = ((X[:, None, :] - C[None, :, :]) ** 2).sum(axis=-1)  # (n, len_so_far)
+            dists = sq_dists.min(axis=1)  # (n,)
+            total = dists.sum()
+            probs = dists / total if total > 0 else np.ones(len(X)) / len(X)
             next_idx = int(rng.choice(len(X), p=probs))
             centroids.append(X[next_idx].copy())
         self.centroids_ = np.array(centroids)

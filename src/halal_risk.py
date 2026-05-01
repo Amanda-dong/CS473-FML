@@ -67,14 +67,8 @@ def _zscore(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 def build_viability(cfg=CFG) -> pd.DataFrame:
     agg = _load_inspection_agg()
 
-    z_grade = (agg["grade_a_rate"] - agg["grade_a_rate"].mean()) / max(
-        agg["grade_a_rate"].std(), 1e-6
-    )
-    z_critical = (agg["critical_rate"] - agg["critical_rate"].mean()) / max(
-        agg["critical_rate"].std(), 1e-6
-    )
-
-    raw = z_grade - z_critical
+    tmp = _zscore(agg[['grade_a_rate', 'critical_rate']], ['grade_a_rate', 'critical_rate'])
+    raw = tmp['grade_a_rate'] - tmp['critical_rate']
     min_r = raw.min()
     max_r = raw.max()
     agg["viability_score"] = (raw - min_r) / (max_r - min_r) if max_r != min_r else 0.5

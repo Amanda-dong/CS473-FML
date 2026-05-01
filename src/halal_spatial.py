@@ -31,21 +31,15 @@ def _load_centroids() -> pd.DataFrame:
         if 'the_geom' not in df.columns or 'NTA2020' not in df.columns:
             return pd.DataFrame(columns=['nta_id', 'lon', 'lat'])
         
-        centroids = []
-        for _, row in df.iterrows():
+        def _parse_centroid(row):
             try:
-                # the_geom contains WKT MULTIPOLYGON strings
                 geom = wkt_loads(row['the_geom'])
-                centroid = geom.centroid
-                centroids.append({
-                    'nta_id': row['NTA2020'],
-                    'lon': centroid.x,
-                    'lat': centroid.y
-                })
+                c = geom.centroid
+                return pd.Series({'nta_id': row['NTA2020'], 'lon': c.x, 'lat': c.y})
             except Exception:
-                continue
-                
-        return pd.DataFrame(centroids)
+                return pd.Series({'nta_id': row['NTA2020'], 'lon': float('nan'), 'lat': float('nan')})
+        centroid_df = df.apply(_parse_centroid, axis=1).dropna(subset=['lon', 'lat'])
+        return centroid_df.reset_index(drop=True)
     except Exception:
         return pd.DataFrame(columns=['nta_id', 'lon', 'lat'])
 
