@@ -6,6 +6,32 @@ Due to GitHub file size limits and dataset licensing constraints, several large 
 
 ---
 
+## Pivot Note (read first)
+
+This project moved from [`main-pre-pivot`](https://github.com/Amanda-dong/CS473-FML/tree/main-pre-pivot) to the current [`main`](https://github.com/Amanda-dong/CS473-FML/tree/main) implementation.
+
+**Why we changed:**
+In the integrated feature pipeline, missing-value pressure was high in several joins, which increased fallback/imputation usage (including median-based fills). That made some outputs less reliable for decision-facing recommendations. The current branch prioritizes realistic model-facing behavior and clearer output interpretation.
+
+**What `main-pre-pivot` used (simple summary):**
+- Broader integrated ETL/feature datasets across multiple NYC sources (see [pre-pivot design doc](https://github.com/Amanda-dong/CS473-FML/blob/main-pre-pivot/docs/Design.md) for the full list)
+- Full ML stack including trajectory clustering (k-means / GMM), survival modeling (Cox PH + Random Survival Forest), learned scoring (XGBoost), ranking (LambdaMART), and explainability modules
+
+**What we gained from the pivot:**
+- Elimination of cascading imputation chains that obscured signal provenance
+- Tighter control over each scoring component — every number in the final output is traceable to a documented formula
+- A cleaner separation between uncertainty (Bayesian credible intervals) and missing data, rather than blending them via median fills
+
+**What we still reuse from pre-pivot:**
+We explicitly reuse partial datasets, especially `data/raw/gemini_labels_full.csv`, `data/raw/yelp_reviews_with_zones.csv`, and `data/processed/inspections.parquet`. The code that generates these reused datasets lives in the `main-pre-pivot` branch. We do not claim full algorithm reuse — the current branch uses a different, purpose-built `halal_*` phase pipeline (described in [DESIGN.md](DESIGN.md)).
+
+**Branch references:**
+- [main](https://github.com/Amanda-dong/CS473-FML/tree/main) — current implementation
+- [main-pre-pivot](https://github.com/Amanda-dong/CS473-FML/tree/main-pre-pivot) — prior full-stack approach
+- [Pre-pivot design doc](https://github.com/Amanda-dong/CS473-FML/blob/main-pre-pivot/docs/Design.md)
+
+---
+
 ## Technical Abstract
 
 Our engine implements an advanced **Multi-Signal Bayesian Fusion** pipeline that resolves two fundamental problems in urban market analysis: circular demand bias (where low-supply neighborhoods appear low-demand) and spatial autocorrelation in opportunity rankings. By synthesizing latent demand signals from LLM-labeled review corpora, GMM-based probabilistic risk quantification, and spatial econometrics (Local Moran's I), the system distinguishes between perceived market saturation and genuine, structurally underserved opportunities.
