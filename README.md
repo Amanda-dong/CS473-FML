@@ -23,6 +23,9 @@ more stable decision support. The processed dataset can still contain
 fallback-imputed values (including median fills), but when the learned model is
 available (we pushed it in data/models), the app displays the trained model output without heuristic fallback output.
 
+For more real output, go to `main`:
+[CS473-FML main](https://github.com/Amanda-dong/CS473-FML/tree/main).
+
 ## Teammates
 
 - Amanda Dong (`yd2825`) — [GitHub](https://github.com/Amanda-dong)
