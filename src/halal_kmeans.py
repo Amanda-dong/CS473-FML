@@ -5,7 +5,9 @@ import pandas as pd
 
 
 class HalalKMeans:
-    def __init__(self, k: int = 4, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+    def __init__(
+        self, k: int = 4, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42
+    ):
         self.k = k
         self.max_iter = max_iter
         self.tol = tol
@@ -56,10 +58,7 @@ def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4):
     km.fit(X)
     work["cluster_id"] = km.labels_
 
-    centroid_raw = (
-        work.groupby("cluster_id", as_index=False)[feature_cols]
-        .mean()
-    )
+    centroid_raw = work.groupby("cluster_id", as_index=False)[feature_cols].mean()
     centroid_raw["market_type"] = ""
 
     remaining = set(centroid_raw["cluster_id"].astype(int).tolist())
@@ -67,11 +66,17 @@ def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4):
     rank_col = "gap_score" if "gap_score" in centroid_raw.columns else "demand_score"
     high_opp_candidates = centroid_raw[centroid_raw["demand_score"] > 0.5]
     if high_opp_candidates.empty:
-        high_opp_row = centroid_raw.sort_values([rank_col, "demand_score"], ascending=False).iloc[0]
+        high_opp_row = centroid_raw.sort_values(
+            [rank_col, "demand_score"], ascending=False
+        ).iloc[0]
     else:
-        high_opp_row = high_opp_candidates.sort_values([rank_col, "demand_score"], ascending=False).iloc[0]
+        high_opp_row = high_opp_candidates.sort_values(
+            [rank_col, "demand_score"], ascending=False
+        ).iloc[0]
     high_opp_id = int(high_opp_row["cluster_id"])
-    centroid_raw.loc[centroid_raw["cluster_id"] == high_opp_id, "market_type"] = "High Opportunity"
+    centroid_raw.loc[centroid_raw["cluster_id"] == high_opp_id, "market_type"] = (
+        "High Opportunity"
+    )
     remaining.discard(high_opp_id)
 
     if remaining:
@@ -81,23 +86,28 @@ def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4):
             .iloc[0]
         )
         established_id = int(established_row["cluster_id"])
-        centroid_raw.loc[centroid_raw["cluster_id"] == established_id, "market_type"] = "Established Hub"
+        centroid_raw.loc[
+            centroid_raw["cluster_id"] == established_id, "market_type"
+        ] = "Established Hub"
         remaining.discard(established_id)
 
     if remaining:
-        ordered_remaining = (
-            centroid_raw[centroid_raw["cluster_id"].isin(remaining)]
-            .sort_values("demand_score", ascending=False)
-        )
+        ordered_remaining = centroid_raw[
+            centroid_raw["cluster_id"].isin(remaining)
+        ].sort_values("demand_score", ascending=False)
         names = ["Growing Market", "Low Demand"]
         for row, name in zip(ordered_remaining.itertuples(index=False), names):
-            centroid_raw.loc[centroid_raw["cluster_id"] == int(row.cluster_id), "market_type"] = name
+            centroid_raw.loc[
+                centroid_raw["cluster_id"] == int(row.cluster_id), "market_type"
+            ] = name
             remaining.discard(int(row.cluster_id))
 
     for cid in remaining:
         centroid_raw.loc[centroid_raw["cluster_id"] == cid, "market_type"] = "Other"
 
-    cluster_to_name = dict(zip(centroid_raw["cluster_id"].astype(int), centroid_raw["market_type"]))
+    cluster_to_name = dict(
+        zip(centroid_raw["cluster_id"].astype(int), centroid_raw["market_type"])
+    )
     work["market_type"] = work["cluster_id"].map(cluster_to_name)
 
     counts = work["market_type"].value_counts()

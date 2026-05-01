@@ -4,7 +4,9 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-def build_similarity(df: pd.DataFrame, feature_cols: list[str], top_n: int = 3) -> pd.DataFrame:
+def build_similarity(
+    df: pd.DataFrame, feature_cols: list[str], top_n: int = 3
+) -> pd.DataFrame:
     work = df.dropna(subset=feature_cols).copy()
     means = work[feature_cols].mean()
     stds = work[feature_cols].std().replace(0, 1.0)

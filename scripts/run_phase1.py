@@ -64,7 +64,12 @@ def main() -> None:
     Xz = ((clustered[feature_cols] - means) / stds).to_numpy(dtype=float)
     sil = silhouette_score(Xz, clustered["cluster_id"].to_numpy())
 
-    size_df = clustered["market_type"].value_counts().rename_axis("market_type").reset_index(name="nta_count")
+    size_df = (
+        clustered["market_type"]
+        .value_counts()
+        .rename_axis("market_type")
+        .reset_index(name="nta_count")
+    )
     centroid_df = (
         clustered.groupby("market_type", as_index=False)[feature_cols]
         .mean()
@@ -86,7 +91,13 @@ def main() -> None:
     print("Top 3 NTAs per cluster:")
     for market_type, group in clustered.groupby("market_type"):
         top3 = group.nlargest(3, "gap_score")[
-            ["nta_id", "gap_score", "demand_score", "halal_supply_rate", "halal_cuisine_diversity"]
+            [
+                "nta_id",
+                "gap_score",
+                "demand_score",
+                "halal_supply_rate",
+                "halal_cuisine_diversity",
+            ]
         ]
         print(f"\n{market_type}")
         print(top3.to_string(index=False))

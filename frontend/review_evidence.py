@@ -58,7 +58,9 @@ def load_labeled_reviews(repo_root: Path) -> pd.DataFrame | None:
     df["nta_norm"] = df["nta"].astype(str).str.strip().str.upper()
     df["review_text"] = df["review_text"].fillna("").astype(str)
     if "halal_relevance" in df.columns:
-        df["halal_relevance"] = df["halal_relevance"].fillna("not_related").astype(str).str.strip()
+        df["halal_relevance"] = (
+            df["halal_relevance"].fillna("not_related").astype(str).str.strip()
+        )
     else:
         df["halal_relevance"] = "not_related"
 

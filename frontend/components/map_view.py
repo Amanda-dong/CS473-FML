@@ -65,7 +65,9 @@ ZONE_CENTERS = {
 }
 
 
-def _deterministic_jitter(nta_id: str, base_lat: float, base_lon: float) -> tuple[float, float]:
+def _deterministic_jitter(
+    nta_id: str, base_lat: float, base_lon: float
+) -> tuple[float, float]:
     seed = sum(ord(c) for c in nta_id)
     rng = random.Random(seed)
     return (

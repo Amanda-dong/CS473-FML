@@ -8,6 +8,8 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import KFold, cross_val_score
 
 
+from src.utils import HALAL_CUISINES
+
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 OUT_DIR = ROOT / "data" / "output"
@@ -18,14 +20,23 @@ HYGIENE = RAW / "restaurant_hygiene.csv"
 PHASE1 = OUT_DIR / "phase1_cluster_assignments.csv"
 
 JOIN_CANDIDATES = ["review_id", "restaurant_id", "business_id"]
-LABEL_CANDIDATES = ["halal_label", "label", "gemini_label", "category", "halal_relevance"]
+LABEL_CANDIDATES = [
+    "halal_label",
+    "label",
+    "gemini_label",
+    "category",
+    "halal_relevance",
+]
 
 
 def _load_yearly_nta_signals() -> pd.DataFrame:
     reviews = pd.read_csv(YELP_REVIEWS)
     gemini = pd.read_csv(GEMINI_LABELS)
 
-    join_key = next((c for c in JOIN_CANDIDATES if c in reviews.columns and c in gemini.columns), None)
+    join_key = next(
+        (c for c in JOIN_CANDIDATES if c in reviews.columns and c in gemini.columns),
+        None,
+    )
     label_col = next((c for c in LABEL_CANDIDATES if c in gemini.columns), None)
     if join_key is None or label_col is None:
         raise ValueError("Could not resolve Yelp/Gemini join key or label column.")
@@ -39,22 +50,23 @@ def _load_yearly_nta_signals() -> pd.DataFrame:
     joined = joined.dropna(subset=["nta", "year"]).copy()
 
     label = joined[label_col].fillna("").astype(str).str.lower()
-    joined["is_halal"] = label.str.contains("halal", case=False, regex=False).astype(int)
+    joined["is_halal"] = label.str.contains("halal", case=False, regex=False).astype(
+        int
+    )
     joined["is_explicit"] = label.eq("explicit_halal").astype(int)
 
-    agg = (
-        joined.groupby(["nta", "year"], as_index=False)
-        .agg(
-            total_reviews=("review_id", "count"),
-            halal_count=("is_halal", "sum"),
-            explicit_count=("is_explicit", "sum"),
-        )
+    agg = joined.groupby(["nta", "year"], as_index=False).agg(
+        total_reviews=("review_id", "count"),
+        halal_count=("is_halal", "sum"),
+        explicit_count=("is_explicit", "sum"),
     )
     agg["halal_related_share"] = agg["halal_count"] / agg["total_reviews"]
     agg["explicit_halal_share"] = agg["explicit_count"] / agg["total_reviews"]
 
     global_mean = agg["halal_count"].sum() / agg["total_reviews"].sum()
-    agg["shrunk_share"] = (agg["halal_count"] + 10 * global_mean) / (agg["total_reviews"] + 10)
+    agg["shrunk_share"] = (agg["halal_count"] + 10 * global_mean) / (
+        agg["total_reviews"] + 10
+    )
     return agg.rename(columns={"nta": "nta_id"})
 
 
@@ -122,17 +134,33 @@ def build_forecast():
         cols = [c for c in feature_cols if c != col]
         ab_model = Ridge(alpha=1.0)
         ab_scores = cross_val_score(ab_model, model_df[cols], y, cv=cv, scoring="r2")
-        ablation_rows.append({"dropped_feature": col, "r2_mean": ab_scores.mean(), "r2_std": ab_scores.std()})
+        ablation_rows.append(
+            {
+                "dropped_feature": col,
+                "r2_mean": ab_scores.mean(),
+                "r2_std": ab_scores.std(),
+            }
+        )
     ablation_df = pd.DataFrame(ablation_rows)
 
     baseline_pred = model_df["halal_related_share_2022"].to_numpy()
     baseline_r2 = r2_score(y, baseline_pred)
 
     top_actual = model_df.nlargest(5, "halal_related_share_2023")[
-        ["nta_id", "halal_related_share_2022", "halal_related_share_2023", "halal_demand_forecast"]
+        [
+            "nta_id",
+            "halal_related_share_2022",
+            "halal_related_share_2023",
+            "halal_demand_forecast",
+        ]
     ]
     bottom_actual = model_df.nsmallest(5, "halal_related_share_2023")[
-        ["nta_id", "halal_related_share_2022", "halal_related_share_2023", "halal_demand_forecast"]
+        [
+            "nta_id",
+            "halal_related_share_2022",
+            "halal_related_share_2023",
+            "halal_demand_forecast",
+        ]
     ]
 
     forecast_df = model_df[["nta_id", "halal_demand_forecast"]].copy()
@@ -152,29 +180,27 @@ def build_forecast():
 def build_entry_forecast():
     yearly = _load_yearly_nta_signals()
     phase1 = pd.read_csv(PHASE1)[
-        ["nta_id", "demand_score", "gap_score", "halal_cuisine_diversity", "halal_supply_rate"]
+        [
+            "nta_id",
+            "demand_score",
+            "gap_score",
+            "halal_cuisine_diversity",
+            "halal_supply_rate",
+        ]
     ].copy()
 
     hygiene = pd.read_csv(HYGIENE)
-    hygiene["INSPECTION DATE"] = pd.to_datetime(hygiene["INSPECTION DATE"], errors="coerce")
+    hygiene["INSPECTION DATE"] = pd.to_datetime(
+        hygiene["INSPECTION DATE"], errors="coerce"
+    )
     hygiene["year"] = hygiene["INSPECTION DATE"].dt.year
     hygiene = hygiene[hygiene["year"].between(2010, 2025)].copy()
 
-    halal_cuisines = {
-        "Halal",
-        "Middle Eastern",
-        "Pakistani",
-        "Bangladeshi",
-        "Afghan",
-        "Egyptian",
-        "Turkish",
-        "Moroccan",
-        "Lebanese",
-        "Persian/Iranian",
-    }
-    hygiene = hygiene[hygiene["CUISINE DESCRIPTION"].isin(halal_cuisines)].dropna(
-        subset=["CAMIS", "NTA", "INSPECTION DATE"]
+    # Use shared HALAL_CUISINES (lowercase) — apply .str.lower() for CAMIS title-case data
+    halal_mask = (
+        hygiene["CUISINE DESCRIPTION"].str.strip().str.lower().isin(HALAL_CUISINES)
     )
+    hygiene = hygiene[halal_mask].dropna(subset=["CAMIS", "NTA", "INSPECTION DATE"])
 
     first_seen = (
         hygiene.groupby("CAMIS", as_index=False)["INSPECTION DATE"]
@@ -187,19 +213,21 @@ def build_entry_forecast():
         .drop_duplicates(subset=["CAMIS"])[["CAMIS", "NTA"]]
         .rename(columns={"NTA": "nta_id"})
     )
-    new_halal = camis_nta.merge(first_seen[["CAMIS", "first_year"]], on="CAMIS", how="inner")
+    new_halal = camis_nta.merge(
+        first_seen[["CAMIS", "first_year"]], on="CAMIS", how="inner"
+    )
     new_counts = (
         new_halal.groupby(["nta_id", "first_year"], as_index=False)["CAMIS"]
         .nunique()
         .rename(columns={"CAMIS": "new_halal_count"})
     )
 
-    n2023 = new_counts[new_counts["first_year"] == 2023][["nta_id", "new_halal_count"]].rename(
-        columns={"new_halal_count": "new_halal_count_2023"}
-    )
-    n2024 = new_counts[new_counts["first_year"] == 2024][["nta_id", "new_halal_count"]].rename(
-        columns={"new_halal_count": "new_halal_count_2024"}
-    )
+    n2023 = new_counts[new_counts["first_year"] == 2023][
+        ["nta_id", "new_halal_count"]
+    ].rename(columns={"new_halal_count": "new_halal_count_2023"})
+    n2024 = new_counts[new_counts["first_year"] == 2024][
+        ["nta_id", "new_halal_count"]
+    ].rename(columns={"new_halal_count": "new_halal_count_2024"})
     y2023 = yearly[(yearly["year"] == 2023) & (yearly["total_reviews"] >= 3)].copy()
     feature_year = y2023[
         ["nta_id", "shrunk_share", "explicit_halal_share", "total_reviews"]
@@ -238,9 +266,9 @@ def build_entry_forecast():
     model = Ridge(alpha=1.0)
     r2_scores = cross_val_score(model, X, y, cv=cv, scoring="r2")
     model.fit(X, y)
-    model_df["new_halal_entry_forecast"] = pd.Series(model.predict(X), index=model_df.index).clip(
-        lower=0.0
-    )
+    model_df["new_halal_entry_forecast"] = pd.Series(
+        model.predict(X), index=model_df.index
+    ).clip(lower=0.0)
 
     coef_df = pd.DataFrame({"feature": feature_cols, "coefficient": model.coef_})
 
@@ -250,7 +278,11 @@ def build_entry_forecast():
         ab_model = Ridge(alpha=1.0)
         ab_scores = cross_val_score(ab_model, model_df[cols], y, cv=cv, scoring="r2")
         ablation_rows.append(
-            {"dropped_feature": col, "r2_mean": ab_scores.mean(), "r2_std": ab_scores.std()}
+            {
+                "dropped_feature": col,
+                "r2_mean": ab_scores.mean(),
+                "r2_std": ab_scores.std(),
+            }
         )
     ablation_df = pd.DataFrame(ablation_rows)
 
@@ -258,10 +290,20 @@ def build_entry_forecast():
     baseline_r2 = r2_score(y, baseline_pred)
 
     top_actual = model_df.nlargest(5, "new_halal_count_2024")[
-        ["nta_id", "new_halal_count_2023", "new_halal_count_2024", "new_halal_entry_forecast"]
+        [
+            "nta_id",
+            "new_halal_count_2023",
+            "new_halal_count_2024",
+            "new_halal_entry_forecast",
+        ]
     ]
     bottom_actual = model_df.nsmallest(5, "new_halal_count_2024")[
-        ["nta_id", "new_halal_count_2023", "new_halal_count_2024", "new_halal_entry_forecast"]
+        [
+            "nta_id",
+            "new_halal_count_2023",
+            "new_halal_count_2024",
+            "new_halal_entry_forecast",
+        ]
     ]
 
     forecast_df = model_df[["nta_id", "new_halal_entry_forecast"]].copy()

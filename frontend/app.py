@@ -45,6 +45,7 @@ BOROUGH_PREFIX = {
     "Staten Island": "SI",
 }
 
+
 def filter_recommendations(
     df: pd.DataFrame,
     borough: str | None,
@@ -128,6 +129,7 @@ def main() -> None:
         filtered,
         repo_root=_REPO_ROOT,
         review_pool=review_pool,
+        df_all=df_all,
     )
 
 

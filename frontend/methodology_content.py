@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-APPROACH_IMAGE = (
-    "/Users/amandadongsmacbookpro/Desktop/截屏2026-05-01 00.51.55.png"
-)
+APPROACH_IMAGE = "/Users/amandadongsmacbookpro/Desktop/截屏2026-05-01 00.51.55.png"
 
 
 def render_methodology_page() -> None:
@@ -22,7 +20,9 @@ def render_methodology_page() -> None:
         - Public data comes with survivorship bias, platform coverage gaps, and neighborhood-level masking.
         """
     )
-    st.caption("The challenge is not a lack of neighborhoods — it is a lack of halal-specific decision support.")
+    st.caption(
+        "The challenge is not a lack of neighborhoods — it is a lack of halal-specific decision support."
+    )
 
     st.divider()
 
@@ -94,7 +94,9 @@ def render_methodology_page() -> None:
     st.markdown(
         "> `final_score = 0.4 × demand_score + 0.4 × gap_score + 0.2 × viability_score`"
     )
-    st.markdown("**Viability** is a rule-based index from NYC restaurant inspection data:")
+    st.markdown(
+        "**Viability** is a rule-based index from NYC restaurant inspection data:"
+    )
     st.markdown("- −1 point if critical violation rate > 75th percentile")
     st.markdown("- −1 point if Grade A rate < 25th percentile")
     st.write(

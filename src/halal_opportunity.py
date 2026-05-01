@@ -4,32 +4,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.utils import HALAL_CUISINES, minmax as _minmax
+
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 HYGIENE = RAW / "restaurant_hygiene.csv"
-
-HALAL_CUISINES = {
-    "halal",
-    "middle eastern",
-    "pakistani",
-    "bangladeshi",
-    "afghan",
-    "egyptian",
-    "turkish",
-    "moroccan",
-    "lebanese",
-    "persian/iranian",
-}
-
-
-def _minmax(series: pd.Series) -> pd.Series:
-    s = series.astype(float)
-    min_v = s.min()
-    max_v = s.max()
-    if pd.isna(min_v) or pd.isna(max_v) or max_v == min_v:
-        return pd.Series(0.0, index=s.index)
-    return (s - min_v) / (max_v - min_v)
 
 
 def build_supply() -> pd.DataFrame:
@@ -40,14 +20,13 @@ def build_supply() -> pd.DataFrame:
     cuisine = df["CUISINE DESCRIPTION"].fillna("").astype(str).str.strip().str.lower()
     df["is_halal"] = cuisine.isin(HALAL_CUISINES).astype(int)
 
-    grouped = (
-        df.groupby("nta_id", as_index=False)
-        .agg(
-            total_restaurants=("CAMIS", "count"),
-            halal_restaurants=("is_halal", "sum"),
-        )
+    grouped = df.groupby("nta_id", as_index=False).agg(
+        total_restaurants=("CAMIS", "count"),
+        halal_restaurants=("is_halal", "sum"),
     )
-    grouped["halal_supply_rate"] = grouped["halal_restaurants"] / grouped["total_restaurants"]
+    grouped["halal_supply_rate"] = (
+        grouped["halal_restaurants"] / grouped["total_restaurants"]
+    )
     halal_diversity = (
         df[df["is_halal"] == 1]
         .groupby("nta_id", as_index=False)["CUISINE DESCRIPTION"]
@@ -55,7 +34,9 @@ def build_supply() -> pd.DataFrame:
         .rename(columns={"CUISINE DESCRIPTION": "halal_cuisine_diversity"})
     )
     grouped = grouped.merge(halal_diversity, on="nta_id", how="left")
-    grouped["halal_cuisine_diversity"] = grouped["halal_cuisine_diversity"].fillna(0).astype(float)
+    grouped["halal_cuisine_diversity"] = (
+        grouped["halal_cuisine_diversity"].fillna(0).astype(float)
+    )
     return grouped[
         [
             "nta_id",

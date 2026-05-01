@@ -48,7 +48,11 @@ def main() -> None:
     print("\nRidge feature coefficients:")
     print(forecast_diag["coefficients"].to_string(index=False))
     print("\nRidge ablation table:")
-    print(forecast_diag["ablation"].to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+    print(
+        forecast_diag["ablation"].to_string(
+            index=False, float_format=lambda x: f"{x:.4f}"
+        )
+    )
     print("\nPredicted vs actual halal_related_share — Top 5 actual:")
     print(forecast_diag["top_actual"].to_string(index=False))
     print("\nPredicted vs actual halal_related_share — Bottom 5 actual:")
@@ -61,7 +65,9 @@ def main() -> None:
     print("\nEntry Ridge feature coefficients:")
     print(entry_diag["coefficients"].to_string(index=False))
     print("\nEntry Ridge ablation table:")
-    print(entry_diag["ablation"].to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+    print(
+        entry_diag["ablation"].to_string(index=False, float_format=lambda x: f"{x:.4f}")
+    )
     print("\nPredicted vs actual new halal count — Top 5 actual:")
     print(entry_diag["top_actual"].to_string(index=False))
     print("\nPredicted vs actual new halal count — Bottom 5 actual:")
@@ -91,10 +97,20 @@ def main() -> None:
         .merge(entry_df, on="nta_id", how="left")
     )
     final["high_risk_prob"] = final["high_risk_prob"].fillna(0.5)
-    median_forecast = float(forecast_df["halal_demand_forecast"].median()) if len(forecast_df) else 0.5
-    final["halal_demand_forecast"] = final["halal_demand_forecast"].fillna(median_forecast)
-    median_entry = float(entry_df["new_halal_entry_forecast"].median()) if len(entry_df) else 0.0
-    final["new_halal_entry_forecast"] = final["new_halal_entry_forecast"].fillna(median_entry)
+    median_forecast = (
+        float(forecast_df["halal_demand_forecast"].median())
+        if len(forecast_df)
+        else 0.5
+    )
+    final["halal_demand_forecast"] = final["halal_demand_forecast"].fillna(
+        median_forecast
+    )
+    median_entry = (
+        float(entry_df["new_halal_entry_forecast"].median()) if len(entry_df) else 0.0
+    )
+    final["new_halal_entry_forecast"] = final["new_halal_entry_forecast"].fillna(
+        median_entry
+    )
     final["risk_bucket"] = final["risk_bucket"].fillna("Unknown")
     final["risk_confidence"] = final["risk_confidence"].fillna("Low confidence")
     final["halal_demand_forecast_norm"] = _minmax(final["halal_demand_forecast"])
@@ -103,7 +119,9 @@ def main() -> None:
         * (1 - 0.15 * final["high_risk_prob"])
         * (1 + 0.10 * final["halal_demand_forecast_norm"])
     )
-    final = final.sort_values("final_score_adjusted", ascending=False).reset_index(drop=True)
+    final = final.sort_values("final_score_adjusted", ascending=False).reset_index(
+        drop=True
+    )
     final["rank"] = range(1, len(final) + 1)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

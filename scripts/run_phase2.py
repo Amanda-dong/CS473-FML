@@ -27,9 +27,7 @@ def main() -> None:
     df["risk_bucket"] = df["risk_bucket"].fillna("Unknown")
 
     df["final_score"] = (
-        0.4 * df["demand_score"]
-        + 0.4 * df["gap_score"]
-        + 0.2 * df["viability_score"]
+        0.4 * df["demand_score"] + 0.4 * df["gap_score"] + 0.2 * df["viability_score"]
     )
 
     feature_cols = ["demand_score", "halal_supply_rate", "gap_score", "viability_score"]
@@ -39,7 +37,12 @@ def main() -> None:
     df["rank"] = range(1, len(df) + 1)
 
     top10 = df.head(10)
-    cluster_dist = top10["market_type"].value_counts().rename_axis("market_type").reset_index(name="count")
+    cluster_dist = (
+        top10["market_type"]
+        .value_counts()
+        .rename_axis("market_type")
+        .reset_index(name="count")
+    )
 
     gap_rank = df["gap_score"].rank(ascending=False, method="average")
     final_rank = df["final_score"].rank(ascending=False, method="average")
@@ -50,7 +53,9 @@ def main() -> None:
 
     print("Cluster distribution of Top 10:")
     print(cluster_dist.to_string(index=False))
-    print(f"\nSpearman correlation (gap_score rank vs final_score rank): {spearman_val:.4f}")
+    print(
+        f"\nSpearman correlation (gap_score rank vs final_score rank): {spearman_val:.4f}"
+    )
     print("\nTop 5 NTA summary:")
     cols = [
         "rank",

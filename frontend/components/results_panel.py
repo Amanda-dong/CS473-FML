@@ -1,4 +1,4 @@
-"""Results panel — renders a list of recommendation cards."""
+"""Results panel — renders ranking bar chart + recommendation cards."""
 
 from __future__ import annotations
 
@@ -21,12 +21,82 @@ _EXPORT_COLUMNS = [
     "similar_ntas",
 ]
 
+MARKET_TYPE_COLOR = {
+    "High Opportunity": "#e63946",
+    "Established Hub": "#457b9d",
+    "Growing Market": "#2a9d8f",
+    "Low Demand": "#adb5bd",
+}
+
+
+def _render_ranking_chart(df_all: pd.DataFrame, df_highlight: pd.DataFrame) -> None:
+    """Horizontal bar chart — all NTAs in grey, highlighted shortlist in color."""
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
+        return
+
+    if df_all is None or df_all.empty:
+        return
+
+    plot_df = df_all.sort_values("final_score", ascending=True).copy()
+    highlight_ids = (
+        set(df_highlight["nta_id"].astype(str).tolist())
+        if df_highlight is not None
+        else set()
+    )
+
+    colors = [
+        MARKET_TYPE_COLOR.get(str(row.get("market_type", "")), "#adb5bd")
+        if str(row.get("nta_id", "")) in highlight_ids
+        else "rgba(180,180,180,0.3)"
+        for _, row in plot_df.iterrows()
+    ]
+    labels = [
+        _display_name(str(nta)) if str(nta) in highlight_ids else ""
+        for nta in plot_df["nta_id"]
+    ]
+
+    fig = go.Figure(
+        go.Bar(
+            x=plot_df["final_score"].tolist(),
+            y=list(range(len(plot_df))),
+            orientation="h",
+            marker_color=colors,
+            text=labels,
+            textposition="outside",
+            textfont=dict(size=10),
+            hovertemplate="<b>%{customdata[0]}</b><br>Score: %{x:.3f}<br>Type: %{customdata[1]}<extra></extra>",
+            customdata=list(
+                zip(
+                    plot_df["nta_id"].astype(str).tolist(),
+                    plot_df["market_type"].astype(str).tolist(),
+                )
+            ),
+        )
+    )
+    fig.update_layout(
+        height=max(180, min(len(plot_df) * 5, 340)),
+        margin=dict(l=0, r=120, t=8, b=8),
+        xaxis=dict(title="Overall Score", range=[0, 1.05]),
+        yaxis=dict(visible=False),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        title=dict(
+            text="Your shortlist vs all scored neighborhoods",
+            font=dict(size=12),
+            x=0,
+        ),
+    )
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
 
 def render_results_panel(
     df: pd.DataFrame,
     *,
     repo_root=None,
     review_pool: pd.DataFrame | None = None,
+    df_all: pd.DataFrame | None = None,
 ) -> None:
     st.subheader("Best Matches")
     st.caption(
@@ -45,6 +115,16 @@ def render_results_panel(
     c2.metric("Best score", f"{float(top_row.get('final_score', 0.0)):.3f}")
     c3.metric("Top risk level", str(top_row.get("risk_bucket", "—")))
     st.caption("Higher scores rank first. Risk is shown separately in each card.")
+
+    # City-wide ranking context chart
+    if df_all is not None and not df_all.empty:
+        with st.expander("📊 Where your shortlist ranks city-wide", expanded=True):
+            _render_ranking_chart(df_all, df)
+            st.caption(
+                "Colored bars = your current shortlist (by market type). "
+                "Grey bars = all other scored neighborhoods."
+            )
+
     st.divider()
 
     for i, (_, row) in enumerate(df.iterrows()):

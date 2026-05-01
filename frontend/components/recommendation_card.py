@@ -156,6 +156,99 @@ def _halal_rel_badge(label: str) -> str:
     }.get(label, label.replace("_", " ").title())
 
 
+def _build_radar_chart(
+    demand: float,
+    gap: float,
+    viability: float,
+    risk_prob: float,
+    forecast_norm: float,
+) -> "go.Figure":
+    """Radar chart: 5 opportunity dimensions, all on [0, 1]."""
+    import plotly.graph_objects as go
+
+    categories = [
+        "Halal Demand",
+        "Market Gap",
+        "Operating Safety",
+        "Low Risk",
+        "Future Trend",
+    ]
+    values = [
+        float(demand or 0),
+        float(gap or 0),
+        float(viability or 0),
+        1.0 - float(risk_prob or 0.5),
+        float(forecast_norm or 0.5),
+    ]
+    values_closed = values + [values[0]]
+    cats_closed = categories + [categories[0]]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatterpolar(
+            r=values_closed,
+            theta=cats_closed,
+            fill="toself",
+            fillcolor="rgba(255,75,75,0.15)",
+            line=dict(color="rgba(255,75,75,0.8)", width=2),
+            name="Profile",
+        )
+    )
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True, range=[0, 1], tickfont=dict(size=9), showticklabels=False
+            ),
+            angularaxis=dict(tickfont=dict(size=10)),
+        ),
+        showlegend=False,
+        margin=dict(l=40, r=40, t=20, b=20),
+        height=220,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
+
+
+def _opportunity_summary(
+    demand: float,
+    gap: float,
+    viability: float,
+    risk_bucket: str,
+    market_type: str,
+    diversity: int,
+) -> str:
+    """Generate plain-English 2-sentence opportunity summary from signal values."""
+    d = float(demand or 0)
+    g = float(gap or 0)
+    v = float(viability or 0)
+
+    demand_txt = (
+        "strong halal interest"
+        if d >= 0.5
+        else ("moderate halal interest" if d >= 0.25 else "low halal awareness")
+    )
+    gap_txt = (
+        "few existing halal options"
+        if g >= 0.5
+        else ("some competition" if g >= 0.2 else "an established halal scene")
+    )
+    risk_txt = {
+        "Low": "low operating risk",
+        "Medium": "moderate inspection risk",
+        "High": "elevated regulatory risk",
+    }.get(risk_bucket, "unknown risk level")
+    diversity_txt = (
+        f"{diversity} halal cuisine type{'s' if diversity != 1 else ''} already present"
+        if diversity > 0
+        else "no recorded halal presence"
+    )
+
+    sentence1 = f"This area shows **{demand_txt}** with **{gap_txt}**, placing it in the **{market_type}** segment."
+    sentence2 = f"Operating environment has **{risk_txt}** — {diversity_txt}."
+    return sentence1 + "  \n" + sentence2
+
+
 def render_recommendation_card(
     row: dict,
     rank: int,
@@ -168,12 +261,14 @@ def render_recommendation_card(
     final_score = row.get("final_score", 0.0)
     demand_score = row.get("demand_score", 0.0)
     gap_score = row.get("gap_score", 0.0)
+    viability_score = row.get("viability_score", 0.5)
     halal_supply_rate = row.get("halal_supply_rate", 0.0)
     halal_cuisine_diversity = row.get("halal_cuisine_diversity", 0)
     risk_bucket = str(row.get("risk_bucket", "Unknown"))
     risk_confidence = str(row.get("risk_confidence", ""))
     high_risk_prob = row.get("high_risk_prob", 0.5)
     halal_demand_forecast = row.get("halal_demand_forecast", None)
+    halal_demand_forecast_norm = row.get("halal_demand_forecast_norm", None)
     similar_ntas_raw = str(row.get("similar_ntas", "") or "")
     similar_ntas = [s.strip() for s in similar_ntas_raw.split(",") if s.strip()]
 
@@ -190,31 +285,60 @@ def render_recommendation_card(
         with col_badge:
             st.markdown(f"**{emoji} {market_type}**")
 
-        # Main scores
-        c1, c2, c3 = st.columns(3)
-        c1.metric(
-            "Overall fit",
-            _fmt_score(final_score),
-            help="This is the main overall ranking score for this neighborhood.",
-        )
-        c2.metric(
-            "Local interest",
-            _signal_label(demand_score),
-            help="A review-based signal for halal interest in the area.",
-        )
-        c3.metric(
-            "Open space",
-            _signal_label(gap_score),
-            help="A simple read on how under-served the area may be for halal food.",
+        # Plain-English summary
+        st.markdown(
+            _opportunity_summary(
+                demand_score,
+                gap_score,
+                viability_score,
+                risk_bucket,
+                market_type,
+                int(halal_cuisine_diversity or 0),
+            )
         )
 
-        st.progress(float(final_score) if final_score else 0.0)
-        st.caption(
-            "Quick read: a stronger overall fit means a better rank. Risk is shown separately below."
-        )
+        # Radar + metrics side by side
+        col_radar, col_metrics = st.columns([2, 3])
+        with col_radar:
+            try:
+                fig = _build_radar_chart(
+                    demand_score,
+                    gap_score,
+                    viability_score,
+                    high_risk_prob,
+                    halal_demand_forecast_norm,
+                )
+                st.plotly_chart(
+                    fig, use_container_width=True, config={"displayModeBar": False}
+                )
+            except Exception:
+                pass
+        with col_metrics:
+            c1, c2, c3 = st.columns(3)
+            c1.metric(
+                "Overall fit",
+                _fmt_score(final_score),
+                help="Main ranking score: 0.4×demand + 0.4×gap + 0.2×viability.",
+            )
+            c2.metric(
+                "Demand",
+                _signal_label(demand_score),
+                help="Bayesian-shrunk halal review share across Yelp data.",
+            )
+            c3.metric(
+                "Gap",
+                _signal_label(gap_score),
+                help="max(demand − supply, 0) — unmet demand proxy.",
+            )
+            st.progress(float(final_score) if final_score else 0.0)
+            st.caption(
+                "Score = 0.4×demand + 0.4×gap + 0.2×viability. Radar shows 5 dimensions."
+            )
 
         # Yelp / Gemini labeled review evidence for this zone
-        with st.expander("Review evidence — sample Yelp rows (Gemini labels)", expanded=False):
+        with st.expander(
+            "Review evidence — sample Yelp rows (Gemini labels)", expanded=False
+        ):
             if review_pool is None or review_pool.empty:
                 hint = ""
                 if repo_root is not None:
@@ -224,7 +348,8 @@ def render_recommendation_card(
                     )
                 st.info(
                     "No review evidence loaded. Run the dashboard from the repo with "
-                    "`data/raw/gemini_labels_full.csv` present, or check the path.\n\n" + hint
+                    "`data/raw/gemini_labels_full.csv` present, or check the path.\n\n"
+                    + hint
                 )
             else:
                 st.markdown(
@@ -241,7 +366,9 @@ def render_recommendation_card(
 
                 counts = nta_review_counts(review_pool, nta_id)
                 if counts["total"] == 0:
-                    st.caption(f"No review rows mapped to **`{nta_id}`** in the labeled Yelp export.")
+                    st.caption(
+                        f"No review rows mapped to **`{nta_id}`** in the labeled Yelp export."
+                    )
                 else:
                     _other_note = ""
                     if counts.get("other_labels", 0) > 0:
@@ -268,12 +395,18 @@ def render_recommendation_card(
 
                         display_rows = []
                         for _, rr in samples.iterrows():
-                            name = rr.get("business_name") or rr.get("restaurant_id") or "Unknown venue"
+                            name = (
+                                rr.get("business_name")
+                                or rr.get("restaurant_id")
+                                or "Unknown venue"
+                            )
                             name = str(name).strip() or "Unknown venue"
                             rt = rr.get("rating")
                             rt_txt = f"★ {float(rt):.0f}" if pd.notna(rt) else ""
                             rel = rr.get("halal_relevance", "")
-                            txt = clip_review(str(rr.get("review_text", "")), max_chars=400)
+                            txt = clip_review(
+                                str(rr.get("review_text", "")), max_chars=400
+                            )
                             display_rows.append(
                                 {
                                     "Venue": name[:80],
@@ -282,7 +415,11 @@ def render_recommendation_card(
                                     "Review excerpt": txt,
                                 }
                             )
-                        st.dataframe(pd.DataFrame(display_rows), use_container_width=True, hide_index=True)
+                        st.dataframe(
+                            pd.DataFrame(display_rows),
+                            use_container_width=True,
+                            hide_index=True,
+                        )
 
         # Supply info
         diversity = int(halal_cuisine_diversity) if halal_cuisine_diversity else 0
@@ -339,8 +476,15 @@ def render_recommendation_card(
                     st.caption("Forecast not available for this neighborhood.")
             else:
                 st.caption("Forecast not available for this neighborhood.")
-            st.caption("Use this as a rough directional signal, not a precise prediction.")
+            st.caption(
+                "Use this as a rough directional signal, not a precise prediction."
+            )
 
         # Similar NTAs
         if similar_ntas:
-            st.caption("Similar areas: " + _format_similar_neighborhoods(similar_ntas))
+            with st.expander("Similar neighborhoods", expanded=False):
+                for nta in similar_ntas[:3]:
+                    st.markdown(f"- **{_display_name(nta)}** ({nta})")
+                st.caption(
+                    "Based on cosine similarity across demand, supply, gap, and viability signals."
+                )

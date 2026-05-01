@@ -24,9 +24,13 @@ GMM_FEATURES = [
 
 def _load_inspection_agg() -> pd.DataFrame:
     inspections = pd.read_parquet(INSPECTIONS)
-    inspections["inspection_date"] = pd.to_datetime(inspections["inspection_date"], errors="coerce")
+    inspections["inspection_date"] = pd.to_datetime(
+        inspections["inspection_date"], errors="coerce"
+    )
     inspections["year"] = inspections["inspection_date"].dt.year
-    inspections = inspections[(inspections["year"] >= 2020) & (inspections["year"] <= 2025)].copy()
+    inspections = inspections[
+        (inspections["year"] >= 2020) & (inspections["year"] <= 2025)
+    ].copy()
     inspections = inspections.dropna(subset=["nta_id"]).copy()
 
     critical = inspections["critical_flag"].fillna("").astype(str).str.upper()
@@ -34,14 +38,11 @@ def _load_inspection_agg() -> pd.DataFrame:
     inspections["is_critical"] = critical.eq("CRITICAL").astype(int)
     inspections["is_grade_a"] = grade.eq("A").astype(int)
 
-    agg = (
-        inspections.groupby("nta_id", as_index=False)
-        .agg(
-            critical_rate=("is_critical", "mean"),
-            grade_a_rate=("is_grade_a", "mean"),
-            inspection_count=("restaurant_id", "count"),
-            restaurant_count=("restaurant_id", pd.Series.nunique),
-        )
+    agg = inspections.groupby("nta_id", as_index=False).agg(
+        critical_rate=("is_critical", "mean"),
+        grade_a_rate=("is_grade_a", "mean"),
+        inspection_count=("restaurant_id", "count"),
+        restaurant_count=("restaurant_id", pd.Series.nunique),
     )
     agg["inspection_frequency"] = (
         agg["inspection_count"] / agg["restaurant_count"].replace(0, pd.NA)
@@ -64,22 +65,42 @@ def _zscore(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 def build_viability() -> pd.DataFrame:
     agg = _load_inspection_agg()
-    critical_q75 = agg["critical_rate"].quantile(0.75)
-    grade_a_q25 = agg["grade_a_rate"].quantile(0.25)
 
-    agg["risk_points"] = 0
-    agg.loc[agg["critical_rate"] > critical_q75, "risk_points"] += 1
-    agg.loc[agg["grade_a_rate"] < grade_a_q25, "risk_points"] += 1
-    agg["viability_score"] = 1 - (agg["risk_points"] / 2.0)
-    agg["risk_bucket"] = agg["risk_points"].map({0: "Low", 1: "Medium", 2: "High"}).fillna("Unknown")
-    return agg[["nta_id", "critical_rate", "grade_a_rate", "inspection_frequency", "viability_score", "risk_bucket"]].copy()
+    z_grade = (agg["grade_a_rate"] - agg["grade_a_rate"].mean()) / max(
+        agg["grade_a_rate"].std(), 1e-6
+    )
+    z_critical = (agg["critical_rate"] - agg["critical_rate"].mean()) / max(
+        agg["critical_rate"].std(), 1e-6
+    )
+
+    raw = z_grade - z_critical
+    min_r = raw.min()
+    max_r = raw.max()
+    agg["viability_score"] = (raw - min_r) / (max_r - min_r) if max_r != min_r else 0.5
+
+    agg["risk_bucket"] = agg["viability_score"].apply(
+        lambda v: "Low" if v >= 0.6 else ("Medium" if v >= 0.35 else "High")
+    )
+
+    return agg[
+        [
+            "nta_id",
+            "critical_rate",
+            "grade_a_rate",
+            "inspection_frequency",
+            "viability_score",
+            "risk_bucket",
+        ]
+    ].copy()
 
 
 def build_gmm_risk():
     agg = _load_inspection_agg()
 
     phase1 = pd.read_csv(PHASE1)[["nta_id", "demand_score", "halal_supply_rate"]].copy()
-    merged = agg.merge(phase1, on="nta_id", how="inner").dropna(subset=GMM_FEATURES).copy()
+    merged = (
+        agg.merge(phase1, on="nta_id", how="inner").dropna(subset=GMM_FEATURES).copy()
+    )
 
     z = _zscore(merged[GMM_FEATURES], GMM_FEATURES)
 
@@ -103,7 +124,9 @@ def build_gmm_risk():
     means_table["nta_count"] = merged["component"].value_counts().sort_index().to_list()
 
     ranked_components = (
-        means_table.sort_values("critical_rate_mean", ascending=False)["component"].astype(int).tolist()
+        means_table.sort_values("critical_rate_mean", ascending=False)["component"]
+        .astype(int)
+        .tolist()
     )
     risk_name_map = {
         ranked_components[0]: "High Risk",
@@ -126,29 +149,30 @@ def build_gmm_risk():
     sil = silhouette_score(z.to_numpy(), labels)
 
     means_table["risk_component"] = means_table["component"].map(risk_name_map)
-    means_table = means_table.sort_values("critical_rate_mean", ascending=False).reset_index(drop=True)
+    means_table = means_table.sort_values(
+        "critical_rate_mean", ascending=False
+    ).reset_index(drop=True)
 
-    component_inspection_table = (
-        merged.groupby("component", as_index=False)
-        .agg(
-            nta_count=("nta_id", "count"),
-            total_inspections=("inspection_count", "sum"),
-            mean_inspections=("inspection_count", "mean"),
-            low_confidence_ntas=("inspection_count", lambda s: int((s < 10).sum())),
-        )
+    component_inspection_table = merged.groupby("component", as_index=False).agg(
+        nta_count=("nta_id", "count"),
+        total_inspections=("inspection_count", "sum"),
+        mean_inspections=("inspection_count", "mean"),
+        low_confidence_ntas=("inspection_count", lambda s: int((s < 10).sum())),
     )
-    component_inspection_table["risk_component"] = component_inspection_table["component"].map(risk_name_map)
+    component_inspection_table["risk_component"] = component_inspection_table[
+        "component"
+    ].map(risk_name_map)
     component_inspection_table = component_inspection_table.sort_values(
         "total_inspections", ascending=False
     ).reset_index(drop=True)
 
-    low_cov_mask = component_inspection_table["risk_component"].eq("Medium-Low Risk") & (
-        component_inspection_table["mean_inspections"] < 10
-    )
+    low_cov_mask = component_inspection_table["risk_component"].eq(
+        "Medium-Low Risk"
+    ) & (component_inspection_table["mean_inspections"] < 10)
     component_inspection_table["coverage_note"] = ""
-    component_inspection_table.loc[
-        low_cov_mask, "coverage_note"
-    ] = "low inspection coverage — risk assessment unreliable"
+    component_inspection_table.loc[low_cov_mask, "coverage_note"] = (
+        "low inspection coverage — risk assessment unreliable"
+    )
 
     risk_df = merged[
         ["nta_id", "high_risk_prob", "risk_bucket", "risk_component", "risk_confidence"]
