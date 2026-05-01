@@ -15,6 +15,7 @@ import streamlit as st
 from frontend.components.input_form import render_input_form
 from frontend.components.map_view import render_map_view
 from frontend.components.results_panel import render_results_panel
+from frontend.review_evidence import load_labeled_reviews
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -30,6 +31,12 @@ def load_recommendations() -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def load_phase1() -> pd.DataFrame:
     return pd.read_csv(DATA_PATH / "phase1_cluster_assignments.csv")
+
+
+@st.cache_data(show_spinner=False)
+def load_review_evidence_pool() -> pd.DataFrame | None:
+    """Yelp reviews with Gemini halal labels — used for qualitative evidence per NTA."""
+    return load_labeled_reviews(_REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +131,16 @@ def main() -> None:
         render_map_view(filtered)
         st.divider()
         st.subheader("Recommendations")
-        render_results_panel(filtered)
+        st.caption(
+            "Expand **Review evidence — what diners wrote** on each card for real Yelp snippets "
+            "(Gemini halal labels) backing the demand signal for that neighborhood."
+        )
+        review_pool = load_review_evidence_pool()
+        render_results_panel(
+            filtered,
+            repo_root=_REPO_ROOT,
+            review_pool=review_pool,
+        )
 
 
 if __name__ == "__main__":

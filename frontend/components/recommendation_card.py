@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pandas as pd
 import streamlit as st
+
+from frontend.review_evidence import clip_review, evidence_csv_path, nta_review_counts, sample_reviews_for_nta
 
 MARKET_TYPE_EMOJI = {
     "High Opportunity": "🔴",
@@ -64,7 +69,22 @@ def _signal_label(val) -> str:
         return "—"
 
 
-def render_recommendation_card(row: dict, rank: int) -> None:
+def _halal_rel_badge(label: str) -> str:
+    label = str(label).strip().lower()
+    return {
+        "explicit_halal": "Explicit halal mention",
+        "implicit_halal": "Implicit halal context",
+        "not_related": "Not halal-related",
+    }.get(label, label.replace("_", " ").title())
+
+
+def render_recommendation_card(
+    row: dict,
+    rank: int,
+    *,
+    review_pool: pd.DataFrame | None = None,
+    repo_root: Path | None = None,
+) -> None:
     nta_id = str(row.get("nta_id", ""))
     market_type = str(row.get("market_type", ""))
     final_score = row.get("final_score", 0.0)
@@ -114,6 +134,58 @@ def render_recommendation_card(row: dict, rank: int) -> None:
         )
 
         st.progress(float(final_score) if final_score else 0.0)
+
+        # Yelp / Gemini labeled review evidence for this zone
+        with st.expander("Review evidence — what diners wrote (Yelp × Gemini)", expanded=False):
+            if review_pool is None or review_pool.empty:
+                hint = ""
+                if repo_root is not None:
+                    hint = (
+                        f"Expected file missing: `{evidence_csv_path(repo_root)}`. "
+                        "Place Gemini-labeled review export under `data/raw/`."
+                    )
+                st.info(
+                    "No review evidence loaded. Run the dashboard from the repo with "
+                    "`data/raw/gemini_labels_full.csv` present, or check the path.\n\n" + hint
+                )
+            else:
+                counts = nta_review_counts(review_pool, nta_id)
+                if counts["total"] == 0:
+                    st.caption(f"No review rows mapped to **`{nta_id}`** in the labeled Yelp export.")
+                else:
+                    st.caption(
+                        f"In the labeled Yelp sample for **`{nta_id}`**: "
+                        f"**{counts['explicit_halal']}** explicit-halal, "
+                        f"**{counts['implicit_halal']}** implicit-halal, "
+                        f"**{counts['total']}** review rows · "
+                        f"**{counts['unique_venues']}** distinct venues."
+                    )
+                    samples = sample_reviews_for_nta(review_pool, nta_id, k=6)
+                    if samples.empty:
+                        st.caption("No rows to preview after sorting.")
+                    else:
+                        st.caption(
+                            "Up to **6 unique venues** — one prioritized review each "
+                            "(explicit / implicit halal first, then by rating)."
+                        )
+
+                        display_rows = []
+                        for _, rr in samples.iterrows():
+                            name = rr.get("business_name") or rr.get("restaurant_id") or "Unknown venue"
+                            name = str(name).strip() or "Unknown venue"
+                            rt = rr.get("rating")
+                            rt_txt = f"★ {float(rt):.0f}" if pd.notna(rt) else ""
+                            rel = rr.get("halal_relevance", "")
+                            txt = clip_review(str(rr.get("review_text", "")), max_chars=400)
+                            display_rows.append(
+                                {
+                                    "Venue": name[:80],
+                                    "Rating": rt_txt,
+                                    "Halal label": _halal_rel_badge(rel),
+                                    "Review excerpt": txt,
+                                }
+                            )
+                        st.dataframe(pd.DataFrame(display_rows), use_container_width=True, hide_index=True)
 
         # Supply info
         diversity = int(halal_cuisine_diversity) if halal_cuisine_diversity else 0
