@@ -35,6 +35,8 @@ def build_synthetic_restaurant_history(n: int = 200, seed: int = 42) -> pd.DataF
     )
 
 
+from src.config.constants import FM_COLS
+
 @dataclass
 class SurvivalModelBundle:
     """Scaffold for restaurant survival work."""
@@ -43,7 +45,7 @@ class SurvivalModelBundle:
     duration_col: str = "duration_days"
     event_col: str = "event_observed"
     fitted_: bool = field(default=False, init=False)
-    feature_columns_: list[str] = field(default_factory=list, init=False)
+    feature_columns_: list[str] = field(default_factory=lambda: [c for c in FM_COLS if c not in ("target", "time_key", "zone_id", "dominant_subtype")], init=False)
     cox_model_: Any = field(default=None, init=False)
     rsf_model_: object | None = field(default=None, init=False)
     uses_heuristic_: bool = field(default=False, init=False)

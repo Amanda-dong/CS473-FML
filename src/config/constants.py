@@ -13,21 +13,32 @@ ACTIVE_DATASETS = (
     "boundaries",
 )
 
-# ── Cuisine / concept subtypes ────────────────────────────────────────────────
-# The system is cuisine-agnostic: any free-text concept subtype is accepted and
-# normalised by canonical_subtype().  The list below is the *known* set used for
-# frontend dropdowns and taxonomy keyword matching.  An unknown value is treated
-# as a valid custom subtype rather than rejected.
+# Canonical list of features in the 49-column Feature Matrix
+FM_COLS = [
+    'avg_confidence', 'avg_rating', 'dominant_subtype', 'explicit_halal_review_count', 
+    'explicit_halal_share', 'halal_count_static', 'halal_fast_casual_share', 
+    'halal_negative_rate', 'halal_positive_rate', 'halal_related_review_count', 
+    'halal_related_share', 'healthy_food_share', 'healthy_indian_share', 
+    'implicit_halal_review_count', 'implicit_halal_share', 'implicit_to_explicit_ratio', 
+    'inspection_grade_avg', 'inspection_grade_avg_static', 'label_quality', 
+    'license_velocity', 'mean_assessed_value', 'median_income', 
+    'median_income_static', 'mediterranean_bowls_share', 'net_closes', 'net_opens', 
+    'non_halal_negative_rate', 'non_halal_positive_rate', 'not_related_review_count', 
+    'not_related_share', 'overall_negative_rate', 'overall_positive_rate', 
+    'permit_velocity', 'population', 'population_static', 'rent_burden', 
+    'rent_pressure', 'restaurant_count', 'restaurant_count_static', 
+    'salad_bowls_share', 'smoothie_juice_share', 'station_count', 'subtype_gap', 
+    'target', 'time_key', 'total_review_count', 'trip_count', 
+    'unique_restaurant_count', 'zone_id'
+]
 
 HEALTHY_SUBTYPES = (
-    # healthy / wellness-focused
     "halal",
     "salad_bowls",
     "mediterranean_bowls",
     "healthy_indian",
     "vegan_grab_and_go",
     "protein_forward_lunch",
-    # broader cuisine types
     "mexican",
     "chinese",
     "japanese",
@@ -56,7 +67,6 @@ MICROZONE_TYPES = (
     "business_district",
 )
 
-# ── Model & evaluation configuration ────────────────────────────────────────
 MODEL_CONFIG = {
     "scoring": {
         "n_estimators": 200,
@@ -65,10 +75,12 @@ MODEL_CONFIG = {
         "subsample": 0.8,
         "colsample_bytree": 0.8,
         "random_state": 42,
+        "features": [c for c in FM_COLS if c not in ("target", "time_key", "zone_id", "dominant_subtype")],
     },
     "survival": {
         "n_estimators": 100,
         "penalizer": 0.1,
+        "features": [c for c in FM_COLS if c not in ("target", "time_key", "zone_id", "dominant_subtype")],
     },
     "evaluation": {
         "n_bootstrap": 1000,

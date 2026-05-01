@@ -7,38 +7,27 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.config.constants import MODEL_DIR, PROCESSED_DIR
-from src.data.quality import prepare_training_frame
-from src.models.cmf_score import (
-    LearnedScoringModel,
-    compute_opening_score,
-    score_zone_for_concept,
-)
-from src.models.ranking_model import LearnedRanker
-
-DATA_DIR = Path(PROCESSED_DIR)
-_MODEL_DIR = Path(MODEL_DIR)
-
+from src.config.constants import FM_COLS, MODEL_DIR, PROCESSED_DIR
 
 def load_data() -> tuple[pd.DataFrame, pd.Series]:
     """Load feature matrix and ground truth from data/processed/.
 
-    Expects ``feature_matrix.parquet`` with a ``target`` column (composite
-    outcome score) and optional ``year`` column for temporal splitting.
-    Raises FileNotFoundError if the file is missing — run ETL first.
+    Expects ``feature_matrix.parquet`` with a ``target`` column.
     """
     path = DATA_DIR / "feature_matrix.parquet"
     if not path.exists():
-        raise FileNotFoundError(
-            f"Real data required at {path}. Run the ETL pipeline first:\n"
-            f"  uv run -m src.data.etl_runner\n"
-            f"Then build the feature matrix and ground truth."
-        )
+        raise FileNotFoundError(f"Real data required at {path}.")
     df = pd.read_parquet(path)
+    
+    # Ensure all FM_COLS are present
+    missing = [c for c in FM_COLS if c not in df.columns]
+    if missing:
+        raise ValueError(f"Feature matrix missing columns: {missing}")
+        
     df, _report = prepare_training_frame(df, target_col="target")
     target_col = "target"
     y = df[target_col]
-    X = df.drop(columns=[target_col])
+    X = df[FM_COLS].drop(columns=[target_col])
     return X, y
 
 
