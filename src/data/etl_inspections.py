@@ -105,8 +105,7 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
                 "zipcode,cuisine_description,dba"
             ),
             "$where": (
-                f"inspection_date >= '{start_date}' AND "
-                f"inspection_date <= '{end_date}'"
+                f"inspection_date >= '{start_date}' AND inspection_date <= '{end_date}'"
             ),
             "$order": "inspection_date DESC",
         }
