@@ -39,11 +39,28 @@ CS473-FML/
 
 Notes: Paths reference the working codebase; placeholders called out explicitly below exist for modules still being generalized (e.g., multi-cuisine overlays).
 
-### Module placeholders maintained for coursework traceability
+## Algorithms used in `main` branch
 
-- `frontend/components/scenario_panel.py` — scaffolding for hypothetical cuisine substitutions (wired to taxonomy utilities still landing).
-- `frontend/components/data_freshness.py` — monitoring widget enumerating parquet caches not yet uniformly populated across contributors’ laptops.
-- `build_halal_scores.py` — empty orchestration shim reserved for consolidating exports once experimentation stabilizes.
+Current `main` uses a 3-phase analytics pipeline:
+
+1. **Phase 1 — Demand / Supply / Clustering**
+   - Demand signal extraction from Yelp + Gemini labels (`src/halal_demand.py`)
+   - Supply-gap feature construction from CAMIS-style data (`src/halal_opportunity.py`)
+   - Unsupervised neighborhood clustering via custom NumPy k-means (`src/halal_kmeans.py`)
+
+2. **Phase 2 — Ranking / Similarity / Viability**
+   - Cosine-similarity neighborhood retrieval (`src/halal_similarity.py`)
+   - Composite opportunity scoring and ranking in phase runners (`scripts/run_phase2.py`)
+   - Inspection-derived viability features used for ranking context (`src/halal_risk.py`)
+
+3. **Phase 3 — Risk / Forecast / Final score adjustment**
+   - Gaussian Mixture Model (GMM) risk overlays (`src/halal_risk.py`)
+   - Ridge-based forecasting for halal demand and entry trends (`src/halal_forecast.py`)
+   - Final adjusted ranking output assembly (`scripts/run_phase3.py`)
+
+Outputs from these phases are exported to `data/output/` and consumed by the
+Streamlit frontend.
+
 
 ## Division of labor
 
