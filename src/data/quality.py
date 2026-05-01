@@ -162,19 +162,34 @@ def fill_feature_matrix_nulls(
                 elif _med_col in df.columns:
                     df.rename(columns={_med_col: _acs_col}, inplace=True)
             df.drop(
-                columns=[c for c in ("borough", "median_income_med", "population_med", "rent_burden_med") if c in df.columns],
+                columns=[
+                    c
+                    for c in (
+                        "borough",
+                        "median_income_med",
+                        "population_med",
+                        "rent_burden_med",
+                    )
+                    if c in df.columns
+                ],
                 inplace=True,
             )
 
         # 11. Static features — only if source columns present
         if "median_income_static" in df.columns and "median_income" in df.columns:
-            df["median_income_static"] = df["median_income_static"].fillna(df["median_income"])
+            df["median_income_static"] = df["median_income_static"].fillna(
+                df["median_income"]
+            )
         if "rent_pressure" in df.columns and "rent_burden" in df.columns:
             _max_rb = df["rent_burden"].max()
             if _max_rb > 0:
-                df["rent_pressure"] = df["rent_pressure"].fillna(df["rent_burden"] / _max_rb)
+                df["rent_pressure"] = df["rent_pressure"].fillna(
+                    df["rent_burden"] / _max_rb
+                )
         if "mean_assessed_value" in df.columns and "median_income" in df.columns:
-            df["mean_assessed_value"] = df["mean_assessed_value"].fillna(df["median_income"] * 12)
+            df["mean_assessed_value"] = df["mean_assessed_value"].fillna(
+                df["median_income"] * 12
+            )
 
         # 12. Final fallback
         numeric_medians = df.select_dtypes(exclude="object").median()
