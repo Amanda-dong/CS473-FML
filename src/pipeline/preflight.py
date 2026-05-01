@@ -264,7 +264,9 @@ def run_processed_data_preflight(
                 PreflightCheck(
                     name="survival_training",
                     passed=False,
-                    message=f"Could not validate survival artifacts under {base_dir}: {exc}",
+                    message=(
+                        f"Could not validate survival artifacts under {base_dir}: {exc}"
+                    ),
                 )
             )
 
@@ -281,7 +283,10 @@ def run_processed_data_preflight(
             PreflightCheck(
                 name="embedding_corpus",
                 passed=False,
-                message=f"Missing required embedding artifact under {base_dir}: yelp.parquet or reviews.parquet",
+                message=(
+                    f"Missing required embedding artifact under {base_dir}: "
+                    "yelp.parquet or reviews.parquet"
+                ),
             )
         )
     else:

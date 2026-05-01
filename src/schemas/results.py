@@ -29,7 +29,10 @@ class ZoneRecommendation(BaseModel):
     model_version: str = Field(default="heuristic")
     scoring_path: str = Field(
         default="heuristic",
-        description="Which scoring method produced this result: 'learned', 'heuristic', 'heuristic_fallback'",
+        description=(
+            "Which scoring method produced this result: "
+            "'learned', 'heuristic', 'heuristic_fallback'"
+        ),
     )
     label_quality: float = Field(
         default=1.0,
@@ -69,7 +72,9 @@ def build_placeholder_response(
             concept_subtype=concept_subtype,
             opportunity_score=round(0.75 - index * 0.05, 4),
             confidence_bucket="medium",
-            healthy_gap_summary="Healthy options are under-supplied relative to quick lunch demand.",
+            healthy_gap_summary=(
+                "Healthy options are under-supplied relative to quick lunch demand."
+            ),
             positives=[
                 "Strong daytime footfall proxy",
                 "Low healthy subtype saturation",

@@ -636,7 +636,10 @@ def _recommendation_from_metrics(metrics: dict[str, float]) -> str:
         and metrics["ate_p_value"] < 0.05
         and metrics["max_abs_smd"] < 0.1
     ):
-        return "Pass: uplift is positive, statistically supported, and covariate balance is acceptable."
+        return (
+            "Pass: uplift is positive, statistically supported, "
+            "and covariate balance is acceptable."
+        )
     if metrics["qini_coefficient"] <= 0:
         return "Fail: uplift does not beat the random baseline."
     if metrics["ate"] <= 0:
@@ -673,7 +676,8 @@ def run_causal_temporal_backtest(
         )
         recommendation = _recommendation_from_metrics(metrics)
         recommendations.append(
-            f"Fold {split_index} ({_format_periods(split.test_periods)}): {recommendation}"
+            f"Fold {split_index} ({_format_periods(split.test_periods)}): "
+            f"{recommendation}"
         )
 
         fold_dir = output_dir / f"run_{split_index}"

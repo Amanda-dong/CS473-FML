@@ -314,7 +314,8 @@ def test_estimate_ate_one_row() -> None:
 
 
 def test_compute_uplift_curve_empty_gain() -> None:
-    # compute_uplift_curve already tested with empty series, but let's be sure about line 339
+    # compute_uplift_curve already tested with empty series,
+    # but let's be sure about line 339
     curve = compute_uplift_curve(
         pd.Series([], dtype=float), pd.Series([], dtype=int), np.array([])
     )

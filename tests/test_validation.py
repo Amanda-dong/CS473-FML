@@ -80,7 +80,7 @@ def test_run_temporal_backtest_prefers_y_composite_target() -> None:
     assert _CaptureTargetModel.fit_targets == [[0.9, 0.1]]
 
 
-# 鈹€鈹€ backtesting 鈥?additional metrics 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# ── backtesting ──────────────────────────────────────────────────────────────
 
 
 def test_production_scoring_adapter_applies_context() -> None:
@@ -217,7 +217,7 @@ def test_evaluate_top_k_no_observed() -> None:
     assert evaluate_top_k(["a", "b"], [], k=2) == 0.0
 
 
-# 鈹€鈹€ ablation 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# ── ablation ─────────────────────────────────────────────────────────────────
 
 
 class _SimpleModel:
@@ -350,7 +350,7 @@ def test_heuristic_scores_runs() -> None:
     assert isinstance(scores, np.ndarray)
 
 
-# 鈹€鈹€ backtesting 鈥?additional code paths 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# ── backtesting ───────────────────────────────────────────────────────────────
 
 
 def test_run_temporal_backtest_fallback_target_column() -> None:

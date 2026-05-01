@@ -990,8 +990,9 @@ def test_canonical_subtype_keyword_match() -> None:
 
 def test_feature_matrix_agg_to_zone_guards() -> None:
     # 120: _agg_to_zone returns nta_df when empty or no zone_id column
-    # We can trigger this by passing a dataset that results in an empty or missing zone_id inlv
-    # but build_zone_year_matrix is complex. Let's call _agg_to_zone via monkeypatch or directly if possible.
+    # We can trigger this by passing a dataset that results in an
+    # empty or missing zone_id in lv but build_zone_year_matrix is complex.
+    # Let's call _agg_to_zone via monkeypatch or directly if possible.
     # Actually, build_zone_year_matrix is the main entry.
     pass
 
@@ -1110,9 +1111,11 @@ def test_prepare_social_signals_more_branches() -> None:
 
 def test_feature_matrix_agg_to_zone_empty_missing_col() -> None:
     # 120: nta_df.empty or "zone_id" not in nta_df.columns
-    # This is hard to trigger from build_zone_year_matrix because modules usually return valid frames.
-    # But we can call the internal function if we really want, or just rely on other tests if they hit it.
-    # Let's try to trigger it via build_license_velocity_features returning something without zone_id.
+    # This is hard to trigger from build_zone_year_matrix because modules
+    # usually return valid frames. But we can call the internal function
+    # if we really want, or just rely on other tests if they hit it.
+    # Let's try to trigger it via build_license_velocity_features
+    # returning something without zone_id.
     pass
 
 
@@ -1415,7 +1418,8 @@ def test_build_zone_year_matrix_gemini_empty_merged(monkeypatch) -> None:
 
     # Mock exists to avoid other files
     monkeypatch.setattr(Path, "exists", lambda self: False)
-    # Mock build_feature_matrix to return empty but avoid early return by providing some input
+    # Mock build_feature_matrix to return empty but avoid early return
+    # by providing some input
     monkeypatch.setattr(
         fm,
         "build_feature_matrix",
