@@ -55,6 +55,12 @@ def inject_custom_theme():
             color: #1a1a1a;
         }
 
+        /* Force all tab content panels to match app background */
+        [data-baseweb="tab-panel"] {
+            background-color: #fafaf8 !important;
+            color: #1a1a1a !important;
+        }
+
         /* Fix top cutoff */
         .block-container {
             padding-top: 2rem !important;
@@ -126,7 +132,10 @@ def inject_custom_theme():
             gap: 2rem;
             background-color: transparent;
         }
-        .stTabs [data-baseweb="tab"] {
+        .stTabs [data-baseweb="tab"],
+        .stTabs button[role="tab"],
+        .stTabs [data-baseweb="tab"] *,
+        .stTabs button[role="tab"] * {
             height: 50px;
             white-space: pre-wrap;
             background-color: transparent;
@@ -134,9 +143,12 @@ def inject_custom_theme():
             gap: 1rem;
             padding-top: 10px;
             padding-bottom: 10px;
-            color: #333333;
+            color: #333333 !important;
         }
-        .stTabs [aria-selected="true"] {
+        .stTabs [aria-selected="true"],
+        .stTabs [aria-selected="true"] *,
+        .stTabs button[role="tab"][aria-selected="true"],
+        .stTabs button[role="tab"][aria-selected="true"] * {
             background-color: var(--bg-glass);
             border-bottom: 3px solid var(--primary) !important;
             color: var(--primary) !important;
