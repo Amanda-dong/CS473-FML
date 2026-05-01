@@ -1,9 +1,4 @@
 # NYC Halal Restaurant Opportunity Finder
-## Data Availability (Important)
-
-Due to GitHub file size limits and dataset licensing constraints, several large raw datasets are not stored directly in the repository.
-
-Instead, they are provided via the repository Releases section.
 
 Data-driven Neighborhood Tabulation Area (NTA) short-lists that combine halal-related review signals (Yelp + Gemini labels), CAMIS-style restaurant supply proxies, NYC DOHMH inspection aggregates, clustering, probabilistic risk overlays, and lightweight forecasting for a merchant-facing Streamlit experience.
 
@@ -78,7 +73,9 @@ Place inputs under:
 - `data/raw/restaurant_hygiene.csv` — CAMIS universe with cuisine descriptors (tracked via Releases if omitted from git due to `.gitignore`).
 - `data/processed/inspections.parquet` — per-inspection parquet with grades, violation flags, and `nta_id`.
 
+Due to GitHub file size limits and dataset licensing constraints, several large raw datasets are not included directly in the repository. These files are provided separately in the repository’s Releases section. Please download all required datasets before running any pipeline phases.
 Outputs are regenerated under `data/output/` whenever you rerun the phases.
+
 
 ---
 
