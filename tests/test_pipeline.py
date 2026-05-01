@@ -2,7 +2,7 @@
 
 import pandas as pd
 from unittest.mock import patch
-import run_full_pipeline
+import scripts.run_full_pipeline as run_full_pipeline
 
 
 def test_build_feature_matrix_stage_returns_null_free_dataframe(
