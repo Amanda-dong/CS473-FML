@@ -212,7 +212,7 @@ Three-tab Streamlit application: **Top Picks | Methodology | Data Sources**
    - Opportunity score (0–100)
    - Survival risk percentage
    - Confidence interval
-   - Trajectory cluster label (emerging / gentrifying / stable / declining)
+   - Trajectory cluster label (emerging / fast-growing / stable / declining)
    - Risk flags (e.g., "high competition density", "rent pressure above median")
    - Positive drivers (e.g., "strong healthy demand signal", "subtype gap: no Indian supply")
    - Score breakdown by signal group
@@ -235,7 +235,7 @@ Three-tab Streamlit application: **Top Picks | Methodology | Data Sources**
 
 - Campus walk-sheds consistently show lower survival risk than CBD business districts — stable demand from a enrolled population vs. economic-cycle-sensitive office foot traffic
 - Transit-adjacent zones score highest on demand signals but also carry the highest competition penalty — the opportunity signal is real but the window may already be closing
-- Zones labeled "emerging" by the phase model outperform "stable" zones in 2-year survival for new entrants — consistent with first-mover dynamics in gentrifying areas
+- Zones labeled "emerging" by the phase model outperform "stable" zones in 2-year survival for new entrants — consistent with first-mover dynamics in fast-changing corridors
 
 ---
 

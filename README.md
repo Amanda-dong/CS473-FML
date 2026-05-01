@@ -138,7 +138,9 @@ Model Performance: Survival C-index ~0.80
 
 Evaluation artifacts: `data/processed/backtest_results.parquet`, `ablation_results.parquet`, `docs/EvaluationResults.md`, `docs/CausalMLEvaluationReport.md`
 
-Test suite: 574 tests, all passing (`uv run pytest`)
+Test suite: run `python -m pytest` (or `uv run pytest`) from the repo root with
+dependencies installed; the number of tests changes as the project grows — use
+CI or local pytest output for the current count.
 
 ## Repository Structure
 
@@ -175,29 +177,36 @@ CS473-FML/
 
 ## Setup
 
-Recommended local workflow uses `uv`.
+Use **Python 3.11+** (several pinned packages do not support 3.9).
+
+You can use either `uv` or a conda/venv + `pip` workflow; pick one and stay consistent.
+
+**Option A — `uv` (team default in this section)**
 
 1. Install `uv`.
-2. Create a virtual environment:
-   - `uv venv`
-3. Activate it:
-   - `source .venv/bin/activate` on macOS/Linux
-   - `.venv\\Scripts\\activate` on Windows
-4. Install dependencies:
-   - `uv pip install -r requirements.txt`
-5. Run the test suite:
-   - `uv run pytest`
+2. Create a virtual environment: `uv venv`
+3. Activate: `source .venv/bin/activate` (macOS/Linux) or `.venv\Scripts\activate` (Windows)
+4. Install: `uv pip install -r requirements.txt`
+5. Tests: `uv run pytest`
+
+**Option B — conda + pip (common on macOS)**
+
+1. `conda create -n cs473-fml python=3.11 -y` then `conda activate cs473-fml`
+2. `python -m pip install -U pip setuptools wheel`
+3. `python -m pip install -r requirements.txt`
+4. Tests: `python -m pytest`
+
+If `pip` cannot resolve a pin in `requirements.txt`, treat it as a **team coordination**
+item (do not silently change shared pins on your own branch without agreement).
 
 Note: A `GEMINI_API_KEY` is required for live NLP labeling (`src/nlp/gemini_labels.py`). All other features run without API keys.
 
 ## Backend Quick Start
 
-1. Install dependencies:
-   - `python -m pip install -r requirements.txt`
-2. Start API server:
-   - `bash scripts/run_api.sh`
-3. In a separate terminal, run smoke checks:
-   - `python scripts/smoke_api.py`
+1. Activate the same environment you used in **Setup** (Python 3.11+).
+2. Install dependencies if not already: `python -m pip install -r requirements.txt`
+3. Start API server: `bash scripts/run_api.sh` (this script calls `uv run python -m uvicorn …`; install `uv` or run `python -m uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload` instead)
+4. In a separate terminal (same env), run smoke checks: `python scripts/smoke_api.py`
 
 Backend API contract is documented in:
 

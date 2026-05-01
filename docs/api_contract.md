@@ -18,9 +18,13 @@ Error format (FastAPI default):
 
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "fm_row_count": 726,
+  "feature_count": 49
 }
 ```
+
+`fm_row_count` / `feature_count` come from `data/processed/feature_matrix.parquet` at process startup (0 if the file is missing or unreadable).
 
 ## GET `/datasets`
 
@@ -87,7 +91,7 @@ Field notes:
       "risks": ["string"],
       "freshness_note": "string",
       "feature_contributions": {
-        "healthy_review_share": 0.1182
+        "halal_related_share": 0.1182
       },
       "survival_risk": 0.25,
       "model_version": "xgboost_v1",
@@ -104,6 +108,7 @@ Notes:
 - `scoring_path` is one of `learned`, `heuristic`, `heuristic_fallback`
 - `query.train_window`: year range of the feature matrix used (e.g. `"2016-2024"`); `"unknown"` if no feature matrix loaded
 - `query.model_version`: derived from `.meta.json` sidecar if present; otherwise inner model class name; `"heuristic"` when no model is loaded
+- Each item may include additional fields (`rank`, `score`, `confidence_tier`, `positive_drivers`, `similar_restaurants`, `zone_type`, `data_freshness`, …). Source of truth: `src/schemas/results.py` (`ZoneRecommendation`).
 
 Errors:
 
@@ -135,12 +140,14 @@ Request:
 }
 ```
 
-`trajectory_cluster`:
+`trajectory_cluster` (labels returned by `src/api/routers/recommendations.py`):
 
 - `emerging`
-- `gentrifying`
+- `fast-growing`
 - `stable`
 - `declining`
+
+If clustering returns an unexpected label string, the API passes it through unchanged.
 
 Errors:
 

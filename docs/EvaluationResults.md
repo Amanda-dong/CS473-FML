@@ -26,9 +26,10 @@ The evaluation uses the following schedule:
 - **Minimum training window:** 2 years (years 2015-2016 train, 2017 is first test fold).
 - **Step size:** 1 year per fold (folds 2017, 2018, ... 2024).
 - **Features:** All numeric columns in `data/processed/feature_matrix.parquet`.
-- **Scorer:** `ScoringModelWrapper` — a transparent heuristic that averages the
-  four primary opportunity signals (`demand_signal`, `merchant_viability`,
-  `subtype_gap`, `opportunity_score`).
+- **Scorer:** `ProductionScoringAdapter` in `src/validation/run_evaluation.py` — fits
+  `LearnedScoringModel` (XGBoost regressor) on numeric features when XGBoost is
+  available and there is enough labeled variance; otherwise predictions fall back
+  to the CMF heuristic (`score_zone_for_concept` + `compute_opening_score` per row).
 
 ### Ranking metrics
 
