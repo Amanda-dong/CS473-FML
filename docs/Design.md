@@ -45,7 +45,7 @@ CS473-FML/
 │   ├── Proposal.md              # Problem framing, methods, research-driven choices
 │   ├── Design.md                # This file: structure, labor, repo readiness
 │   ├── Sprints.md               # Sprint-by-sprint task division and completion status
-│   ├── Research.md              # Literature + dataset-viability rationale
+│   ├── Research.md              # Research, data viability, dependency notes
 │   ├── DataDictionary.md        # Authoritative column-by-column schema reference
 │   ├── ModelInterfaces.md       # Exact model I/O contracts and runtime behavior
 │   ├── EvaluationResults.md     # Backtest, ablation, and ranking metrics
@@ -53,7 +53,6 @@ CS473-FML/
 │   ├── api_contract.md          # FastAPI endpoint shapes
 │   ├── ReportSections.md        # Final report draft material
 │   ├── Presentation.md          # Slide deck outline
-│   ├── UIChangePlan.md          # Frontend redesign log
 │   └── temporal_audit.md        # Per-source coverage + cutoff decisions
 │
 ├── frontend/                    # Streamlit shortlist-first UI (consumes the FastAPI backend only)
@@ -212,7 +211,7 @@ artifacts that illustrate that ownership.
 | **Harsh Agarwal** | Backend / ML — Survival & Scoring | `src/models/survival_model.py`, `src/models/train_survival.py`, `src/models/cmf_score.py`, `src/models/train_scoring.py`, `src/models/ranking_model.py`, `src/models/explainability.py` | `data/models/survival_model.joblib`, `data/models/scoring_model.joblib`, `data/models/ranking_model.joblib`; survival C-index ≈ 0.80 reported in `docs/EvaluationResults.md` |
 | **Siqi Zhu** | Backend / ML — Phase Discovery & Validation | `src/models/trajectory_model.py`, `src/validation/backtesting.py`, `src/validation/ablation.py`, `src/validation/causal.py`, `src/validation/run_evaluation.py` | k-means + GMM trajectory clusters in `notebooks/02_trajectory_model.ipynb`; backtest + ablation parquets under `data/processed/`; `docs/CausalMLEvaluationReport.md` |
 | **Tony Zhao** | Data / ETL Lead | `src/data/etl_*.py` (licenses, permits, inspections, pluto, acs, citibike, airbnb, 311, boundaries), `src/data/etl_runner.py`, `src/data/quality.py`, `src/data/audit.py`, `scripts/*` | All ETL parquets in `data/processed/`; `docs/temporal_audit.md`; `docs/DataDictionary.md` source sections |
-| **Amanda Dong** | Frontend / NLP | `frontend/app.py`, `frontend/components/*`, `frontend/pages/*`, `src/nlp/gemini_labels.py`, `src/nlp/review_aggregates.py`, `src/nlp/subtype_classifier.py`, `src/nlp/neighborhood_mentions.py` | Streamlit shortlist-first UI; `data/processed/gemini_full_zone_features.csv`; `notebooks/04_nlp.ipynb`; `docs/UIChangePlan.md` |
+| **Amanda Dong** | Frontend / NLP | `frontend/app.py`, `frontend/components/*`, `frontend/pages/*`, `src/nlp/gemini_labels.py`, `src/nlp/review_aggregates.py`, `src/nlp/subtype_classifier.py`, `src/nlp/neighborhood_mentions.py` | Streamlit shortlist-first UI; `data/processed/gemini_full_zone_features.csv`; `notebooks/04_nlp.ipynb` |
 | **Catherine Yi** | Project Lead / Integration | `src/api/main.py`, `src/api/routers/recommendations.py`, `src/features/feature_matrix.py`, `src/features/ground_truth.py`, `src/features/zone_crosswalk.py`, `run_full_pipeline.py`, `docs/*` | API contract (`docs/api_contract.md`); canonical `feature_matrix.parquet` (726 × 49); end-to-end `run_full_pipeline.py`; final `docs/ReportSections.md` and `docs/Presentation.md` |
 
 Cross-cutting ownership: every member is responsible for the `tests/test_*.py`

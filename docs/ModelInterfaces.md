@@ -1,6 +1,6 @@
 # Model Interfaces and Rationale
 
-Updated: April 3, 2026
+Updated: April 30, 2026
 
 This document is the implementation-level companion to `docs/Design.md`.
 It answers three questions for every model layer in the project:
@@ -76,27 +76,35 @@ Current implemented numeric feature columns that may be present:
 
 Important implementation note:
 
-- `TrajectoryClusteringModel` currently selects **all numeric columns**
-  from the frame it is given.
-- If `time_key` remains numeric in the training frame, it is included unless
-  the caller drops it first.
-- In the live `/predict/trajectory` API fallback path, the model is not yet
-  fed the zone-year matrix above. It clusters a synthetic/demo feature frame
-  built by `_build_features()` in `src/api/routers/recommendations.py`.
+- `TrajectoryClusteringModel` selects **all numeric columns** from the frame it
+  is given (with missing values filled to `0.0`).
+- Offline analysis and notebooks (`notebooks/02_trajectory_model.ipynb`) should
+  use the zone-year matrix from `build_zone_year_matrix()` in
+  `src/features/feature_matrix.py` and **drop identifiers** (`zone_id`,
+  `time_key`) before clustering if they should not drive k-means.
+- The live **`POST /predict/trajectory`** endpoint clusters a **per-zone
+  derived feature vector** built by `_build_features()` in
+  `src/api/routers/recommendations.py`: one row per entry in `_NYC_ZONES`, with
+  values blended from seeded defaults, `data/processed` Gemini zone features,
+  and the loaded feature-matrix cache (`license_velocity`, `rent_pressure`,
+  etc.). That path is deliberately compact for interactive API latency, not a
+  full replay of every column in `feature_matrix.parquet`.
 
-The current API fallback feature frame contains these numeric columns:
+The numeric keys returned by `_build_features()` today (all fed into
+`TrajectoryClusteringModel`) are:
 
-- `quick_lunch_demand`
+- `halal_related_share`
 - `subtype_gap`
-- `survival_score`
+- `target`
 - `rent_pressure`
-- `competition_score`
-- `healthy_review_share`
+- `restaurant_count_static`
+- `overall_positive_rate`
 - `license_velocity`
-- `transit_access`
-- `income_alignment`
+- `trip_count`
+- `median_income_static`
 - `healthy_supply_ratio`
 - `healthy_gap_score`
+- `explicit_halal_share`
 
 ### Preprocessing
 
@@ -130,11 +138,13 @@ Stored diagnostics in `diagnostics_` may include:
 - `n_samples`
 - `stability_ari`
 
-API output from `/predict/trajectory`:
+API output from `POST /predict/trajectory` (plain `dict`, not `ZoneRecommendation`):
 
 - `concept_subtype`
 - `zone_type`
-- `trajectory_cluster`
+- `trajectory_cluster` (humanized label: emerging / fast-growing / stable / declining when mapped from `cluster_*`)
+- `train_window` (derived from loaded feature matrix years, or `"unknown"`)
+- `model_version` (e.g. `kmeans_v1`)
 
 ## 3. Survival Modeling
 
@@ -428,20 +438,19 @@ explain in a class demo and in a recommendation card.
 - `transit_access_score`
 - `income_alignment_score`
 
-Helper function `score_zone_for_concept(...)` currently builds those components
-from a zone feature dict whose expected keys are:
+Helper function `score_zone_for_concept(...)` in `src/models/cmf_score.py` maps
+numeric zone features into `ScoreComponents`. Expected keys (**all optional**;
+defaults documented in that function):
 
-- `quick_lunch_demand`
-- `healthy_review_share`
+- `halal_related_share`
+- `overall_positive_rate`
 - `subtype_gap`
-- `survival_score`
+- `target` (merchant viability / survival-aligned scalar in API paths)
 - `license_velocity`
-- `competition_score`
+- `restaurant_count_static`
 - `rent_pressure`
-- `healthy_supply_ratio`
-- `transit_access`
-- `income_alignment`
-- `healthy_gap_score`
+- `trip_count`
+- `median_income_static`
 
 ### Exact outputs
 
@@ -574,23 +583,32 @@ Saved artifact:
 
 ## 9. Runtime Recommendation Outputs
 
-The final product layer wraps the models above into `ZoneRecommendation`
-records. The API response schema in `src/schemas/results.py` contains:
+The final product layer wraps the models above into **`ZoneRecommendation`**
+instances (`src/schemas/results.py`). Fields on each card:
 
-- `zone_id`
-- `zone_name`
-- `concept_subtype`
-- `opportunity_score`
+- `zone_id`, `zone_name`
+- `rank`, `score`, `opportunity_score`
 - `confidence_bucket`
-- `healthy_gap_summary`
-- `positives`
+- `concept_subtype`
+- `positive_drivers` (detailed bullet strings when populated)
 - `risks`
+- `positives` (short duplicate list used by some API paths for compatibility)
+- `similar_restaurants`
+- `data_freshness`
+- `zone_type`
+- `borough`
+- `healthy_gap_summary`
 - `freshness_note`
-- `feature_contributions`
+- `feature_contributions` (per-feature attribution map)
 - `survival_risk`
 - `model_version`
-- `scoring_path`
-- `label_quality`
+- `scoring_path` (`learned`, `heuristic`, or `heuristic_fallback`)
+- `label_quality` (fraction of ground-truth components available, 0–1)
 
-These fields matter because the project is not only trying to predict well. It
-is trying to produce a recommendation a merchant can inspect and defend.
+**`RecommendationResponse`** wraps:
+
+- `query` — echoed request parameters (`dict`)
+- `recommendations` — ordered list of `ZoneRecommendation`
+
+These fields exist so the UI can explain *why* a zone ranked where it did, not
+only the score.

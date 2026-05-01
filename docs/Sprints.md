@@ -103,7 +103,7 @@ status report (✅ shipped, ⚠️ partial, ❌ cut). For static module ownershi
   `docs/CausalMLEvaluationReport.md`.
 - ✅ Headline metrics in `docs/EvaluationResults.md`.
 - ✅ Data-freshness widget in `frontend/components/data_freshness.py`.
-- ✅ Shortlist-first UI flow per `docs/UIChangePlan.md`.
+- ✅ Shortlist-first UI flow in Streamlit (`frontend/`).
 - ✅ Final-report material: `docs/ReportSections.md`,
   `docs/Presentation.md`.
 - ✅ 606-test suite passing under `pytest`.

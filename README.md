@@ -245,7 +245,7 @@ shippable deliverable. Source of truth: [`docs/Design.md`](docs/Design.md) §2.
 | **Harsh Agarwal** | Backend / ML — Survival & Scoring | `src/models/survival_model.py`, `train_survival.py`, `cmf_score.py`, `train_scoring.py`, `ranking_model.py`, `explainability.py` | `data/models/{survival,scoring,ranking}_model.joblib`; survival C-index ≈ 0.80 in `docs/EvaluationResults.md` |
 | **Siqi Zhu** | Backend / ML — Phase Discovery & Validation | `src/models/trajectory_model.py`, `src/validation/{backtesting,ablation,causal,run_evaluation}.py` | k-means + GMM clusters; `notebooks/02_trajectory_model.ipynb`; backtest / ablation parquets; `docs/CausalMLEvaluationReport.md` |
 | **Tony Zhao** | Data / ETL Lead | `src/data/etl_*.py` (all 10 sources), `etl_runner.py`, `quality.py`, `audit.py`, `scripts/*` | All ETL parquets in `data/processed/`; `docs/temporal_audit.md`; source sections of `docs/DataDictionary.md` |
-| **Amanda Dong** | Frontend / NLP | `frontend/app.py`, `frontend/components/*`, `frontend/pages/*`, `src/nlp/{gemini_labels,review_aggregates,subtype_classifier,neighborhood_mentions}.py` | Streamlit UI; `data/processed/gemini_full_zone_features.csv`; `notebooks/04_nlp.ipynb`; `docs/UIChangePlan.md` |
+| **Amanda Dong** | Frontend / NLP | `frontend/app.py`, `frontend/components/*`, `frontend/pages/*`, `src/nlp/{gemini_labels,review_aggregates,subtype_classifier,neighborhood_mentions}.py` | Streamlit UI; `data/processed/gemini_full_zone_features.csv`; `notebooks/04_nlp.ipynb` |
 | **Catherine Yi** | Project Lead / Integration | `src/api/main.py`, `src/api/routers/recommendations.py`, `src/features/{feature_matrix,ground_truth,zone_crosswalk}.py`, `run_full_pipeline.py`, `docs/*` | API contract (`docs/api_contract.md`); canonical `feature_matrix.parquet` (726 × 49); `run_full_pipeline.py`; `docs/ReportSections.md`, `docs/Presentation.md` |
 
 Each member also owns the matching `tests/test_*.py` for their primary
@@ -375,13 +375,12 @@ The implementation is complete across all eight planned stages:
 | [`docs/Proposal.md`](docs/Proposal.md) | Problem framing, methods, research-driven choices |
 | [`docs/Design.md`](docs/Design.md) | Repository structure, division of labor, environment and readiness |
 | [`docs/Sprints.md`](docs/Sprints.md) | Sprint-by-sprint plan with completion status |
-| [`docs/Research.md`](docs/Research.md) | Literature + dataset-viability rationale |
+| [`docs/Research.md`](docs/Research.md) | Research, data & modeling rationale |
 | [`docs/DataDictionary.md`](docs/DataDictionary.md) | Authoritative column-by-column schema |
 | [`docs/ModelInterfaces.md`](docs/ModelInterfaces.md) | Exact model I/O contracts and runtime behavior |
 | [`docs/api_contract.md`](docs/api_contract.md) | FastAPI endpoint shapes |
 | [`docs/EvaluationResults.md`](docs/EvaluationResults.md) | Backtest, ablation, ranking metrics |
 | [`docs/CausalMLEvaluationReport.md`](docs/CausalMLEvaluationReport.md) | Causal-validation findings |
 | [`docs/temporal_audit.md`](docs/temporal_audit.md) | Per-source coverage + cutoff decisions |
-| [`docs/UIChangePlan.md`](docs/UIChangePlan.md) | Frontend redesign log |
 | [`docs/ReportSections.md`](docs/ReportSections.md) | Final-report draft material |
 | [`docs/Presentation.md`](docs/Presentation.md) | Slide deck outline |
