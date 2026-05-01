@@ -1,6 +1,6 @@
 """Inbound API request schemas."""
 
-from typing import Literal, Optional, Any
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -19,10 +19,10 @@ class RecommendationRequest(BaseModel):
 
     @field_validator("concept_subtype")
     @classmethod
-    def validate_subtype(cls, v: Any) -> Any:
+    def validate_subtype(cls, v: str) -> str:
         """Reject non-alphanumeric (except spaces/underscores) to prevent injection."""
-        if not v or not isinstance(v, str):
-            raise ValueError("concept_subtype must be a non-empty string")
+        if not v:
+            raise ValueError("concept_subtype must not be empty")
         # Allow alphanumeric, spaces, and underscores only
         if not all(c.isalnum() or c in " _" for c in v):
             raise ValueError(
