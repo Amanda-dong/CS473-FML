@@ -7,8 +7,6 @@
 ```
 CS473-FML/
 ├── README.md                 # Orientation, datasets, pipeline commands, teammate links.
-├── requirement.text          # Plain-text dependency pin list (mirrors requirements.txt).
-├── REQUIREMENTS.TXT          # Uppercase mirror of requirements.txt for reviewers.
 ├── PROPOSAL.md               # Formal problem framing + methodological overview.
 ├── DESIGN.md                 # This document — layout, staffing, stubs.
 ├── requirements.txt          # Python packages for conda/venv reproducibility.
