@@ -23,11 +23,13 @@ def build_license_velocity_features(license_events: pd.DataFrame) -> pd.DataFram
     Parameters
     ----------
     license_events:
-        DataFrame with columns (event_date, restaurant_id, license_status, nta_id, category).
+        DataFrame with columns:
+        (event_date, restaurant_id, license_status, nta_id, category).
 
     Returns
     -------
-    DataFrame with columns (zone_id, time_key, license_velocity, net_opens, net_closes).
+    DataFrame with columns:
+        (zone_id, time_key, license_velocity, net_opens, net_closes).
     """
     if license_events.empty:
         return pd.DataFrame(columns=_OUTPUT_COLUMNS)
