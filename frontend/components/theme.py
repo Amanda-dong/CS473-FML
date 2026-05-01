@@ -28,6 +28,11 @@ def inject_custom_theme():
             color: #fafafa;
         }
 
+        /* Fix top cutoff */
+        .block-container {
+            padding-top: 2rem !important;
+        }
+
         /* Card Styling */
         div[data-testid="stMetric"] {
             background: var(--bg-glass);
@@ -68,9 +73,9 @@ def inject_custom_theme():
             letter-spacing: 0.5px;
             margin-bottom: 0.5rem;
         }
-        .badge-high-opp { background-color: var(--danger); color: white; }
-        .badge-established { background-color: #457b9d; color: white; }
-        .badge-growing { background-color: var(--success); color: white; }
+        .badge-high-opportunity { background-color: var(--danger); color: white; }
+        .badge-established-hub { background-color: #457b9d; color: white; }
+        .badge-growing-market { background-color: var(--success); color: white; }
         .badge-low-demand { background-color: #495057; color: white; }
 
         /* Sidebar Styling */

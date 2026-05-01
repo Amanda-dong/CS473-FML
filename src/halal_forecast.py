@@ -266,7 +266,7 @@ def build_entry_forecast():
         coef_df = pd.DataFrame({'feature': feature_cols, 'coefficient': [0.0]*len(feature_cols)})
         ablation_rows = [{'feature': c, 'r2_mean': 0.0, 'r2_std': 0.0} for c in feature_cols]
         ablation_df = pd.DataFrame(ablation_rows)
-        diag = {'r2_mean': 0.0, 'r2_std': 0.0, 'baseline_r2': 0.0, 'coefficients': coef_df, 'ablation': ablation_df, 'top_actual': pd.DataFrame(), 'bottom_actual': pd.DataFrame()}
+        diag = {'r2_insample': 0.0, 'r2_std': 0.0, 'baseline_r2': 0.0, 'coefficients': coef_df, 'ablation': ablation_df, 'top_actual': pd.DataFrame(), 'bottom_actual': pd.DataFrame()}
         return fallback, diag
 
     cv = KFold(n_splits=CFG.ridge_cv_folds, shuffle=True, random_state=CFG.ridge_random_state)

@@ -283,7 +283,20 @@ def render_recommendation_card(
             st.markdown(f"### #{rank} {_display_name(nta_id)}")
             st.caption(f"{_borough(nta_id)} · {nta_id}")
         with col_badge:
-            st.markdown(f"<div class='market-badge badge-{badge_class}'>{market_type}</div>", unsafe_allow_html=True)
+            _mc = {
+                'High Opportunity': ('#fde8e8', '#e63946', '#c0392b'),
+                'Established Hub':  ('#e3edf7', '#457b9d', '#2c5f7a'),
+                'Growing Market':   ('#e8f5e9', '#2a9d8f', '#1e7a6e'),
+                'Low Demand':       ('#f5f5f5', '#adb5bd', '#6c757d'),
+            }
+            mc_bg, mc_border, mc_text = _mc.get(market_type, ('#f5f5f5', '#adb5bd', '#6c757d'))
+            emoji = MARKET_TYPE_EMOJI.get(market_type, "⚪")
+            st.markdown(
+                f'<span style="background:{mc_bg};border:1.5px solid {mc_border};border-radius:20px;'
+                f'padding:4px 12px;font-size:0.82em;font-weight:600;color:{mc_text};display:inline-block;">'
+                f'{emoji} {market_type}</span>',
+                unsafe_allow_html=True,
+            )
 
         # Radar + Score Gauge
         col_radar, col_gauge = st.columns([2, 2])
@@ -303,38 +316,62 @@ def render_recommendation_card(
                 pass
         
         with col_gauge:
-            import plotly.graph_objects as go
-            fig_gauge = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = final_score,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Overall Fit", 'font': {'size': 14, 'color': '#e9c46a'}},
-                gauge = {
-                    'axis': {'range': [0, 1], 'tickwidth': 1, 'tickcolor': "#457b9d"},
-                    'bar': {'color': "#e9c46a"},
-                    'bgcolor': "rgba(0,0,0,0)",
-                    'borderwidth': 2,
-                    'bordercolor': "rgba(255,255,255,0.1)",
-                    'steps': [
-                        {'range': [0, 0.4], 'color': 'rgba(230, 57, 70, 0.2)'},
-                        {'range': [0.4, 0.7], 'color': 'rgba(42, 157, 143, 0.2)'},
-                        {'range': [0.7, 1], 'color': 'rgba(26, 71, 42, 0.4)'}],
-                }
-            ))
-            fig_gauge.update_layout(
-                height=220, 
-                margin=dict(l=30, r=30, t=50, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                font={'color': "#fafafa"}
-            )
-            st.plotly_chart(fig_gauge, use_container_width=True, config={"displayModeBar": False}, key=f"gauge_{nta_id}")
+            pass # Gauge moved to consolidated block below
 
-        # Summary Metrics
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Demand", _signal_label(demand_score))
-        m2.metric("Gap", _signal_label(gap_score))
-        m3.metric("Latent Demand", _signal_label(latent_demand_score) if latent_demand_score is not None else '—')
-        m4.metric("Risk", risk_bucket)
+        # Consolidated Metrics & Gauge
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric(
+            'Overall fit',
+            _fmt_score(final_score),
+            help='Main ranking score: 0.4×demand + 0.4×gap + 0.2×viability.',
+        )
+        c2.metric(
+            'Demand',
+            _signal_label(demand_score),
+            help='Bayesian-shrunk halal review share across Yelp data.',
+        )
+        c3.metric(
+            'Gap',
+            _signal_label(gap_score),
+            help='max(demand − supply, 0) — unmet demand proxy.',
+        )
+        c4.metric(
+            'Latent Demand',
+            _signal_label(latent_demand_score) if latent_demand_score is not None else '—',
+            help='Implicit halal interest + keyword signals. Captures demand where halal restaurants are absent.',
+        )
+        if cluster_confidence is not None:
+            try:
+                cc = float(cluster_confidence)
+                if cc < 0.25:
+                    st.warning(f'⚠ Borderline cluster (confidence {cc:.2f}) — market type may shift with new data.')
+            except (TypeError, ValueError):
+                pass
+        try:
+            import plotly.graph_objects as _go
+            _score_val = float(final_score) * 100 if final_score else 0.0
+            _gauge = _go.Figure(_go.Indicator(
+                mode='gauge+number',
+                value=_score_val,
+                domain={'x': [0, 1], 'y': [0, 1]},
+                gauge={
+                    'axis': {'range': [0, 100], 'tickfont': {'size': 9}},
+                    'bar': {'color': '#1a472a'},
+                    'steps': [
+                        {'range': [0, 40], 'color': '#fde8e8'},
+                        {'range': [40, 70], 'color': '#fff8e1'},
+                        {'range': [70, 100], 'color': '#e8f5e9'},
+                    ],
+                    'threshold': {'line': {'color': '#e9c46a', 'width': 3}, 'thickness': 0.8, 'value': _score_val},
+                },
+                number={'suffix': '/100', 'font': {'size': 14}},
+                title={'text': 'Overall Score', 'font': {'size': 11}},
+            ))
+            _gauge.update_layout(height=130, margin=dict(l=10, r=10, t=20, b=10), paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(_gauge, use_container_width=True, config={'displayModeBar': False})
+        except Exception:
+            st.progress(float(final_score) if final_score else 0.0)
+        st.caption('Score = 0.4×demand + 0.4×gap + 0.2×viability. Radar shows 5 dimensions.')
 
         # Plain-English summary
         st.info(_opportunity_summary(

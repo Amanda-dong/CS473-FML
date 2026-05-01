@@ -135,8 +135,10 @@ def main() -> None:
             for _, row in top_3.iterrows():
                 with st.container():
                     st.markdown(f"**{row['nta_id']}**")
-                    st.caption(f"Score: {row['final_score']:.3f} | {row['market_type']}")
-                    st.progress(float(row['final_score']))
+                    score_val = row.get('final_score_adjusted', row.get('final_score', 0.0))
+                    c1, c2 = st.columns(2)
+                    c1.metric("Score", f"{score_val:.3f}")
+                    c2.markdown(f"<div class='market-badge badge-{row['market_type'].lower().replace(' ', '-')}'>{row['market_type']}</div>", unsafe_allow_html=True)
             st.caption("Scroll down for full details and review evidence.")
 
         st.divider()
@@ -157,10 +159,6 @@ def main() -> None:
         # results_panel will handle the rich analytics in step 5
         from frontend.components.results_panel import render_analytics_view
         render_analytics_view(filtered_all, filtered)
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":

@@ -29,52 +29,6 @@ MARKET_TYPE_COLOR = {
 }
 
 
-def _render_ranking_chart(df_all: pd.DataFrame, df_highlight: pd.DataFrame) -> None:
-    """Violin + Strip plot for city-wide distribution with shortlist highlighted."""
-    import plotly.express as px
-    import plotly.graph_objects as go
-
-    if df_all is None or df_all.empty:
-        return
-
-    # Prepare data for plotting
-    plot_df = df_all.copy()
-    highlight_ids = {str(x).strip() for x in df_highlight["nta_id"]} if df_highlight is not None else set()
-    plot_df['Is Shortlisted'] = plot_df['nta_id'].apply(lambda x: 'Shortlist' if str(x).strip() in highlight_ids else 'Other')
-
-    fig = px.violin(
-        plot_df, 
-        y="final_score", 
-        x="market_type", 
-        color="market_type",
-        color_discrete_map=MARKET_TYPE_COLOR,
-        box=True, 
-        points="all",
-        hover_data=["nta_id"],
-        title="Score Distribution by Market Type"
-    )
-
-    # Highlight shortlisted points with a different symbol or larger size
-    # Actually, plotly express doesn't easily allow different symbols per point in violin.
-    # We'll just stick to a clean violin with boxplot and rely on Tab 3 for deeper dive.
-    
-    fig.update_layout(
-        height=500,
-        margin=dict(l=10, r=10, t=50, b=10),
-        xaxis=dict(title="Market Segment"),
-        yaxis=dict(title="Overall Score", range=[0, 1]),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#fafafa"),
-        title=dict(
-            text="How your matches compare to all neighborhoods",
-            font=dict(size=14, color="#e9c46a"),
-            x=0,
-        ),
-    )
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False}, key="citywide_ranking_violin")
-
-
 def render_analytics_view(df_all: pd.DataFrame, df_filtered: pd.DataFrame) -> None:
     """Rich analytics for Tab 3."""
     import plotly.express as px
@@ -160,10 +114,11 @@ def render_results_panel(
         )
         return
 
-    # City-wide ranking context chart
-    if df_all is not None and not df_all.empty:
-        with st.expander("📊 Ranking Distribution", expanded=True):
-            _render_ranking_chart(df_all, df)
+    top_row = df.iloc[0]
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Top match", _display_name(str(top_row.get("nta_id", ""))))
+    c2.metric("Best score", f"{float(top_row.get('final_score', 0.0)):.3f}")
+    c3.metric("Top risk level", str(top_row.get("risk_bucket", "—")))
 
     st.divider()
 
@@ -183,5 +138,6 @@ def render_results_panel(
         data=csv_bytes,
         file_name="halal_shortlist.csv",
         mime="text/csv",
-        use_container_width=True
+        use_container_width=True,
+        key="export_shortlist_btn"
     )
