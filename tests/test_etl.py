@@ -87,7 +87,7 @@ def test_licenses_transform_keeps_business_unique_id_separate() -> None:
     transformed = transform(raw)
 
     assert transformed.loc[0, "business_unique_id"] == "dca-42"
-    assert pd.isna(transformed.loc[0, "restaurant_id"])
+    assert transformed.loc[0, "restaurant_id"] == "dca-42"
 
 
 # ── etl_311 ───────────────────────────────────────────────────────────────────
@@ -543,7 +543,7 @@ def test_etl_licenses_transform_filters_unknown_nta() -> None:
     assert result.iloc[0]["nta_id"] == "BK09"
 
 
-def test_etl_licenses_transform_adds_restaurant_id_na() -> None:
+def test_etl_licenses_transform_restaurant_id_from_business_unique_id() -> None:
     from src.data.etl_licenses import transform
 
     raw = pd.DataFrame(
@@ -557,6 +557,7 @@ def test_etl_licenses_transform_adds_restaurant_id_na() -> None:
     )
     result = transform(raw)
     assert "restaurant_id" in result.columns
+    assert result.iloc[0]["restaurant_id"] == "dca-42"
 
 
 # ── etl_runner (additional) ───────────────────────────────────────────────────
