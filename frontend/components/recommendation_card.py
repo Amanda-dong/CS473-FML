@@ -14,6 +14,7 @@ _ZONE_TYPE_BADGE = {
 }
 _CLUSTER_BADGE = {
     "emerging": "🌱 Emerging",
+    "fast-growing": "📈 Fast-Growing",
     "gentrifying": "📈 Fast-Growing",
     "stable": "🏛️ Stable",
     "declining": "📉 Declining",

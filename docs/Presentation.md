@@ -65,7 +65,7 @@ Key architectural choices:
 
 **Key design decision:** DCA license data, not Yelp, defines the restaurant universe. Yelp coverage skews toward mid-market and above; DCA captures every licensed food establishment regardless of digital footprint.
 
-**ETL output:** 10 processed Parquet files joined into a zone-year feature matrix (NTA x year x feature).
+**ETL output:** Multiple processed Parquet tables joined into a **micro-zone × year** feature matrix (`data/processed/feature_matrix.parquet`; on-disk baseline **726 rows × 49 columns**), with `nta_id` used as a join key where sources are NTA-native.
 
 ---
 
@@ -74,9 +74,9 @@ Key architectural choices:
 - K-Means clustering over time-windowed feature vectors per NTA
   - Input features: license velocity delta, review growth rate, demographic drift (ACS year-over-year), permit intensity
   - Window: rolling 3-year slices from 2015 to 2024
-- Output: 4 trajectory labels per zone-period
+- Output: four user-facing trajectory labels (clustering is unsupervised; labels are mapped for the API)
   - **Emerging** — rising license velocity, demographic shift, permit activity
-  - **Gentrifying** — review growth and income influx ahead of supply change
+  - **Fast-growing** — review growth and income influx ahead of supply change (API string; narrative slides may still say “gentrifying-like” dynamics)
   - **Stable** — low variance across all signals
   - **Declining** — license attrition, flat or falling demand signals
 - Validated qualitatively against NYU Furman Center neighborhood change narratives
@@ -89,20 +89,19 @@ Key architectural choices:
 
 **Why survival analysis, not classification:**
 
-- Standard classification treats a still-open restaurant as a positive label — this discards information
-- Survival analysis handles right-censoring correctly: a restaurant open through the end of the observation window is an uncensored success, not a missing value
+- Standard classification treats a still-open restaurant as a positive label — this discards timing information
+- Survival analysis handles **right-censoring**: a restaurant still open at the data cutoff has an **observed** tenure so far but a **future** closure time that is unknown — that row is censored, not a “failed” label
 
-**Model:** Cox Proportional Hazards
+**Model:** Cox Proportional Hazards as primary baseline; Random Survival Forest and heuristic paths exist in code when libraries or convergence fail.
 
-- Covariates: neighborhood phase label, DOHMH inspection grade history, building permit density (rent pressure proxy), competing healthy-food establishment count, census income percentile
-- Event definition: DCA license transitions to Inactive / Revoked / Expired within the 2015–2024 observation window
+- Covariates (high level): zone-level rent, competition, inspection, transit; plus **license-history** features from the event sequence (`n_renewals`, `mean_renewal_interval_days`, `n_inactive_events`, `days_since_last_event`) — see `docs/EvaluationResults.md` §5.3
+- Event definition: DCA license last status in a closed set (e.g. inactive / expired / surrendered / revoked — see `build_real_restaurant_history()` in `src/models/survival_model.py`)
 
-**Results:**
+**Results (sync with `docs/EvaluationResults.md` before presenting):**
 
-- C-index: 0.71 (95% CI: 0.65–0.77)
-- Improvement over random baseline: +21 percentage points
+- Cox PH holdout C-index **0.5544**; 5-fold CV **0.5992 ± 0.0043**; bootstrap CI **[0.591, 0.608]** (same table in Evaluation Results)
 
-**Key finding:** Inspection grade history is the strongest single survival predictor — consistent with prior restaurant analytics literature and operationally interpretable (operators who maintain standards persist longer).
+**Key finding:** License-history and inspection signals dominate discriminative power in the current bundle — treat “inspection-only” claims as outdated if you cite older slides.
 
 ---
 
@@ -117,8 +116,8 @@ Weighted sum of 10 normalized signals, each scaled to [0, 1]:
 | Subtype gap | 0.16 | Intra-category variance across healthy subtypes |
 | Healthy gap | 0.12 | Overall healthy supply deficit vs. demand |
 | License velocity | 0.10 | Recent net new licenses (market momentum) |
-| NLP reviews | 0.08 | Gemini-annotated healthy-food demand from review text |
-| Transit access | 0.07 | Citi Bike + subway proximity score |
+| Review demand (NLP) | 0.08 | Review-derived healthy-demand share (`review_demand_score` in code) |
+| Transit access | 0.07 | Trip / mobility proxies (e.g. Citi Bike counts normalized in the feature dict) |
 | Competition penalty | 0.08 | Established competitor density (negative) |
 | Rent penalty | 0.04 | Permit-derived rent pressure (negative) |
 | Income alignment | 0.05 | ACS income match to concept price tier |
@@ -147,10 +146,10 @@ Weighted sum of 10 normalized signals, each scaled to [0, 1]:
 - Gemini annotation pass is in progress; will replace regex once quality threshold is validated
 - Label quality estimate pending held-out human review sample
 
-**Three derived features used downstream:**
+**Three derived features used downstream (zone-year matrix naming):**
 
-- `healthy_review_share` — fraction of reviews flagged as any healthy subtype
-- `subtype_gap` — entropy / std dev across per-subtype proportions
+- `healthy_food_share` — healthy-food demand share aggregated to the zone-year row (not `healthy_review_share` in the current parquet)
+- `subtype_gap` — spread across per-subtype proportions / taxonomy gap signal
 - `dominant_subtype` — modal subtype label for a zone (used for concept-match scoring)
 
 ---
@@ -164,52 +163,51 @@ Weighted sum of 10 normalized signals, each scaled to [0, 1]:
 
 **Primary metric:** NDCG@5 (normalized discounted cumulative gain at rank 5) — appropriate for a shortlist recommendation task where rank order matters.
 
-| Year | NDCG@5 | Precision@5 | MAP |
-|------|--------|-------------|-----|
-| 2020 | 0.71 | 0.60 | 0.63 |
-| 2022 | 0.78 | 0.70 | 0.72 |
-| 2024 | 0.83 | 0.76 | 0.78 |
+| Fold year | NDCG@5 | Precision@5 | MAP |
+|-----------|--------|-------------|-----|
+| 2020 | 0.9765 | 0.800 | 0.877 |
+| 2022 | 0.9667 | 0.600 | 0.628 |
+| 2023 | 0.9617 | 0.600 | 0.659 |
+
+*(Values copied from `docs/EvaluationResults.md` §5.1 walk-forward table; re-run `src/validation/run_evaluation.py` if you need fresher numbers.)*
 
 **Trend interpretation:**
 
-- Consistent improvement as the training window grows — the model learns more stable zone-level patterns over time
-- 2020 dip relative to trend: COVID-driven restaurant closures disrupted the normal relationship between demand signals and survival outcomes; the model recovers cleanly on 2022+ data
+- Metrics stay high across folds (short catalog + strong temporal features). Written interpretation and COVID narrative in `EvaluationResults.md` should be read together with the table — do not invent a “steady climb” story if the printed fold rows disagree.
 
 ---
 
 ## Slide 10: Evaluation — Feature Ablation
 
-Which signals actually drive ranking quality? Leave-one-group-out ablation over the 2024 evaluation set:
+Which signals actually drive ranking quality? Leave-one-group-out ablation (values from `docs/EvaluationResults.md` §5.2 — full model NDCG@5 = **0.9706**):
 
-```
-Signal group ablated        NDCG@5 drop
-----------------------------------------------
-Demand signals              -0.22  (most important)
-Survival features           -0.15
-NLP / reviews               -0.09
-Competition features        -0.06
-Rent / cost features        -0.04  (least important)
-```
+| Group removed | NDCG@5 after ablation | Drop from full |
+|---------------|----------------------|----------------|
+| demand | 0.801 | 0.170 |
+| survival | 0.852 | 0.119 |
+| nlp | 0.897 | 0.074 |
+| rent_cost | 0.926 | 0.045 |
+| competition | 0.942 | 0.029 |
 
 **Take-aways:**
 
-- Demand signals dominate — this validates the data architecture decision to prioritize review velocity and DCA license momentum over cost proxies
-- NLP provides meaningful lift (+0.09 NDCG) even with keyword-regex; Gemini annotation is expected to push this further
-- Rent variance is lower at micro-zone granularity than at borough level — blunt rent signals add noise more than signal at this resolution
+- **Demand** group removal hurts most — consistent with the evaluation write-up
+- **Survival** is second — merchant viability signal matters for ranking
+- NLP, rent/cost, and competition matter but with smaller marginal drops on this table
 
 ---
 
 ## Slide 11: Demo — Product Walkthrough
 
-Three-tab Streamlit application: **Top Picks | Methodology | Data Sources**
+Streamlit shell: **two in-app tabs** on `frontend/app.py` — **Top Picks** and **Data Sources**. **Methodology** is a **separate multipage entry** (`frontend/pages/1_Methodology.py`), not a third tab on the main screen.
 
 **Merchant workflow:**
 
 1. Select concept (e.g., "Healthy Indian") + price tier + risk tolerance slider
 2. System scores all 137 modeled micro-zones and returns the top 5 ranked by opportunity score
 3. Each result card displays:
-   - Zone type badge (campus / business district / residential)
-   - Opportunity score (0–100)
+   - Zone type badge (e.g. campus walkshed, lunch corridor, transit catchment, business district)
+   - Opportunity score (0–100 in UI — scaled from the 0–1 backend score)
    - Survival risk percentage
    - Confidence interval
    - Trajectory cluster label (emerging / fast-growing / stable / declining)
