@@ -122,13 +122,13 @@ def main() -> None:
 
     st.divider()
     review_pool = load_review_evidence_pool()
+    render_map_view(filtered_all)
+    st.divider()
     render_results_panel(
         filtered,
         repo_root=_REPO_ROOT,
         review_pool=review_pool,
     )
-    st.divider()
-    render_map_view(filtered_all)
 
 
 if __name__ == "__main__":
