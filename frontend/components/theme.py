@@ -126,17 +126,26 @@ def inject_custom_theme():
             gap: 2rem;
             background-color: transparent;
         }
-        .stTabs [data-baseweb="tab"] {
+        .stTabs [data-baseweb="tab"],
+        .stTabs button[role="tab"],
+        .stTabs [data-baseweb="tab"] p,
+        .stTabs [data-baseweb="tab"] span,
+        .stTabs button[role="tab"] p,
+        .stTabs button[role="tab"] span {
             height: 50px;
             white-space: pre-wrap;
             background-color: transparent;
             border-radius: 4px 4px 0 0;
-            gap: 1rem;
             padding-top: 10px;
             padding-bottom: 10px;
-            color: #333333;
+            color: #333333 !important;
         }
-        .stTabs [aria-selected="true"] {
+        .stTabs [aria-selected="true"],
+        .stTabs [aria-selected="true"] p,
+        .stTabs [aria-selected="true"] span,
+        .stTabs button[role="tab"][aria-selected="true"],
+        .stTabs button[role="tab"][aria-selected="true"] p,
+        .stTabs button[role="tab"][aria-selected="true"] span {
             background-color: var(--bg-glass);
             border-bottom: 3px solid var(--primary) !important;
             color: var(--primary) !important;
