@@ -524,7 +524,10 @@ def test_discover_topics_zero_n_topics_clamps_to_one() -> None:
 
 
 def test_discover_topics_empty_cluster_mask(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Covers lines 57-58: empty mask for a cluster_id when all samples in one cluster."""
+    """Covers lines 57-58: empty mask for a cluster_id.
+
+    Triggered when all samples are in one cluster.
+    """
     import numpy as np
     from sklearn import cluster as sklearn_cluster
     from src.nlp.topic_model import discover_topics
@@ -1082,9 +1085,10 @@ def test_generate_label_payload_portkey(monkeypatch) -> None:
 
     mock_portkey = MagicMock()
     mock_response = MagicMock()
-    mock_response.choices[
-        0
-    ].message.content = '[{"sentiment":"positive","halal_relevance":"not_related","concept_subtype":"healthy_indian","confidence":0.9}]'
+    mock_response.choices[0].message.content = (
+        '[{"sentiment":"positive","halal_relevance":"not_related",'
+        '"concept_subtype":"healthy_indian","confidence":0.9}]'
+    )
     mock_portkey.chat.completions.create.return_value = mock_response
 
     mock_module = MagicMock()
@@ -1194,7 +1198,8 @@ def test_embed_reviews_tfidf_fallback_guards(monkeypatch) -> None:
     from src.nlp.embeddings import embed_reviews
 
     # Target 3: Single text forces n_components=min(384, 0, 1000)=0 -> set to 1
-    # Also if text has 2+ words, tfidf.shape[1] might be 2 -> actual_components=min(1, 1)=1
+    # Also if text has 2+ words, tfidf.shape[1] might be 2 ->
+    # actual_components=min(1, 1)=1
     result = embed_reviews(["hello world"])
     assert result.shape == (1, 384)
 

@@ -214,9 +214,7 @@ def test_load_scoring_model_rehydrates_learned_wrapper(tmp_path) -> None:
     )
 
 
-def test_build_real_restaurant_history_uses_business_unique_id_without_inspection_join() -> (
-    None
-):
+def test_build_real_restaurant_history_uses_unique_id_no_join() -> None:
     from src.models.survival_model import build_real_restaurant_history
 
     licenses = pd.DataFrame(
@@ -699,7 +697,8 @@ def test_top_positive_drivers_transit_access() -> None:
 def test_top_positive_drivers_income_alignment() -> None:
     from src.models.explainability import top_positive_drivers
 
-    # median_income_static=140000 normalises to (140k-30k)/170k ≈ 0.647 > 0.65 → just above threshold
+    # median_income_static=140000 normalises to (140k-30k)/170k ≈ 0.647
+    # > 0.65 → just above threshold
     features = {"median_income_static": 141_000.0}
     drivers = top_positive_drivers(features)
     assert any("income" in d.lower() for d in drivers)

@@ -1223,7 +1223,8 @@ def test_etl_acs_run_etl_falls_back_when_local_empty(
     from src.data import etl_acs
 
     monkeypatch.setattr(etl_acs, "_load_local", lambda: pd.DataFrame())
-    # run_etl() catches the empty-frame error and falls back to canonical CSV or placeholder
+    # run_etl() catches the empty-frame error and falls back to
+    # canonical CSV or placeholder
     result = etl_acs.run_etl(limit=5)
     assert isinstance(result, pd.DataFrame)
 
@@ -1967,7 +1968,8 @@ def test_prepare_embedding_corpus_dedupe_fallback_after_filtering() -> None:
             ]
         }
     )
-    # dedupe_columns=['nonexistent'] should filter to [] and then fallback to ['review_text']
+    # dedupe_columns=['nonexistent'] should filter to [] and
+    # then fallback to ['review_text']
     result, report = prepare_embedding_corpus(df, dedupe_columns=["nonexistent"])
     assert len(result) == 2
     assert "long enough review" in result["review_text"].values

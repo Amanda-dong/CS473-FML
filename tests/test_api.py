@@ -132,7 +132,8 @@ async def test_predict_cmf_returns_sorted_scores() -> None:
             json={"concept_subtype": "healthy_mediterranean", "limit": 5},
         )
     recs = resp.json()["recommendations"]
-    # Diversity re-ranking can perturb strict score order; verify rank sequence is correct
+    # Diversity re-ranking can perturb strict score order;
+    # verify rank sequence is correct
     ranks = [r["rank"] for r in recs]
     assert ranks == sorted(ranks), "Recommendations must be returned in rank order"
     # Top recommendation must have a non-trivial score

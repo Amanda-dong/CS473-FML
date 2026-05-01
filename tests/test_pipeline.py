@@ -16,8 +16,9 @@ def test_build_feature_matrix_stage_returns_null_free_dataframe(
     monkeypatch.setattr(run_full_pipeline, "PROCESSED_DIR", processed_dir)
 
     # 2. Mock inputs to build_feature_matrix_stage
-    # We need to ensure build_zone_year_matrix and fill_feature_matrix_nulls are exercised
-    # and produce a valid output that results in a null-free matrix.
+    # We need to ensure build_zone_year_matrix and fill_feature_matrix_nulls
+    # are exercised and produce a valid output that results in a
+    # null-free matrix.
 
     # Create sample ETL outputs
     mock_etl_outputs = {
@@ -40,8 +41,9 @@ def test_build_feature_matrix_stage_returns_null_free_dataframe(
         ),
     }
 
-    # We need to mock the feature builders that are imported inside build_feature_matrix_stage
-    # or inside build_zone_year_matrix to avoid complex dependencies.
+    # We need to mock the feature builders that are imported inside
+    # build_feature_matrix_stage or inside build_zone_year_matrix to avoid
+    # complex dependencies.
     # Actually, we can just patch them to return simple DFs.
 
     with patch(
