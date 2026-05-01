@@ -29,11 +29,6 @@ def load_recommendations() -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_phase1() -> pd.DataFrame:
-    return pd.read_csv(DATA_PATH / "phase1_cluster_assignments.csv")
-
-
-@st.cache_data(show_spinner=False)
 def load_review_evidence_pool() -> pd.DataFrame | None:
     """Yelp reviews with Gemini halal labels — used for qualitative evidence per NTA."""
     return load_labeled_reviews(_REPO_ROOT)
@@ -50,19 +45,11 @@ BOROUGH_PREFIX = {
     "Staten Island": "SI",
 }
 
-MARKET_TYPE_COLOR = {
-    "High Opportunity": "🔴",
-    "Established Hub": "🔵",
-    "Growing Market": "🟢",
-    "Low Demand": "⚫",
-}
-
-
 def filter_recommendations(
     df: pd.DataFrame,
     borough: str | None,
     market_type: str | None,
-    limit: int,
+    limit: int | None,
     risk_tolerance: str = "High",
 ) -> pd.DataFrame:
     result = df.copy()
@@ -81,6 +68,8 @@ def filter_recommendations(
     if result.empty:
         return result
 
+    if limit is None:
+        return result
     return result.head(limit)
 
 
@@ -94,54 +83,52 @@ def main() -> None:
         layout="wide",
     )
     st.title("🕌 NYC Halal Restaurant Opportunity Finder")
-    st.caption("Find the best NYC neighborhoods to open a halal restaurant.")
+    st.caption("Find promising NYC neighborhoods for a halal restaurant launch.")
 
     df_all = load_recommendations()
 
     # Sidebar filters
     with st.sidebar:
-        st.header("Filters")
+        st.header("Build Your Shortlist")
+        st.caption(
+            "Choose the borough, market type, and risk level that fit your halal restaurant plan."
+        )
         form_state = render_input_form()
         st.divider()
-        st.caption(f"Total NTAs analyzed: **{len(df_all)}**")
+        st.caption(f"Neighborhoods in model: **{len(df_all)}**")
 
     # Filter data
-    filtered = filter_recommendations(
+    filtered_all = filter_recommendations(
         df_all,
         borough=form_state.get("borough"),
         market_type=form_state.get("market_type"),
-        limit=int(form_state.get("limit", 5)),
+        limit=None,
         risk_tolerance=form_state.get("risk_tolerance", "High"),
     )
+    filtered = filtered_all.head(int(form_state.get("limit", 5)))
 
-    # Tabs
-    (tab_overview,) = st.tabs(["📍 Overview"])
+    st.subheader("Welcome")
+    st.caption(
+        "This dashboard helps you compare NYC neighborhoods for a halal restaurant launch. Start with the best matches below, then use the map and neighborhood details to narrow your options."
+    )
 
-    with tab_overview:
-        # Header metrics
-        col1, col2 = st.columns(2)
-        col1.metric("NTAs Analyzed", len(df_all))
-        col2.metric("Showing", len(filtered))
-        st.caption(
-            "ℹ️ Signal strength labels (Very Strong / Moderate / Weak / Low) are relative rankings across 144 NYC neighborhoods, not absolute percentages."
-        )
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Neighborhoods scored", len(df_all))
+    col2.metric("Showing now", len(filtered))
+    col3.metric("Risk filter", str(form_state.get("risk_tolerance", "Medium")))
+    st.caption(
+        "Labels like Very Strong or Moderate are simple relative rankings across the neighborhoods in this model."
+    )
 
-        st.divider()
-        st.subheader("Neighborhood Map")
-        render_map_view(filtered)
-        st.divider()
-        st.subheader("Recommendations")
-        st.caption(
-            "Open **Review evidence — sample Yelp rows** for Gemini-labeled excerpts; "
-            "read the boxed note explaining how counts differ from pipeline `demand_score` "
-            "(full Yelp merge, city-wide min–max)."
-        )
-        review_pool = load_review_evidence_pool()
-        render_results_panel(
-            filtered,
-            repo_root=_REPO_ROOT,
-            review_pool=review_pool,
-        )
+    st.divider()
+    review_pool = load_review_evidence_pool()
+    render_results_panel(
+        filtered,
+        repo_root=_REPO_ROOT,
+        review_pool=review_pool,
+    )
+    st.divider()
+    render_map_view(filtered_all)
 
 
 if __name__ == "__main__":
