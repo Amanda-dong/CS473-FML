@@ -111,8 +111,7 @@ def render_scenario_panel() -> dict[str, str | bool | None]:
     if compare_mode:
         compare_subtypes = list(all_known_subtypes())
         compare_labels = [
-            _DISPLAY_NAMES.get(s, s.replace("_", " ").title())
-            for s in compare_subtypes
+            _DISPLAY_NAMES.get(s, s.replace("_", " ").title()) for s in compare_subtypes
         ]
         default_idx = 1 if len(compare_subtypes) > 1 else 0
         compare_idx = st.selectbox(
