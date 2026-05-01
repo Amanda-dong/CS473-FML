@@ -12,14 +12,15 @@ if str(_REPO_ROOT) not in sys.path:
 import pandas as pd
 import streamlit as st
 
-from frontend.components.comparison import render_comparison_view
 from frontend.components.input_form import render_input_form
 from frontend.components.map_view import render_map_view
-from frontend.components.recommendation_card import _display_name, render_recommendation_card
-from frontend.components.results_panel import _render_ranking_chart
+from frontend.components.results_panel import render_results_panel
 from frontend.components.theme import inject_custom_theme
 from frontend.review_evidence import load_labeled_reviews
 
+# ---------------------------------------------------------------------------
+# Data loading
+# ---------------------------------------------------------------------------
 DATA_PATH = _REPO_ROOT / "data" / "output"
 
 
@@ -30,9 +31,13 @@ def load_recommendations() -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def load_review_evidence_pool() -> pd.DataFrame | None:
+    """Yelp reviews with Gemini halal labels — used for qualitative evidence per NTA."""
     return load_labeled_reviews(_REPO_ROOT)
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 BOROUGH_PREFIX = {
     "Brooklyn": "BK",
     "Queens": "QN",
@@ -60,12 +65,19 @@ def filter_recommendations(
         result = result[result["risk_bucket"] == "Low"]
     elif risk_tolerance == "Medium":
         result = result[result["risk_bucket"].isin(["Low", "Medium"])]
-    result = result.sort_values("final_score", ascending=False)
+    result = result.sort_values("final_score_adjusted", ascending=False)
+
     if result.empty:
         return result
-    return result if limit is None else result.head(limit)
+
+    if limit is None:
+        return result
+    return result.head(limit)
 
 
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 def main() -> None:
     st.set_page_config(
         page_title="NYC Halal Opportunity Finder",
@@ -74,18 +86,23 @@ def main() -> None:
     )
     inject_custom_theme()
 
-    st.title("🕌 NYC Halal Restaurant Opportunity Finder")
-    st.caption("Find promising NYC neighborhoods for a halal restaurant launch.")
-
     df_all = load_recommendations()
 
+    # Sidebar filters
     with st.sidebar:
-        st.header("Build Your Shortlist")
-        st.caption("Filter by borough, market type, and risk tolerance.")
+        st.markdown("<h2 style='color: #e9c46a;'>🕌 Halal Scout</h2>", unsafe_allow_html=True)
+        st.caption(
+            "Build your shortlist by choosing the borough, market type, and risk level."
+        )
         form_state = render_input_form()
+
+        if st.button("🔄 Quick Reset", use_container_width=True):
+            st.rerun()
+
         st.divider()
         st.caption(f"Neighborhoods in model: **{len(df_all)}**")
 
+    # Filter data
     filtered_all = filter_recommendations(
         df_all,
         borough=form_state.get("borough"),
@@ -93,90 +110,54 @@ def main() -> None:
         limit=None,
         risk_tolerance=form_state.get("risk_tolerance", "High"),
     )
-    filtered = filtered_all.head(int(form_state.get("limit", 5)))
-    review_pool = load_review_evidence_pool()
+    limit_val = int(form_state.get("limit", 5))
+    filtered = filtered_all.head(limit_val)
 
-    tab1, tab2, tab3 = st.tabs(["🗺️ Explore", "⚖️ Compare", "📊 Analytics"])
+    # Tabs
+    tab_map, tab_compare, tab_analytics = st.tabs([
+        "📍 Map & Shortlist",
+        "⚖️ Compare",
+        "📊 Analytics"
+    ])
 
-    with tab1:
-        kpi1, kpi2, kpi3 = st.columns(3)
-        kpi1.metric("Neighborhoods scored", len(df_all))
-        kpi2.metric("Showing now", len(filtered))
-        kpi3.metric("Risk filter", str(form_state.get("risk_tolerance", "Medium")))
-        st.caption("Scores are relative rankings — not absolute measures.")
+    with tab_map:
+        st.markdown("### 🗺️ Opportunity Map")
+        col_map, col_summary = st.columns([2, 1])
 
-        render_map_view(filtered_all)
+        with col_map:
+            render_map_view(filtered_all)
+
+        with col_summary:
+            st.markdown("#### 🏆 Top 3 Summary")
+            top_3 = filtered.head(3)
+            if top_3.empty:
+                st.info("No matches found.")
+            for _, row in top_3.iterrows():
+                with st.container():
+                    st.markdown(f"**{row['nta_id']}**")
+                    score_val = row.get('final_score_adjusted', row.get('final_score', 0.0))
+                    c1, c2 = st.columns(2)
+                    c1.metric("Score", f"{score_val:.3f}")
+                    c2.markdown(f"<div class='market-badge badge-{row['market_type'].lower().replace(' ', '-')}'>{row['market_type']}</div>", unsafe_allow_html=True)
+            st.caption("Scroll down for full details and review evidence.")
+
         st.divider()
-
-        if filtered is None or filtered.empty:
-            st.warning(
-                "No neighborhoods match your filters. Try widening borough, risk, or market type."
-            )
-        else:
-            top_row = filtered.iloc[0]
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Top match", _display_name(str(top_row.get("nta_id", ""))))
-            c2.metric("Best score", f"{float(top_row.get('final_score', 0.0)):.3f}")
-            c3.metric("Top risk level", str(top_row.get("risk_bucket", "—")))
-
-            if df_all is not None and not df_all.empty:
-                with st.expander("📊 Where your shortlist ranks city-wide", expanded=True):
-                    _render_ranking_chart(df_all, filtered)
-                    st.caption(
-                        "Colored bars = your shortlist (by market type). Grey = all other neighborhoods."
-                    )
-
-            st.subheader("Your Shortlist")
-            col_left, col_right = st.columns(2)
-            for i, (_, row) in enumerate(filtered.iterrows()):
-                with col_left if i % 2 == 0 else col_right:
-                    render_recommendation_card(
-                        row.to_dict(),
-                        rank=i + 1,
-                        review_pool=review_pool,
-                        repo_root=_REPO_ROOT,
-                    )
-
-            export_cols = [
-                "nta_id", "market_type", "final_score", "demand_score",
-                "gap_score", "viability_score", "risk_bucket", "similar_ntas",
-            ]
-            export_cols = [c for c in export_cols if c in filtered.columns]
-            st.download_button(
-                "📥 Export shortlist as CSV",
-                data=filtered[export_cols].to_csv(index=False).encode("utf-8"),
-                file_name="halal_recommendations.csv",
-                mime="text/csv",
-            )
-
-    with tab2:
-        st.markdown("Select two neighborhoods from your shortlist to compare them side by side.")
-        if len(filtered) < 2:
-            st.info(
-                "Expand your shortlist (slider in sidebar) to at least 2 neighborhoods "
-                "to use this view."
-            )
-        else:
-            render_comparison_view(filtered)
-
-    with tab3:
-        st.subheader("All Scored Neighborhoods")
-        st.caption("Full city-wide data — sort any column to explore.")
-        show_cols = [
-            "nta_id", "market_type", "final_score", "demand_score", "gap_score",
-            "viability_score", "risk_bucket", "high_risk_prob", "halal_cuisine_diversity",
-        ]
-        show_cols = [c for c in show_cols if c in df_all.columns]
-        st.dataframe(
-            df_all[show_cols].sort_values("final_score", ascending=False),
-            use_container_width=True,
-            hide_index=True,
+        review_pool = load_review_evidence_pool()
+        render_results_panel(
+            filtered,
+            repo_root=_REPO_ROOT,
+            review_pool=review_pool,
+            df_all=df_all,
         )
 
-        st.divider()
-        st.subheader("Methodology")
-        from frontend.pages.methodology import render_methodology_page  # noqa: PLC0415
-        render_methodology_page()
+    with tab_compare:
+        from frontend.components.comparison import render_comparison_view
+        render_comparison_view(filtered)
+
+    with tab_analytics:
+        st.subheader("📊 Market Analytics")
+        from frontend.components.results_panel import render_analytics_view
+        render_analytics_view(filtered_all, filtered)
 
 
 if __name__ == "__main__":
