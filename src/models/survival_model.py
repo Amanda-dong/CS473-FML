@@ -161,12 +161,14 @@ class SurvivalModelBundle:
                     [0.0] * len(candidate_frame), index=candidate_frame.index
                 )
             )
+            _comp_col = next(
+                (c for c in ("restaurant_count_static", "competition_score") if c in candidate_frame),
+                None,
+            )
             competition = (
-                candidate_frame["competition_score"]
-                if "competition_score" in candidate_frame
-                else pd.Series(
-                    [0.0] * len(candidate_frame), index=candidate_frame.index
-                )
+                candidate_frame[_comp_col].clip(upper=1.0)
+                if _comp_col is not None
+                else pd.Series([0.0] * len(candidate_frame), index=candidate_frame.index)
             )
             risk = (rent_pressure.astype(float) + competition.astype(float)) / 2.0
             return risk.clip(lower=0.0, upper=1.0).rename("closure_risk")
@@ -461,14 +463,14 @@ def build_real_restaurant_history(
         Must contain: restaurant_id, grade (A/B/C).
     zone_features : pd.DataFrame | None
         Optional zone-level features keyed by zone_id with columns:
-        rent_pressure, competition_score, transit_access.
+        rent_pressure, restaurant_count_static, trip_count.
 
     Returns
     -------
     pd.DataFrame with columns:
         restaurant_id, zone_id, cuisine_type,
         duration_days, event_observed (1=closed, 0=right-censored),
-        rent_pressure, competition_score, transit_access,
+        rent_pressure, restaurant_count_static, trip_count,
         inspection_grade_numeric
     """
     licenses = licenses_df.copy()
@@ -528,8 +530,8 @@ def build_real_restaurant_history(
                 "event_observed",
                 "inspection_grade_numeric",
                 "rent_pressure",
-                "competition_score",
-                "transit_access",
+                "restaurant_count_static",
+                "trip_count",
             ]
         )
 
@@ -649,7 +651,7 @@ def build_real_restaurant_history(
             )
             for c in zone_cols:
                 result[c] = result[c].fillna(0.5)
-    for c in ["rent_pressure", "competition_score", "transit_access"]:
+    for c in ["rent_pressure", "restaurant_count_static", "trip_count"]:
         if c not in result.columns:
             result[c] = 0.5
 
