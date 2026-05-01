@@ -397,7 +397,7 @@ def render_recommendation_card(
                     showlegend=False,
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
-                    font={'color': "#fafafa"}
+                    font={'color': '#1a1a1a'}
                 )
                 st.plotly_chart(contrib_fig, use_container_width=True, config={'displayModeBar': False}, key=f"breakdown_{nta_id}")
             except Exception:
