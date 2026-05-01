@@ -55,8 +55,6 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-`requirement.text` and `REQUIREMENTS.TXT` mirror `requirements.txt` for reviewers who want alternate filenames.
-
 ---
 
 ## Running the analytic pipeline
