@@ -1,6 +1,6 @@
 # Data Dictionary and Exact Dataset Schemas
 
-Updated: April 3, 2026
+Updated: April 30, 2026
 
 This document is the schema-level source of truth for the project.
 It covers:
@@ -37,6 +37,7 @@ Important distinction:
 | Source audit | `DatasetAuditRow` | `name`, `owner`, `spatial_unit`, `time_grain`, `earliest_year`, `status`, `notes` | implemented |
 | Raw ETL | source-specific tables below | fixed canonical schemas per source | mixed: some real ETL, some loaders, some stubs |
 | Zone-year feature engineering | zone-year matrix | `zone_id`, `time_key`, joined feature columns listed below | implemented |
+| NTA zone table enrichment | `data/processed/zone_features.parquet` | cuisine mix + optional Yelp NTA aggregates (see §5.12) | implemented |
 | Neighborhood phase discovery | numeric slice of zone-year matrix | all numeric columns from phase matrix | implemented |
 | Survival modeling | restaurant history table | exact columns listed below | implemented |
 | NLP weak labeling | review-label cache | exact label columns listed below | implemented |
@@ -618,6 +619,40 @@ The current intended feature families are:
 - NLP demand features
 - competition and access features
 - cost-pressure features
+
+### 5.12 NTA `zone_features` enrichment (cuisine + Yelp)
+
+Stored at:
+
+- `data/processed/zone_features.parquet`
+
+Produced / updated by:
+
+- `src/data/enrich_zone_features.py` (`main()` reads the parquet, merges new columns, writes back)
+
+Inputs:
+
+- `data/processed/inspections.parquet` — requires `nta_id` and `cuisine_type`
+- `data/raw/yelp_reviews_with_zones.csv` — optional; uses columns `nta` (6-char NTA) and `rating`
+
+Join key:
+
+- Rows use **`zone_id` = 6-character 2020 NTA code** (same string family as `nta_id` in inspections). Rows with non-6-char geography keys are dropped for the cuisine block.
+
+Columns added or refreshed by this script:
+
+| Column | Type | Meaning |
+| :---- | :---- | :---- |
+| `cuisine_diversity` | float in `[0, 1]` | Normalized Shannon entropy of the `cuisine_type` distribution within the NTA. `0` when filled for unknown / no data. |
+| `dominant_cuisine` | string | Lowercased mode of `cuisine_type` for the NTA. `unknown` when missing. |
+| `high_risk_cuisine_share` | float in `[0, 1]` | Share of inspection rows whose lowercased `cuisine_type` is in the script’s high-risk set: `chinese`, `mexican`, `american`, `latin american`, `caribbean`, `bakery products/desserts`, `spanish`. |
+
+Same script also merges Yelp aggregates (documented here so the file contract stays in one place):
+
+| Column | Type | Meaning |
+| :---- | :---- | :---- |
+| `yelp_avg_rating` | float | Mean Yelp star rating per NTA. Missing values filled with the column median after merge. |
+| `yelp_review_density` | float in `[0, 1]` | Review count per NTA divided by the maximum count in the batch; `0` when no reviews. |
 
 ## 6. Phase-by-Phase Column Usage
 
