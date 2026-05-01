@@ -1,237 +1,300 @@
-# NYC Restaurant Intelligence Platform - Design Document
+# NYC Restaurant Intelligence Platform — Design Document
 
-Updated: April 1, 2026
+Updated: April 30, 2026
 Team: Catherine · Harsh · Tony · Siqi · Amanda
-Repo: github.com/Amanda-dong/CS473-FML
+Repo: <https://github.com/Amanda-dong/CS473-FML>
+
+Design reference for collaborators and reviewers. It covers (1) repository
+structure with a one-line description of each component, (2) division of labor
+across the five-person team with concrete module ownership, and (3) how the repo
+documents setup and maps documentation to runnable code (README,
+`requirements.txt`, environment, modules under `src/`).
+
+Longer engineering details live in `docs/DataDictionary.md`,
+`docs/ModelInterfaces.md`, and `docs/api_contract.md`. Architecture rationale
+sits in `docs/Research.md` and `docs/Proposal.md`.
+
+---
 
 ## 1. Repository Structure
 
-Current scaffold:
+The repository follows a strict separation between **data**, **library code
+under `src/`**, **product surfaces (`frontend/`, `src/api/`)**, **operational
+scripts**, **tests**, and **docs**. Nothing in `src/` writes to the network at
+import time, and nothing in `frontend/` reaches into `src/data/` directly — the
+API layer is the contract between them.
 
 ```text
 CS473-FML/
-├── README.md
-├── requirements.txt
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── geojson/
-├── docs/
-├── src/
-│   ├── data/
-│   ├── features/
-│   ├── models/
-│   ├── nlp/
-│   ├── api/
-│   └── validation/
-├── frontend/
-│   ├── app.py
-│   └── components/
-├── notebooks/
-└── tests/
+├── README.md                    # Project overview, setup, quick start, doc index
+├── Makefile                     # One-line entry points: `make etl`, `make train`, `make api`, `make ui`, `make test`
+├── requirements.txt             # Pinned Python deps (Python 3.11+)
+├── pytest.ini / .coveragerc     # Test runner + coverage config
+├── ruff.toml                    # Lint/format config (single source of truth for style)
+├── .pre-commit-config.yaml      # Pre-commit hooks (ruff, formatting, commitlint)
+├── .env.example                 # Template for secrets (e.g. GEMINI_API_KEY)
+├── run_full_pipeline.py         # End-to-end orchestrator: ETL → feature matrix → training
+│
+├── data/                        # All persisted artifacts (gitignored except small fixtures)
+│   ├── raw/                     # Date-stamped immutable source extracts (CSV/JSON from NYC Open Data, Yelp, ACS)
+│   ├── processed/               # Canonical parquet tables (feature_matrix.parquet, ground truth, ETL outputs)
+│   ├── geojson/                 # NTA + Community District boundaries used as join infrastructure
+│   └── models/                  # Trained joblib artifacts: scoring_model, survival_model, ranking_model
+│
+├── docs/                        # Design, proposal, data dictionary, model interfaces, evaluation reports
+│   ├── Proposal.md              # Problem framing, methods, research-driven choices
+│   ├── Design.md                # This file: structure, labor, repo readiness
+│   ├── Sprints.md               # Sprint-by-sprint task division and completion status
+│   ├── Research.md              # Literature + dataset-viability rationale
+│   ├── DataDictionary.md        # Authoritative column-by-column schema reference
+│   ├── ModelInterfaces.md       # Exact model I/O contracts and runtime behavior
+│   ├── EvaluationResults.md     # Backtest, ablation, and ranking metrics
+│   ├── CausalMLEvaluationReport.md # Causal-validation findings
+│   ├── api_contract.md          # FastAPI endpoint shapes
+│   ├── ReportSections.md        # Final report draft material
+│   ├── Presentation.md          # Slide deck outline
+│   ├── UIChangePlan.md          # Frontend redesign log
+│   └── temporal_audit.md        # Per-source coverage + cutoff decisions
+│
+├── frontend/                    # Streamlit shortlist-first UI (consumes the FastAPI backend only)
+│   ├── app.py                   # Entry point: routes, state, calls /predict/cmf and /predict/trajectory
+│   ├── components/              # Reusable widgets: input_form, recommendation_card, scenario_panel, map_view, results_panel, data_freshness
+│   ├── pages/                   # Multi-page Streamlit pages (e.g. Methodology)
+│   ├── views/                   # Static long-form content (e.g. methodology copy)
+│   └── utils/                   # Frontend-only helpers (search state)
+│
+├── notebooks/                   # Exploratory analysis (read-only narratives, not part of runtime path)
+│   ├── 01_eda.ipynb             # Data audit + coverage exploration
+│   ├── 02_trajectory_model.ipynb # k-means / GMM phase discovery
+│   ├── 03_survival_model.ipynb  # Cox PH + RSF prototyping
+│   ├── 04_nlp.ipynb             # Gemini labeling + aggregation
+│   └── 05_backtesting.ipynb     # Temporal validation
+│
+├── scripts/                     # One-off CLIs and operational helpers
+│   ├── run_api.sh               # Boots uvicorn against `src.api.main:app`
+│   ├── smoke_api.py             # Hits each API endpoint as a smoke test
+│   ├── filter_yelp_reviews_fusion.py # Pre-filter Yelp corpus to NYC restaurants
+│   ├── join_reviews_to_zones.py # Spatially join reviews onto micro-zones
+│   ├── assign_yelp_business_zones.py # Map Yelp businesses to zone_id
+│   ├── download_nta_geojson.py  # Fetch boundary GeoJSON
+│   ├── fill_inspections_data.py # Backfill inspection rollups
+│   ├── fix_nulls.py             # Re-run null repair on existing parquets
+│   └── verify_diversity.py      # Audit recommendation diversity
+│
+├── src/                         # All importable library code
+│   ├── api/                     # FastAPI service: contract layer between models and frontend
+│   │   ├── main.py              # App factory, middleware, router registration
+│   │   ├── deps.py              # Shared dependency injection (model loaders, settings)
+│   │   └── routers/
+│   │       ├── recommendations.py # /predict/cmf, /predict/trajectory, /shortlist, /scenarios
+│   │       ├── datasets.py       # Dataset metadata + freshness endpoints
+│   │       └── health.py         # Liveness/readiness probes
+│   │
+│   ├── config/                  # Static project configuration
+│   │   ├── constants.py         # Temporal window, scoring weights, taxonomy thresholds
+│   │   └── settings.py          # Pydantic settings reading .env
+│   │
+│   ├── data/                    # ETL: one module per source, plus quality + audit
+│   │   ├── etl_runner.py        # Orchestrates all ETL modules with consistent logging
+│   │   ├── etl_licenses.py      # NYC DCWP Legally Operating Businesses
+│   │   ├── etl_permits.py       # NYC DOB building permits
+│   │   ├── etl_inspections.py   # NYC DOHMH restaurant inspections
+│   │   ├── etl_pluto.py         # MapPLUTO lot-level land-use
+│   │   ├── etl_acs.py           # Census ACS 5-year demographics
+│   │   ├── etl_yelp.py          # Yelp Open Dataset (audited NYC slice)
+│   │   ├── etl_citibike.py      # Citi Bike trip + station mobility
+│   │   ├── etl_airbnb.py        # Inside Airbnb housing pressure proxy
+│   │   ├── etl_311.py           # NYC 311 complaints (Reddit fallback)
+│   │   ├── etl_boundaries.py    # NTA + CD boundary geometry
+│   │   ├── audit.py             # Per-source coverage + freshness diagnostics
+│   │   ├── quality.py           # Null-fill, schema validation, dtype coercion
+│   │   ├── registry.py          # Source ↔ module mapping for `etl_runner`
+│   │   └── enrich_zone_features.py # Post-ETL zone-level enrichment
+│   │
+│   ├── features/                # Feature engineering on top of cleaned ETL outputs
+│   │   ├── feature_matrix.py    # Builds the canonical zone-year matrix (49 cols × 726 rows)
+│   │   ├── ground_truth.py      # y_composite construction + label_quality
+│   │   ├── microzones.py        # Walk-shed and corridor definitions
+│   │   ├── zone_crosswalk.py    # NTA ↔ zone_id mapping infrastructure
+│   │   ├── healthy_gap.py       # Healthy-supply-gap feature
+│   │   ├── competition_score.py # Local competitive intensity
+│   │   ├── demand_signals.py    # Review-derived demand aggregates
+│   │   ├── license_velocity.py  # Open/close rate features
+│   │   ├── rent_trajectory.py   # Rent / assessed-value pressure proxies
+│   │   ├── merchant_viability.py # Composite merchant-side risk
+│   │   └── yelp_microzones.py   # Yelp-business → micro-zone roll-ups
+│   │
+│   ├── models/                  # Modeling layer + training entry points
+│   │   ├── trajectory_model.py  # k-means / GMM phase discovery
+│   │   ├── survival_model.py    # Cox PH + Random Survival Forest
+│   │   ├── train_survival.py    # Survival training CLI
+│   │   ├── cmf_score.py         # Interpretable concept-market-fit score
+│   │   ├── train_scoring.py     # XGBoost scoring training CLI
+│   │   ├── ranking_model.py     # LambdaMART learning-to-rank head
+│   │   ├── explainability.py    # SHAP-style driver attribution
+│   │   ├── model_loader.py      # Lazy joblib loader shared by API + scripts
+│   │   └── baselines.py         # Naïve/sanity baselines
+│   │
+│   ├── nlp/                     # Text-side pipeline
+│   │   ├── gemini_labels.py     # Gemini Flash silver-label generator
+│   │   ├── review_aggregates.py # Zone-level healthy-demand rollups
+│   │   ├── embeddings.py        # Lightweight CPU embeddings
+│   │   ├── topic_model.py       # Optional topic-cluster summary
+│   │   ├── subtype_classifier.py # Healthy subtype assignment
+│   │   ├── neighborhood_mentions.py # spaCy NER for Reddit / 311 mentions
+│   │   ├── sentiment.py         # Lightweight sentiment helper
+│   │   └── white_space.py       # Subtype-gap derivation
+│   │
+│   ├── pipeline/                # Cross-cutting orchestration helpers
+│   │   ├── orchestrator.py      # Stage runner used by `run_full_pipeline`
+│   │   ├── preflight.py         # Pre-run environment + data sanity checks
+│   │   └── stages.py            # Stage enum / metadata
+│   │
+│   ├── schemas/                 # Pydantic request/response + dataset schemas
+│   │   ├── requests.py          # API request bodies
+│   │   ├── results.py           # API response shapes (recommendations, scenarios)
+│   │   └── datasets.py          # ETL output schemas
+│   │
+│   ├── utils/                   # Shared utilities (no upward dependencies)
+│   │   ├── geospatial.py        # CRS handling + spatial joins
+│   │   ├── taxonomy.py          # Healthy-food subtype taxonomy + matchers
+│   │   └── paths.py             # Centralized path constants
+│   │
+│   └── validation/              # Time-aware evaluation, ablations, causal checks
+│       ├── backtesting.py       # Blocked / rolling temporal backtests
+│       ├── ablation.py          # Feature-family ablation harness
+│       ├── causal.py            # Causal robustness checks
+│       ├── run_evaluation.py    # End-to-end evaluation CLI
+│       └── run_causal_evaluation.py # Causal evaluation CLI
+│
+└── tests/                       # 600+ pytest cases (one test_*.py per src subpackage)
+    ├── conftest.py              # Shared fixtures (synthetic ETL frames, monkeypatched paths)
+    ├── test_etl.py              # ETL module behavior + schema enforcement
+    ├── test_features.py         # Feature matrix + ground truth correctness
+    ├── test_models.py           # Trajectory, survival, scoring, ranking models
+    ├── test_nlp.py              # Gemini labels + aggregates
+    ├── test_api.py              # FastAPI endpoint contracts
+    ├── test_validation.py       # Backtesting + ablation
+    ├── test_causal_validation.py # Causal-evaluation harness
+    ├── test_pipeline.py         # End-to-end pipeline integration
+    ├── test_geospatial.py       # CRS + spatial-join utilities
+    ├── test_zone_crosswalk.py   # NTA ↔ zone_id consistency
+    ├── test_enrich_zone_features.py # Zone-level enrichment
+    └── test_frontend_search_state.py # Streamlit search-state helper
 ```
 
-Design intent by area:
+### Separation-of-concerns guarantees
 
-- `data/raw/`: date-stamped source extracts and audit snapshots; never treated as hand-edited working data
-- `data/processed/`: canonical cleaned tables that feed feature generation
-- `data/geojson/`: boundary files and crosswalk assets for NTA and Community District joins
-- `src/data/`: ETL modules for each approved data source
-- `src/features/`: feature assembly, competition scores, rent proxies, and neighborhood panel construction
-- `src/models/`: phase discovery, survival modeling, and concept-market-fit scoring
-- `src/nlp/`: review pseudo-labeling, sentiment modeling, and neighborhood mention extraction
-- `src/validation/`: temporal backtesting, ablations, and robustness checks
-- `frontend/`: Streamlit prototype for interactive neighborhood exploration
+- **`src/data/`** is the only place that talks to external sources. Nothing
+  downstream of it does I/O against URLs.
+- **`src/features/`** is pure pandas/numpy on top of `data/processed/`. It never
+  re-fetches.
+- **`src/models/`** consumes the feature matrix and writes joblib artifacts to
+  `data/models/`; it never fetches and never renders UI.
+- **`src/api/`** is the only public network surface. It loads models lazily via
+  `src/models/model_loader.py`.
+- **`frontend/`** only calls the API. It does not import from `src/data/`,
+  `src/features/`, or `src/models/`.
+- **`tests/`** mirrors the `src/` package layout one-to-one, so every module has
+  a clear test home.
 
-The product target is no longer a generic restaurant recommender. It is an underserved healthy-food locator for merchants, with special emphasis on campus-adjacent zones, office lunch corridors, and similar walkable micro-markets.
+---
 
-## 2. Research-Driven Architecture Decisions
+## 2. Division of Labor
 
-| Area | Updated decision | Why it is better |
+Every team member owns at least one concrete module path **and** at least one
+shippable deliverable. The `Primary modules` column lists the directories or
+files where that member leads review; the `Deliverables` column lists the main
+artifacts that illustrate that ownership.
+
+| Member | Role | Primary modules (paths) | Deliverables |
+| :---- | :---- | :---- | :---- |
+| **Harsh Agarwal** | Backend / ML — Survival & Scoring | `src/models/survival_model.py`, `src/models/train_survival.py`, `src/models/cmf_score.py`, `src/models/train_scoring.py`, `src/models/ranking_model.py`, `src/models/explainability.py` | `data/models/survival_model.joblib`, `data/models/scoring_model.joblib`, `data/models/ranking_model.joblib`; survival C-index ≈ 0.80 reported in `docs/EvaluationResults.md` |
+| **Siqi Zhu** | Backend / ML — Phase Discovery & Validation | `src/models/trajectory_model.py`, `src/validation/backtesting.py`, `src/validation/ablation.py`, `src/validation/causal.py`, `src/validation/run_evaluation.py` | k-means + GMM trajectory clusters in `notebooks/02_trajectory_model.ipynb`; backtest + ablation parquets under `data/processed/`; `docs/CausalMLEvaluationReport.md` |
+| **Tony Zhao** | Data / ETL Lead | `src/data/etl_*.py` (licenses, permits, inspections, pluto, acs, citibike, airbnb, 311, boundaries), `src/data/etl_runner.py`, `src/data/quality.py`, `src/data/audit.py`, `scripts/*` | All ETL parquets in `data/processed/`; `docs/temporal_audit.md`; `docs/DataDictionary.md` source sections |
+| **Amanda Dong** | Frontend / NLP | `frontend/app.py`, `frontend/components/*`, `frontend/pages/*`, `src/nlp/gemini_labels.py`, `src/nlp/review_aggregates.py`, `src/nlp/subtype_classifier.py`, `src/nlp/neighborhood_mentions.py` | Streamlit shortlist-first UI; `data/processed/gemini_full_zone_features.csv`; `notebooks/04_nlp.ipynb`; `docs/UIChangePlan.md` |
+| **Catherine Yi** | Project Lead / Integration | `src/api/main.py`, `src/api/routers/recommendations.py`, `src/features/feature_matrix.py`, `src/features/ground_truth.py`, `src/features/zone_crosswalk.py`, `run_full_pipeline.py`, `docs/*` | API contract (`docs/api_contract.md`); canonical `feature_matrix.parquet` (726 × 49); end-to-end `run_full_pipeline.py`; final `docs/ReportSections.md` and `docs/Presentation.md` |
+
+Cross-cutting ownership: every member is responsible for the `tests/test_*.py`
+file that mirrors their primary module(s). Test count today: **606 passing**.
+
+---
+
+## 3. Repository and Environment Readiness
+
+Public repo: <https://github.com/Amanda-dong/CS473-FML>.
+
+| Item | Status | Notes |
 | :---- | :---- | :---- |
-| Neighborhood phases | Replace hand-labeled supervised phase classification with unsupervised phase discovery using k-means and GMM | Removes the weakest assumption in the original proposal and lets the data define regimes before interpretation |
-| Cluster validation | Validate discovered clusters against NYU Furman Center neighborhood reports; use Urban Displacement Project or Furman references only if a supervised target is required | Keeps external evidence in the loop without forcing noisy labels up front |
-| Reddit geography | Extract neighborhood mentions with spaCy NER and a static NYC lookup table; aggregate at Community District level | More tractable than trying to geocode sparse social text to 195 NTAs |
-| Reddit feature shape | Use a binary recent-mention signal, not a continuous sentiment score | Lower variance and easier to justify with sparse data |
-| Social-data fallback | If Reddit is too sparse, replace it with NYC 311 complaint data | 311 is official, geocoded, and easier to aggregate consistently |
-| Google Trends | Remove from the project plan entirely | `pytrends` is unofficial and neighborhood-level signal quality is weak |
-| Yelp usage | Audit NYC coverage before relying on Yelp; treat Yelp as enrichment, not the system of record | Prevents the survival model from being built on incomplete platform coverage |
-| Survival backbone | Use official NYC business-license activity as the primary restaurant universe | Stronger coverage and better temporal completeness than review-platform data alone |
-| Sentiment labels | Generate silver labels with Gemini, audit a small gold set, and aggregate labels directly without transformer fine-tuning in the core plan | Preserves the NLP signal while keeping compute costs low |
-| Temporal validation | Run a data audit first and set the train/test cutoff based on the constraining dataset | Avoids promising a backtest window the data cannot actually support |
+| README | ✅ | Overview, setup (uv + conda paths), quick start, structure summary, documentation index |
+| Dependencies | ✅ | `requirements.txt` (Python 3.11+, pinned deps); `Makefile` provides `make install` |
+| Reproducible environment | ✅ | `uv venv` + `.env.example`; `make test` runs the pytest suite (606 passing); `make api` and `make ui` start the prototype |
+| Code layout aligned with §1 | ✅ | Each described area maps to runnable modules under `src/` (`__init__.py` where needed); `tests/` mirrors the package layout |
 
-## 3. Data Model and Join Strategy
+The codebase is actively implemented—not a skeleton. Concretely:
 
-Primary analytical units:
+- **ETL**: 10 source modules under `src/data/`, all callable through
+  `etl_runner.py`. Real fetch paths for `permits`, `licenses`, `inspections`,
+  `pluto`, `acs`, `yelp`, `citibike`, `airbnb`, `311`, `boundaries`.
+- **Features**: `feature_matrix.py` produces a 726-row × 49-column zone-year
+  matrix saved to `data/processed/feature_matrix.parquet`. Ground truth and
+  micro-zone crosswalks are implemented.
+- **Models**: trajectory clustering (k-means + GMM), survival (Cox PH + RSF),
+  scoring (XGBoost), ranking (LambdaMART), and explainability are all wired up.
+  Trained artifacts ship in `data/models/`.
+- **NLP**: full Yelp-corpus Gemini labeling pipeline; zone-level rollups in
+  `data/processed/gemini_full_zone_features.csv`.
+- **API + UI**: FastAPI service in `src/api/` (`/predict/cmf`,
+  `/predict/trajectory`, `/shortlist`, `/scenarios`) consumed by the Streamlit
+  app in `frontend/`.
+- **Validation**: blocked temporal backtesting, feature-family ablations, and a
+  causal-robustness harness under `src/validation/`.
 
-- neighborhood-year panel keyed by NTA and year for the macro context features
-- micro-zone keyed by walk-shed, corridor, or small spatial cell for final recommendations
+---
 
-Secondary units:
+## 4. Architecture Decisions (reference)
 
-- Community District month or quarter for Reddit or 311 social-signal aggregation
-- restaurant-level histories for survival modeling
-- review-level records for NLP training
+This section captures the rationale for the non-obvious choices baked into the
+structure above. It is intentionally short — the long version lives in
+`docs/Research.md` and `docs/Proposal.md`.
 
-Join strategy:
-
-- Maintain a clean distinction between point data, polygon data, and text-derived signals
-- Join geocoded operational data to NTA boundaries for the main neighborhood panel
-- Build a second layer of micro-zones around campuses, transit stops, or lunch corridors for the final recommendation surface
-- Aggregate Reddit or 311 features first at Community District level, then map to NTAs through a documented crosswalk or area-based aggregation
-- Treat any source without trustworthy historical depth as a static covariate instead of pretending it is a full time series
-
-### 3.1 Exact Schema References
-
-The project now has two implementation-level companion docs:
-
-- `docs/DataDictionary.md`: exact raw and derived dataset schemas, phase-by-phase column usage, and current implementation status
-- `docs/ModelInterfaces.md`: exact model inputs, outputs, diagnostics, runtime behavior, and algorithm rationale
-
-Those two files should be treated as the schema and model source of truth when the
-team needs exact column names instead of high-level design prose.
-
-## 4. Core Modeling Plan
-
-### 4.1 Phase Discovery
-
-- Build lagged neighborhood features from permits, licenses, inspections, ACS, PLUTO, mobility, and housing-pressure data
-- Run k-means and Gaussian Mixture Models
-- Compare candidate cluster counts with separation and stability diagnostics
-- Interpret cluster centroids post-hoc and validate against known neighborhood narratives
-
-### 4.2 Survival Modeling
-
-- Construct restaurant-level histories from official NYC licensing data
-- Add neighborhood context from the phase-discovery module
-- Train Cox Proportional Hazards and Random Survival Forest baselines
-- Use Yelp only when it contributes real incremental coverage or text features
-
-This layer should be concept-aware where possible. A healthy fast-casual concept does not compete against all restaurants equally; it competes most directly within lunch-oriented and adjacent healthier categories.
-
-### 4.3 NLP and Demand Signals
-
-- Use a Gemini Flash or Flash-Lite model to generate silver labels for Yelp review text
-- Audit and retain only high-confidence labels
-- Manually label a small gold test set for honest evaluation
-- Aggregate those labels into healthy-demand and food-mix features
-- Keep local transformer fine-tuning as optional only, not part of the baseline implementation
-- Use spaCy NER for neighborhood mention extraction from Reddit
-- Fall back to NYC 311 complaint counts if Reddit coverage is inadequate
-
-Recommended text labels:
-
-- healthy / fresh / light
-- salad / bowl / protein-forward
-- healthy Indian / South Asian
-- Mediterranean / grain-bowl
-- vegan / vegetarian
-- quick lunch / grab-and-go
-- unhealthy-dominant local mix such as burger / pizza / fried-heavy
-
-### 4.4 Final Score
-
-The final score should combine:
-
-- healthy-food supply gap
-- concept-subtype gap
-- merchant viability
-- neighborhood phase or trajectory regime
-- competition saturation penalty
-
-Recommended implementation:
-
-- baseline: interpretable weighted score for transparency
-- stretch goal: small CPU-friendly ranking model that orders neighborhoods within a concept query
-
-Healthy-food supply gap should be computed at the micro-zone level and should reflect:
-
-- count of healthy options nearby
-- ratio of healthy options to all quick-service options
-- local review evidence of unmet healthy demand
-- food-mix imbalance toward burgers, pizza, fried, or dessert-heavy chains
-- subtype-level white space inside the healthy category, for example Mediterranean saturation but healthy Indian under-supply
-
-Merchant viability should reflect:
-
-- local survival odds
-- rent pressure
-- neighborhood regime
-- congestion or competitive intensity
-
-The score should be framed as a ranking aid, not as a guaranteed forecast of business success.
-
-## 5. Product Experience Requirements
-
-The product should optimize for decision speed, not dashboard complexity.
-
-Required UX principles:
-
-- shortlist-first output: show the best 5 neighborhoods before showing the full map
-- shortlist-first output: show the best 5 underserved healthy-food zones before showing the full map
-- explanation-first output: every recommendation must expose key positive drivers and key risks
-- confidence-first output: display a confidence bucket or uncertainty band alongside the score
-- scenario testing: allow users to change healthy concept subtype, price tier, or risk tolerance and immediately compare results
-- freshness visibility: show when each source was last refreshed
-
-Minimum recommendation card fields:
-
-- zone name or walk-shed label
-- rank or score
-- confidence bucket
-- healthy supply-gap summary
-- recommended concept subtype
-- top 3 positive factors
-- top 3 risks
-- comparable restaurant context
-- data freshness note
-
-## 6. Evaluation Metrics That Matter
-
-The project should evaluate each modeling layer with the right metric instead of forcing a single accuracy number.
-
-- clustering: stability and interpretability, not only silhouette
-- survival: concordance index and calibration-style checks where feasible
-- NLP: agreement between Gemini labels and the manually labeled gold set, plus stability of the derived neighborhood aggregates
-- final ranking: top-k usefulness metrics such as NDCG@k or recall@k on held-out periods if the ranking layer is implemented
-- product relevance: manual case-study checks on obvious candidate zones such as campus or office lunch districts
-
-## 7. Engineering and Reproducibility Standards
-
-- Use `uv` for Python environment management and command execution instead of `pip`-first setup
-- Keep raw source pulls immutable and date-stamped
-- Maintain a dataset audit sheet with source URL, refresh cadence, earliest year, spatial granularity, and fallback
-- Avoid random train/test splits for the main modeling story; use blocked or rolling temporal validation
-- Keep third-party API sources optional and clearly separated from official public datasets
-- Refresh dependencies to remove `pytrends` and add planned NLP utilities such as spaCy plus the Gemini labeling client as implementation begins
-- Keep the baseline implementation CPU-friendly; avoid GPU-heavy custom model training unless it becomes a clearly justified stretch goal
-
-## 8. Division of Labor
-
-| Member | Role | Updated responsibilities |
+| Area | Decision | Why |
 | :---- | :---- | :---- |
-| **Harsh & Siqi** | Backend / ML Lead | phase discovery experiments, survival models, CMF scoring, API contracts, temporal evaluation logic |
-| **Tony & Amanda** | Frontend / Data | source audits, ETL pipelines, Yelp coverage audit, Reddit NER or 311 fallback pipeline, Streamlit integration |
-| **Catherine** | Project Lead | data dictionary, crosswalk governance, Furman-based validation rubric, temporal split approval, report integration, presentation |
+| Phase labels | Unsupervised k-means + GMM, not hand-labeled supervised classes | Removes the weakest assumption in the original proposal; lets the data define regimes before interpretation |
+| Survival backbone | NYC DCWP licensing as the primary restaurant universe | Better coverage and temporal completeness than Yelp alone |
+| Sentiment labels | Gemini silver labels + small gold audit, no transformer fine-tuning in main plan | Preserves NLP signal while keeping compute CPU-friendly |
+| Reddit signal | spaCy NER + Community District aggregation; binary recent-mention feature; 311 fallback | More tractable than geocoding sparse social text to 195 NTAs |
+| Google Trends | Removed | `pytrends` is unofficial; neighborhood-level signal quality is weak |
+| Recommendation unit | Micro-zones (walk sheds, corridors, campus catchments) — not whole NTAs | Merchants choose between walkable lunch catchments, not borough-sized areas |
+| Validation | Blocked / rolling temporal backtests, no random splits | Prevents leakage across years and matches deployment reality |
 
-## 9. Stub Code Status
+---
 
-The repository is no longer just a bare scaffold. The current state is:
+## 5. Evaluation Targets
 
-- ETL schemas are defined for every planned source
-- real fetch/transform paths exist for `permits`, `licenses`, `inspections`, `pluto`, `reddit`, and `complaints_311`
-- local-file loaders exist for `acs` and `yelp`
-- `airbnb`, `citibike`, and `boundaries` still need real loaders
-- the zone-year feature builder is implemented and currently wires in `licenses`, `pluto`, `yelp`, `reddit`, `acs`, and `inspections`
-- survival, clustering, NLP aggregation, explainability, scoring, ranking, API, and Streamlit layers all have working code paths
-- some documented sources are still only partially connected to downstream features, especially `permits`, `citibike`, `airbnb`, `311`, and the boundary geometry layer
+- **Clustering**: stability + interpretability against NYU Furman Center
+  narratives (not silhouette alone).
+- **Survival**: concordance index + calibration; current C-index ≈ 0.80.
+- **NLP**: agreement between Gemini silver labels and a 200–300-row gold set;
+  stability of zone-level aggregates.
+- **Final ranking**: top-k usefulness (NDCG@k / recall@k) on held-out periods
+  when the learned ranker is enabled.
+- **Product**: case-study sanity checks on motivating zones (NYU Tandon /
+  MetroTech, FiDi lunch corridor, etc.).
 
-The implementation order should still follow the revised design above:
+Detailed numbers live in `docs/EvaluationResults.md` and
+`docs/CausalMLEvaluationReport.md`.
 
-1. data audit and source viability
-2. canonical neighborhood feature matrix
-3. micro-zone layer for campuses and lunch corridors
-4. phase discovery
-5. survival modeling
-6. NLP enrichment
-7. UI and API integration
+---
+
+## 6. Engineering Standards
+
+- Python 3.11+; `uv` is the team-default environment manager; `pip + venv` is
+  supported as a fallback.
+- Raw data is immutable and date-stamped; never edited in place.
+- No random train/test splits in headline evaluation — temporal blocks only.
+- Lint and format with `ruff` (config in `ruff.toml`); pre-commit hooks
+  enforce both before push.
+- 600+ pytest cases gate every PR; coverage tracked via `.coveragerc`.
+- API keys (Gemini, Yelp Fusion) read from `.env` via
+  `src/config/settings.py`; never committed.
