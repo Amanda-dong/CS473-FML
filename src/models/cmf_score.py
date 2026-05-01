@@ -58,6 +58,11 @@ class ScoreComponents:
     )
     income_alignment_score: float = 0.5  # median income vs price tier alignment
 
+    @property
+    def composite_score(self) -> float:
+        """Compute the overall weighted opening score."""
+        return compute_opening_score(self)
+
 
 def compute_opening_score(components: ScoreComponents) -> float:
     """Compute a transparent weighted opening score.
