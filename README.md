@@ -2,6 +2,40 @@
 
 Data-driven Neighborhood Tabulation Area (NTA) short-lists that combine halal-related review signals (Yelp + Gemini labels), CAMIS-style restaurant supply proxies, NYC DOHMH inspection aggregates, clustering, probabilistic risk overlays, and lightweight forecasting for a merchant-facing Streamlit experience.
 
+## Pivot note (read first)
+
+This project moved from `main-pre-pivot` to the current `main` implementation.
+
+Why we changed:
+- In the integrated feature pipeline, missing-value pressure was high in several
+  joins, which increased fallback/imputation usage (including median-based fills)
+- That made some outputs less reliable for decision-facing recommendations
+- The current branch prioritizes realistic model-facing behavior and
+  clearer output interpretation
+
+What `main-pre-pivot` used (simple summary):
+- Broader integrated ETL/feature datasets across multiple NYC sources (see
+  pre-pivot docs for the full list)
+- Full ML stack including trajectory clustering (`k-means` / `GMM`), survival
+  modeling (`Cox PH` + `Random Survival Forest`), learned scoring (`XGBoost`),
+  ranking (`LambdaMART`), and explainability modules
+
+What we still reuse from pre-pivot:
+- We explicitly reuse partial datasets, especially
+  `data/raw/gemini_labels_full.csv`,
+  `data/raw/yelp_reviews_with_zones.csv`, and
+  `data/processed/inspections.parquet`
+- The code that generates these reused datasets is in the
+  `main-pre-pivot` branch (see links below).
+- We do not claim full algorithm reuse; the current branch uses a different,
+  simpler `halal_*` phase pipeline (described in [`DESIGN.md`](DESIGN.md)).
+
+Branch references:
+- [main-pre-pivot](https://github.com/Amanda-dong/CS473-FML/tree/main-pre-pivot)
+- [main](https://github.com/Amanda-dong/CS473-FML/tree/main)
+- Pre-pivot detailed design doc:
+  [docs/Design.md (main-pre-pivot)](https://github.com/Amanda-dong/CS473-FML/blob/main-pre-pivot/docs/Design.md)
+
 ---
 
 ## Team
