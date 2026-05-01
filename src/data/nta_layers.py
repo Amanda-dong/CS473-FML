@@ -11,7 +11,7 @@ NYC_2020_PATH = RAW_DIR / "nta.geojson"
 
 
 def load_nyc_ntas_for_zones() -> gpd.GeoDataFrame:
-    """Load **2020** NYC NTA polygons (all boroughs) with ACS ``nta2020`` codes (MN0202, BK0202, …).
+    """Load **2020** NYC NTA polygons with ACS ``nta2020`` codes (MN0202, BK0202, …).
 
     Use this for Yelp → micro-zone assignment when the ACS GDB used by
     ``build_nta_features._load_manhattan_ntas`` is not available.

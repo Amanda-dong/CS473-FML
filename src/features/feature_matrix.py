@@ -294,7 +294,8 @@ def build_zone_year_matrix(
                 if "time_key" in merged.columns and "time_key" in acs_zone.columns
                 else ["zone_id"]
             )
-            # Drop existing columns if they exist in merged before merge to avoid suffixing
+            # Drop existing columns if they exist in merged before
+            # merge to avoid suffixing
             overlap = [
                 c
                 for c in acs_zone.columns
