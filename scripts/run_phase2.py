@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.config import CFG
 from src.halal_risk import build_viability
 from src.halal_similarity import build_similarity
 
@@ -27,11 +28,11 @@ def main() -> None:
     df["risk_bucket"] = df["risk_bucket"].fillna("Unknown")
 
     df["final_score"] = (
-        0.4 * df["demand_score"] + 0.4 * df["gap_score"] + 0.2 * df["viability_score"]
+        CFG.score_demand_weight * df["demand_score"] + CFG.score_gap_weight * df["gap_score"] + CFG.score_viability_weight * df["viability_score"]
     )
 
     feature_cols = ["demand_score", "halal_supply_rate", "gap_score", "viability_score"]
-    df = build_similarity(df, feature_cols, top_n=3)
+    df = build_similarity(df, feature_cols, top_n=CFG.similarity_top_n)
 
     df = df.sort_values("final_score", ascending=False).reset_index(drop=True)
     df["rank"] = range(1, len(df) + 1)

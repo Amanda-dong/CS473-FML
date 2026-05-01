@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
+from src.config import CFG
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +64,7 @@ def _zscore(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     return out
 
 
-def build_viability() -> pd.DataFrame:
+def build_viability(cfg=CFG) -> pd.DataFrame:
     agg = _load_inspection_agg()
 
     z_grade = (agg["grade_a_rate"] - agg["grade_a_rate"].mean()) / max(
@@ -79,7 +80,7 @@ def build_viability() -> pd.DataFrame:
     agg["viability_score"] = (raw - min_r) / (max_r - min_r) if max_r != min_r else 0.5
 
     agg["risk_bucket"] = agg["viability_score"].apply(
-        lambda v: "Low" if v >= 0.6 else ("Medium" if v >= 0.35 else "High")
+        lambda v: "Low" if v >= cfg.viability_low_threshold else ("Medium" if v >= cfg.viability_medium_threshold else "High")
     )
 
     return agg[
@@ -94,7 +95,7 @@ def build_viability() -> pd.DataFrame:
     ].copy()
 
 
-def build_gmm_risk():
+def build_gmm_risk(cfg=CFG):
     agg = _load_inspection_agg()
 
     phase1 = pd.read_csv(PHASE1)[["nta_id", "demand_score", "halal_supply_rate"]].copy()
@@ -106,11 +107,11 @@ def build_gmm_risk():
 
     bic_rows = []
     for n in [2, 3, 4]:
-        g = GaussianMixture(n_components=n, covariance_type="full", random_state=42)
+        g = GaussianMixture(n_components=n, covariance_type="full", random_state=cfg.gmm_random_state)
         g.fit(z.to_numpy())
         bic_rows.append({"n_components": n, "bic": g.bic(z.to_numpy())})
 
-    gmm = GaussianMixture(n_components=4, covariance_type="full", random_state=42)
+    gmm = GaussianMixture(n_components=cfg.gmm_n_components, covariance_type="full", random_state=cfg.gmm_random_state)
     gmm.fit(z.to_numpy())
     probs = gmm.predict_proba(z.to_numpy())
     labels = gmm.predict(z.to_numpy())
@@ -139,9 +140,9 @@ def build_gmm_risk():
     merged["risk_component"] = merged["component"].map(risk_name_map)
 
     def bucket(p: float) -> str:
-        if p > 0.66:
+        if p > cfg.risk_high_threshold:
             return "High"
-        if p > 0.33:
+        if p > cfg.risk_medium_threshold:
             return "Medium"
         return "Low"
 

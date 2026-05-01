@@ -3,24 +3,9 @@
 from __future__ import annotations
 
 import pandas as pd
+from src.config import CFG
 
-
-# Canonical halal-relevant cuisine families — lowercase for CAMIS string matching.
-# Both halal_opportunity.py and halal_forecast.py must import from here (not redeclare).
-HALAL_CUISINES: frozenset[str] = frozenset(
-    {
-        "halal",
-        "middle eastern",
-        "pakistani",
-        "bangladeshi",
-        "afghan",
-        "egyptian",
-        "turkish",
-        "moroccan",
-        "lebanese",
-        "persian/iranian",
-    }
-)
+HALAL_CUISINES: frozenset[str] = CFG.halal_cuisines
 
 
 def minmax(series: pd.Series) -> pd.Series:

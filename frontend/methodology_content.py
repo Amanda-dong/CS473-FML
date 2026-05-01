@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-APPROACH_IMAGE = "/Users/amandadongsmacbookpro/Desktop/截屏2026-05-01 00.51.55.png"
+from pathlib import Path
+_img = Path(__file__).resolve().parent.parent / 'assets' / 'approach_diagram.png'
+if _img.exists():
+    st.image(str(_img))
 
 
 def render_methodology_page() -> None:
@@ -41,7 +44,7 @@ def render_methodology_page() -> None:
     with top_right:
         st.metric("NYC NTAs", "195")
         st.metric("NTAs scored", "144")
-    st.image(APPROACH_IMAGE)
+    # Image loading handled at module level
 
     st.divider()
 
@@ -74,14 +77,16 @@ def render_methodology_page() -> None:
     with col1:
         st.markdown("**Features used:**")
         st.markdown("- `demand_score` — halal Yelp review share (proxy)")
+        st.markdown("- `latent_demand_score` — implicit halal interest from review labels, keyword density, and log-normalized volume")
         st.markdown("- `halal_supply_rate` — halal cuisine density (proxy)")
-        st.markdown("- `gap_score` — demand minus supply (heuristic)")
+        st.markdown("- `halal_cuisine_diversity_norm` — normalized cuisine diversity")
     with col2:
         st.markdown("**Market types:**")
         st.markdown("- 🔴 High Opportunity — high demand, low supply")
         st.markdown("- 🔵 Established Hub — strong existing halal scene")
         st.markdown("- 🟢 Growing Market — moderate demand, little supply")
         st.markdown("- ⚫ Low Demand — limited halal activity")
+    st.write("`latent_demand_score` captures implicit halal interest from review labels, keyword density in review text, and log-normalized review volume. It surfaces demand in neighborhoods without established halal restaurants.")
     st.caption("Silhouette score: 0.3963 · k=4 selected by elbow method")
 
     st.divider()
@@ -151,5 +156,6 @@ def render_methodology_page() -> None:
         "(Pakistani, Middle Eastern, etc.), not certified halal restaurant counts.\n"
         "3. **`gap_score`** is a heuristic estimate of unmet demand, not an economic measurement.\n"
         "4. **Risk scores** reflect the general restaurant operating environment in each NTA, "
-        "not halal-restaurant-specific risk."
+        "not halal-restaurant-specific risk.\n"
+        "5. **`cluster_confidence`** below 0.25 means the neighborhood sits near a cluster boundary — its market type label is less certain."
     )
