@@ -1,7 +1,10 @@
-"""Recommendation card — displays one NTA as a structured card."""
+"""Recommendation card — displays one neighborhood recommendation card."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pandas as pd
 import streamlit as st
 
 MARKET_TYPE_EMOJI = {
@@ -9,12 +12,6 @@ MARKET_TYPE_EMOJI = {
     "Established Hub": "🔵",
     "Growing Market": "🟢",
     "Low Demand": "⚫",
-}
-
-RISK_COLOR = {
-    "Low": "normal",
-    "Medium": "off",
-    "High": "inverse",
 }
 
 RISK_ICONS = {
@@ -31,9 +28,96 @@ BOROUGH_NAME = {
     "SI": "Staten Island",
 }
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REVIEWS_PATH = _REPO_ROOT / "data" / "raw" / "yelp_reviews_with_zones.csv"
+_ZONE_LABELS = {
+    "bk-tandon": "NYU Tandon / MetroTech",
+    "bk-downtownbk": "Downtown Brooklyn",
+    "bk-williamsburg": "Williamsburg",
+    "bk-navy-yard": "Brooklyn Navy Yard / Vinegar Hill",
+    "bk-fort-greene": "Fort Greene / Pratt Area",
+    "bk-crown-hts": "Crown Heights",
+    "bk-sunset-pk": "Sunset Park",
+    "mn-midtown-e": "Midtown East",
+    "mn-fidi": "Financial District",
+    "mn-columbia": "Morningside Heights / Columbia",
+    "mn-nyu-wash-sq": "Washington Square / NYU",
+    "mn-ues-hosp": "Upper East Side / Hospital Row",
+    "mn-chelsea": "Chelsea / Hudson Yards",
+    "mn-harlem": "Harlem",
+    "mn-lic-adj": "East Midtown / UN",
+    "qn-lic": "Long Island City",
+    "qn-astoria": "Astoria",
+    "qn-flushing": "Flushing",
+    "qn-jackson-hts": "Jackson Heights",
+    "qn-forest-hills": "Forest Hills",
+    "qn-jamaica": "Jamaica",
+    "bx-fordham": "Fordham",
+    "bx-mott-haven": "Mott Haven",
+    "bx-co-op-city": "Co-op City",
+    "bx-tremont": "East Tremont",
+    "si-st-george": "St. George",
+    "si-new-spring": "New Springville",
+}
+
+
+@st.cache_data(show_spinner=False)
+def _load_nta_zone_lookup() -> dict[str, str]:
+    if not _REVIEWS_PATH.exists():
+        return {}
+    try:
+        df = pd.read_csv(_REVIEWS_PATH, usecols=["nta", "zone_id"])
+    except Exception:
+        return {}
+
+    df = df.dropna(subset=["nta", "zone_id"]).copy()
+    if df.empty:
+        return {}
+
+    df["nta"] = df["nta"].astype(str).str.strip()
+    df["zone_id"] = df["zone_id"].astype(str).str.strip()
+    df = df[(df["nta"] != "") & (df["zone_id"] != "")]
+    if df.empty:
+        return {}
+
+    top_zone = (
+        df.groupby(["nta", "zone_id"])
+        .size()
+        .reset_index(name="n")
+        .sort_values(["nta", "n"], ascending=[True, False])
+        .drop_duplicates(subset=["nta"])
+    )
+    return dict(zip(top_zone["nta"], top_zone["zone_id"]))
+
 
 def _borough(nta_id: str) -> str:
     return BOROUGH_NAME.get(str(nta_id)[:2].upper(), "NYC")
+
+
+def _prettify_zone_id(zone_id: str) -> str:
+    zone_key = str(zone_id).strip().lower()
+    if not zone_key:
+        return ""
+    if zone_key in _ZONE_LABELS:
+        return _ZONE_LABELS[zone_key]
+    if zone_key.startswith("nta-"):
+        return ""
+    return zone_key.replace("-", " ").title()
+
+
+def _display_name(nta_id: str) -> str:
+    zone_lookup = _load_nta_zone_lookup()
+    zone_id = zone_lookup.get(str(nta_id).strip(), "")
+    label = _prettify_zone_id(zone_id)
+    if label:
+        return label
+    code = str(nta_id).strip()
+    return f"{_borough(code)} ({code})" if code else "NYC"
+
+
+def _format_similar_neighborhoods(similar_ntas: list[str]) -> str:
+    labels = [_display_name(nta) for nta in similar_ntas]
+    return " · ".join(labels)
 
 
 def _fmt_pct(val) -> str:
@@ -70,15 +154,12 @@ def render_recommendation_card(row: dict, rank: int) -> None:
     final_score = row.get("final_score", 0.0)
     demand_score = row.get("demand_score", 0.0)
     gap_score = row.get("gap_score", 0.0)
-    viability_score = row.get("viability_score", 0.5)
     halal_supply_rate = row.get("halal_supply_rate", 0.0)
     halal_cuisine_diversity = row.get("halal_cuisine_diversity", 0)
     risk_bucket = str(row.get("risk_bucket", "Unknown"))
     risk_confidence = str(row.get("risk_confidence", ""))
     high_risk_prob = row.get("high_risk_prob", 0.5)
     halal_demand_forecast = row.get("halal_demand_forecast", None)
-    critical_rate = row.get("critical_rate", 0.0)
-    grade_a_rate = row.get("grade_a_rate", 0.0)
     similar_ntas_raw = str(row.get("similar_ntas", "") or "")
     similar_ntas = [s.strip() for s in similar_ntas_raw.split(",") if s.strip()]
 
@@ -90,42 +171,43 @@ def render_recommendation_card(row: dict, rank: int) -> None:
         with col_rank:
             st.markdown(f"### #{rank}")
         with col_title:
-            st.markdown(f"### {nta_id}")
-            st.caption(f"{_borough(nta_id)}")
+            st.markdown(f"### {_display_name(nta_id)}")
+            st.caption(f"{_borough(nta_id)} · {nta_id}")
         with col_badge:
             st.markdown(f"**{emoji} {market_type}**")
 
         # Main scores
         c1, c2, c3 = st.columns(3)
         c1.metric(
-            "Opportunity Score",
+            "Overall fit",
             _fmt_score(final_score),
-            help="Weighted combination: 40% demand + 40% gap + 20% viability",
+            help="This is the main overall ranking score for this neighborhood.",
         )
         c2.metric(
-            "Halal Discussion Signal",
+            "Local interest",
             _signal_label(demand_score),
-            help="Share of Yelp reviews mentioning halal (proxy, not true demand)",
+            help="A review-based signal for halal interest in the area.",
         )
         c3.metric(
-            "Opportunity Gap",
+            "Open space",
             _signal_label(gap_score),
-            help="Demand proxy minus supply proxy (heuristic estimate)",
+            help="A simple read on how under-served the area may be for halal food.",
         )
 
         st.progress(float(final_score) if final_score else 0.0)
+        st.caption("Quick read: a stronger overall fit means a better rank. Risk is shown separately below.")
 
         # Supply info
         diversity = int(halal_cuisine_diversity) if halal_cuisine_diversity else 0
         if diversity == 0:
-            st.caption("No halal-relevant restaurants currently recorded in this area.")
+            st.caption("No halal-relevant restaurants are currently recorded here.")
         else:
             st.caption(
-                f"Halal-relevant restaurants present · {diversity} cuisine type{'s' if diversity > 1 else ''}"
+                f"Current halal presence: {diversity} cuisine type{'s' if diversity > 1 else ''} recorded nearby."
             )
 
         # Risk section
-        with st.expander("Risk & Environment", expanded=False):
+        with st.expander("Risk", expanded=False):
             try:
                 risk_prob = float(high_risk_prob)
             except (TypeError, ValueError):
@@ -134,44 +216,46 @@ def render_recommendation_card(row: dict, rank: int) -> None:
             risk_icon = RISK_ICONS.get(risk_bucket, "❓")
 
             st.metric(
-                "Risk Score",
+                "Neighborhood risk",
                 f"{risk_icon} {risk_bucket}",
-                help="Probability of belonging to a high-risk restaurant environment",
+                help="This reflects the local operating environment, not your specific business plan.",
             )
             st.progress(risk_prob)
             st.caption(
-                f"Risk probability: {risk_prob:.0%} — based on GMM clustering of inspection patterns across this neighborhood."
+                f"Estimated chance of a tougher operating environment: {risk_prob:.0%}."
             )
 
             if risk_confidence == "Low confidence":
                 st.warning(
-                    "Fewer than 10 inspection records — treat with caution.",
+                    "Fewer than 10 inspection records were available here, so treat this risk reading cautiously.",
                     icon="⚠️",
                 )
 
         # Phase 3 insight
-        with st.expander("Next-Year Demand Outlook", expanded=False):
+        with st.expander("Next-Year Outlook", expanded=False):
             if halal_demand_forecast is not None:
                 try:
                     val = float(halal_demand_forecast)
                     if val > 0.5:
                         st.success(
-                            f"Demand trending up — projected halal discussion share: {val:.1%}"
+                            f"Interest appears to be trending up next year. Projected halal discussion share: {val:.1%}"
                         )
                     elif val > 0.3:
                         st.info(
-                            f"Demand stable — projected halal discussion share: {val:.1%}"
+                            f"Interest looks fairly steady next year. Projected halal discussion share: {val:.1%}"
                         )
                     else:
                         st.warning(
-                            f"Demand signal weak — projected halal discussion share: {val:.1%}"
+                            f"Interest looks weaker next year. Projected halal discussion share: {val:.1%}"
                         )
                 except (TypeError, ValueError):
-                    st.caption("Forecast not available for this NTA.")
+                    st.caption("Forecast not available for this neighborhood.")
             else:
-                st.caption("Forecast not available for this NTA.")
-            st.caption("R² = 0.16 — treat as directional signal only, not a precise forecast.")
+                st.caption("Forecast not available for this neighborhood.")
+            st.caption("Use this as a rough directional signal, not a precise prediction.")
 
         # Similar NTAs
         if similar_ntas:
-            st.caption("Similar neighborhoods: " + " · ".join(similar_ntas))
+            st.caption(
+                "Similar areas: " + _format_similar_neighborhoods(similar_ntas)
+            )

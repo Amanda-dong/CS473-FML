@@ -7,6 +7,8 @@ import random
 import pandas as pd
 import streamlit as st
 
+from frontend.components.recommendation_card import _display_name
+
 BOROUGH_CENTROIDS = {
     "BK": (40.6501, -73.9496),
     "QN": (40.7282, -73.7949),
@@ -15,16 +17,20 @@ BOROUGH_CENTROIDS = {
     "SI": (40.5795, -74.1502),
 }
 
+BOROUGH_PREFIX = {
+    "Brooklyn": "BK",
+    "Queens": "QN",
+    "Manhattan": "MN",
+    "Bronx": "BX",
+    "Staten Island": "SI",
+}
+
 MARKET_TYPE_COLOR = {
     "High Opportunity": "red",
     "Established Hub": "blue",
     "Growing Market": "green",
     "Low Demand": "gray",
 }
-
-
-def _jitter(val: float, amount: float = 0.018) -> float:
-    return val + random.uniform(-amount, amount)
 
 
 def _deterministic_jitter(nta_id: str, base_lat: float, base_lon: float) -> tuple[float, float]:
@@ -41,10 +47,9 @@ def render_map_view(df: pd.DataFrame) -> None:
         st.info("No data to display on map.")
         return
 
-    st.subheader("NTA Locations")
+    st.subheader("Neighborhood Map")
     st.caption(
-        "Markers are approximate borough-level centroids with jitter. "
-        "Exact NTA boundaries require GeoJSON data."
+        "Use this map to see where your strongest matches cluster. Marker positions are approximate, not exact neighborhood boundaries."
     )
 
     # Build points dataframe
@@ -61,6 +66,7 @@ def render_map_view(df: pd.DataFrame) -> None:
                 "lat": lat,
                 "lon": lon,
                 "nta_id": nta_id,
+                "label": _display_name(nta_id),
                 "market_type": str(row.get("market_type", "")),
                 "final_score": float(row.get("final_score", 0.0)),
                 "risk_bucket": str(row.get("risk_bucket", "")),
@@ -77,9 +83,6 @@ def render_map_view(df: pd.DataFrame) -> None:
     try:
         import plotly.express as px
 
-        st.caption("Jump to borough:")
-        b1, b2, b3, b4, b5 = st.columns(5)
-
         borough_zoom = {
             "Brooklyn": (40.6501, -73.9496, 12),
             "Queens": (40.7282, -73.7949, 11),
@@ -88,32 +91,34 @@ def render_map_view(df: pd.DataFrame) -> None:
             "Staten Island": (40.5795, -74.1502, 12),
         }
 
-        selected_borough = None
-        if b1.button("Brooklyn"):
-            selected_borough = "Brooklyn"
-        if b2.button("Queens"):
-            selected_borough = "Queens"
-        if b3.button("Manhattan"):
-            selected_borough = "Manhattan"
-        if b4.button("Bronx"):
-            selected_borough = "Bronx"
-        if b5.button("Staten Island"):
-            selected_borough = "Staten Island"
+        selected_borough = st.selectbox(
+            "Map focus",
+            ["Citywide", "Brooklyn", "Queens", "Manhattan", "Bronx", "Staten Island"],
+            help="Center the map on one borough while keeping your current shortlist visible.",
+        )
 
         center_lat, center_lon, zoom = 40.730, -73.935, 10
-        if selected_borough:
+        map_df = points_df
+        if selected_borough != "Citywide":
             center_lat, center_lon, zoom = borough_zoom[selected_borough]
+            borough_prefix = BOROUGH_PREFIX[selected_borough]
+            map_df = points_df[points_df["nta_id"].str.startswith(borough_prefix)].copy()
+
+        if map_df.empty:
+            st.info("No shortlist results are currently shown in that borough.")
+            return
 
         fig = px.scatter_mapbox(
-            points_df,
+            map_df,
             lat="lat",
             lon="lon",
             color="market_type",
             color_discrete_map=MARKET_TYPE_COLOR,
             size="marker_size",
             size_max=18,
-            hover_name="nta_id",
+            hover_name="label",
             hover_data={
+                "nta_id": True,
                 "final_score": ":.3f",
                 "risk_bucket": True,
                 "market_type": True,
@@ -122,13 +127,13 @@ def render_map_view(df: pd.DataFrame) -> None:
             },
             zoom=10,
             height=450,
-            title="Top NTAs by opportunity score",
+            title="Top neighborhoods by score",
         )
         fig.update_layout(
             mapbox_style="open-street-map",
             mapbox=dict(center=dict(lat=center_lat, lon=center_lon), zoom=zoom),
             margin=dict(l=0, r=0, t=40, b=0),
-            legend_title_text="Market Type",
+            legend_title_text="Area type",
         )
         st.plotly_chart(fig, use_container_width=True)
 
