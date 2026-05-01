@@ -39,10 +39,6 @@ Place inputs under:
 - `data/raw/restaurant_hygiene.csv` — CAMIS universe with cuisine descriptors (tracked via Releases if omitted from git due to `.gitignore`).
 - `data/processed/inspections.parquet` — per-inspection parquet with grades, violation flags, and `nta_id`.
 
-Optional exploratory assets:
-
-- `data/raw/yelp_business.csv` — enables richer maps inside `frontend/pages/2_Review_Zones_Demo.py`.
-
 Outputs are regenerated under `data/output/` whenever you rerun the phases.
 
 ---
@@ -89,12 +85,6 @@ Presentation-style walkthrough (`frontend/pages/presentation.py`):
 
 ```powershell
 streamlit run frontend\pages\presentation.py
-```
-
-Gemini labeling × micro-zone exploratory page (requires optional `yelp_business.csv`):
-
-```powershell
-streamlit run frontend\pages\2_Review_Zones_Demo.py
 ```
 
 ---

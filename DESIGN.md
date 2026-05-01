@@ -32,7 +32,7 @@ CS473-FML/
 └── frontend/                # Multi-page Streamlit client + reusable UI widgets.
     ├── app.py               # Primary recommender UX (loads final_recommendations.csv).
     ├── methodology_content.py # Narrative + metrics supporting investor-style storytelling slides.
-    ├── pages/               # Extra Streamlit surfaces (presentation deck, exploratory maps).
+    ├── pages/               # Extra Streamlit surfaces (e.g. presentation deck).
     └── components/         # Sidebar filters, Plotly/NYC map stubs, expandable cards.
 
 ```
@@ -52,7 +52,7 @@ Notes: Paths reference the working codebase; placeholders called out explicitly 
 | **Amanda Dong** | Owns Streamlit UX (`frontend/app.py`, reusable components under `frontend/components/*`), narrative assets in `frontend/methodology_content.py`, and ensures Plotly-backed map summaries stay synchronized with analytic outputs. |
 | **Catherine Yi** | Leads probabilistic overlays and forecasting: Gaussian mixture workflows plus ridge/CV experimentation in `src/halal_forecast.py` / `src/halal_risk.py`, plus orchestration hygiene inside `scripts/run_phase3.py`. |
 | **Harsh Agarwal** | Steward for CAMIS-aligned supply metrics (`src/halal_opportunity.py`), dataset contracts for `data/raw/*.csv`, and reproducibility tooling such as `scripts/check_camis_time.py` + documentation of hygiene extracts. |
-| **Siqi Zhu** | Responsible for Gemini ↔ Yelp ingestion logic (`src/halal_demand.py`), exploratory Streamlit probes (`frontend/pages/2_Review_Zones_Demo.py`), and maintaining micro-zone QA narratives tied to reviewer-level labels. |
+| **Siqi Zhu** | Responsible for Gemini ↔ Yelp ingestion logic (`src/halal_demand.py`), labeled-review data QA under `data/raw/`, and documentation of demand-signal assumptions. |
 | **Tony Zhao** | Coaches unsupervised structuring and ranking blends: executes `HalalKMeans` + elbows via `scripts/run_phase1.py`, composites Stage-2 rankings + cosine profiling in `src/halal_similarity.py`/`scripts/run_phase2.py`, and curates centroid interpretation tables surfaced in decks (`frontend/pages/presentation.py`). |
 
 
