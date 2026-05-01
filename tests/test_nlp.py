@@ -1274,3 +1274,33 @@ def test_embed_reviews_actual_components_guard(monkeypatch):
     # Then it should be clamped to 1.
     result = embed_reviews(["word", "word"])
     assert result.shape == (2, 384)
+
+def test_aggregate_empty_df_returns_zeros():
+    from src.nlp.review_aggregates import aggregate_healthy_review_features
+    result = aggregate_healthy_review_features(pd.DataFrame())
+    assert isinstance(result, pd.DataFrame)
+    assert "total_review_count" in result.columns
+
+def test_aggregate_all_nulls_handled():
+    from src.nlp.review_aggregates import aggregate_healthy_review_features
+    df = pd.DataFrame({
+        "restaurant_id": ["r1"],
+        "time_key": [2024],
+        "zone_id": ["z1"],
+        "rating": [np.nan],
+        "sentiment": [None],
+        "halal_relevance": [None],
+        "concept_subtype": [None],
+        "confidence": [np.nan]
+    })
+    result = aggregate_healthy_review_features(df)
+    assert not result.empty
+    assert result["total_review_count"].iloc[0] == 1
+    assert result["avg_rating"].iloc[0] == 0.0
+
+# ── NLP edge cases ──────────────────────────────────────────────────────────
+
+def test_aggregate_healthy_review_empty_df():
+    from src.nlp.review_aggregates import aggregate_healthy_review_features
+    result = aggregate_healthy_review_features(pd.DataFrame())
+    assert isinstance(result, pd.DataFrame)

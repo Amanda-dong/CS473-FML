@@ -553,6 +553,32 @@ def test_trajectory_model_empty_raises() -> None:
 
 # ── cmf_score — additional branches ──────────────────────────────────────────
 
+@pytest.mark.parametrize('features,expected_above', [
+    ({'halal_related_share': 0.0, 'subtype_gap': 0.0, 'target': 0.0}, 0.0),
+    ({'halal_related_share': 1.0, 'subtype_gap': 1.0, 'target': 1.0}, 0.5),
+    ({'halal_related_share': 0.5, 'subtype_gap': 0.5, 'target': 0.5}, 0.0),
+])
+def test_cmf_score_range(features, expected_above):
+    components = score_zone_for_concept(features, 'salad_bowls')
+    score = compute_opening_score(components)
+    assert 0.0 <= score <= 1.0
+    assert score >= expected_above
+
+def test_cmf_score_nan_features_does_not_crash():
+    features = {'halal_related_share': float('nan'), 'trip_count': float('inf')}
+    components = score_zone_for_concept(features, 'salad_bowls')
+    score = compute_opening_score(components)
+    assert 0.0 <= score <= 1.0
+
+def test_top_risks_normalizes_restaurant_count():
+    from src.models.explainability import top_risks
+    risks = top_risks({'restaurant_count_static': 100.0})  # 100/50 = 2.0, clips to 1.0 > 0.5
+    assert any('Saturated' in r for r in risks)
+
+def test_top_risks_transit_threshold_uses_normalized_count():
+    from src.models.explainability import top_risks
+    risks = top_risks({'trip_count': 50_000.0})  # 50k/200k = 0.25 < 0.45 → limited transit
+    assert any('transit' in r.lower() for r in risks)
 
 def test_learned_scoring_model_predict_with_model() -> None:
     model = LearnedScoringModel()
@@ -1367,3 +1393,28 @@ def test_trajectory_find_best_k_degenerate(monkeypatch) -> None:
     # it continues and returns 2.
     # Note: silhouette_score raises ValueError if len(set(labels)) < 2,
     # but the code has a check for that.
+
+# ── CMF edge cases (parametrized) ──────────────────────────────────────────
+
+@pytest.mark.parametrize('features,min_score', [
+    ({'halal_related_share': 0.0, 'subtype_gap': 0.0, 'target': 0.0}, 0.0),
+    ({'halal_related_share': 1.0, 'subtype_gap': 1.0, 'target': 1.0}, 0.4),
+])
+def test_cmf_score_parametrized_range(features, min_score):
+    result = score_zone_for_concept(features, 'salad_bowls')
+    assert 0.0 <= result.composite_score <= 1.0
+    assert result.composite_score >= min_score
+
+def test_cmf_score_nan_features_does_not_crash():
+    result = score_zone_for_concept({'halal_related_share': float('nan'), 'trip_count': float('inf')}, 'salad_bowls')
+    assert 0.0 <= result.composite_score <= 1.0
+
+def test_top_risks_saturated_when_restaurant_count_high():
+    from src.models.explainability import top_risks
+    risks = top_risks({'restaurant_count_static': 100.0})
+    assert any('Saturated' in r for r in risks)
+
+def test_top_risks_transit_flag_when_trip_count_low():
+    from src.models.explainability import top_risks
+    risks = top_risks({'trip_count': 50_000.0})
+    assert any('transit' in r.lower() for r in risks)
