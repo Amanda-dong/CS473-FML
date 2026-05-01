@@ -71,9 +71,9 @@ def compute_opening_score(components: ScoreComponents) -> float:
     commercial success for a new restaurant concept in a micro-zone.
 
     Weight rationale:
-    - subtype_gap_score (0.24): concept-specific whitespace is the core thesis (priority)
-    - merchant_viability_score (0.16): survival outlook (reduced weight to allow concept fit to lead)
-    - demand_signal_score (0.14): foot-traffic baseline (reduced weight to prevent neighborhood dominance)
+    - subtype_gap_score (0.24): concept-specific whitespace is core thesis
+    - merchant_viability_score (0.16): survival outlook
+    - demand_signal_score (0.14): foot-traffic baseline
     - healthy_gap_score (0.12): overall under-supply in category
     - license_velocity_score (0.10): growing area reduces risk
     - review_demand_score (0.08): NLP sentiment confirms latent demand
