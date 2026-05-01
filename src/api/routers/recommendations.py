@@ -669,7 +669,7 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
         ]
 
     ranked_dicts = rank_zones([r.model_dump() for r in scored])
-    top_n = [ZoneRecommendation(**d) for d in ranked_dicts[: request.limit]]
+    top_n = [ZoneRecommendation(**d) for d in ranked_dicts[: request.max_results]]
 
     return RecommendationResponse(
         query={
@@ -697,7 +697,7 @@ async def list_zones() -> list[dict[str, str]]:
             for zid in zone_ids
         ]
     except Exception as e:
-        logger.warning(f"recommendations: failed to list zones: {e}")
+        logger.warning("recommendations: failed to list zones: %r", e)
         return []
 
 
