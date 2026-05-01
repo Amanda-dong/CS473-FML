@@ -1,0 +1,10 @@
+dropped_feature,auc_mean,auc_std,drop_vs_full,important
+demand_score,0.875,0.21650635094610965,0.0,False
+halal_supply_rate,0.875,0.21650635094610965,0.0,False
+gap_score,0.875,0.21650635094610965,0.0,False
+halal_cuisine_diversity,0.0,0.0,0.875,True
+final_score,0.875,0.21650635094610965,0.0,False
+grade_a_rate,0.875,0.21650635094610965,0.0,False
+inspection_frequency,1.0,0.0,-0.125,False
+market_type_Growing Market,0.875,0.21650635094610965,0.0,False
+market_type_Low Demand,0.875,0.21650635094610965,0.0,False

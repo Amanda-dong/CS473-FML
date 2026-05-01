@@ -1,0 +1,10 @@
+feature,auc_mean,auc_std
+demand_score,0.75,0.4330127018922193
+halal_supply_rate,1.0,0.0
+gap_score,0.25,0.4330127018922193
+halal_cuisine_diversity,0.9375,0.10825317547305482
+final_score,0.25,0.4330127018922193
+grade_a_rate,1.0,0.0
+inspection_frequency,0.0,0.0
+market_type_Growing Market,0.6875,0.2072890493972125
+market_type_Low Demand,0.25,0.25

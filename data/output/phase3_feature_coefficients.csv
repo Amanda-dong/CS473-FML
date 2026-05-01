@@ -1,0 +1,10 @@
+feature,coefficient,interpretation
+demand_score,0.22297127691597723,higher value -> higher halal survival
+halal_supply_rate,0.05903337757104414,higher value -> higher halal survival
+gap_score,-0.06422943919896372,higher value -> lower halal survival
+halal_cuisine_diversity,-1.004651199829986,higher value -> lower halal survival
+final_score,0.04065234863604233,higher value -> higher halal survival
+grade_a_rate,-0.13563440216213518,higher value -> lower halal survival
+inspection_frequency,-0.008774080730845624,higher value -> lower halal survival
+market_type_Growing Market,-0.41075696528605354,higher value -> lower halal survival
+market_type_Low Demand,-0.3985778959726248,higher value -> lower halal survival
