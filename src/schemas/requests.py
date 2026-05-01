@@ -17,15 +17,15 @@ class RecommendationRequest(BaseModel):
     zone_type: str = Field(default="")
     max_results: int = Field(default=5, ge=1, le=20, alias="limit")
 
-    @field_validator("concept_subtype")
+    @field_validator("concept_subtype", mode="before")
     @classmethod
-    def validate_subtype(cls, v: str) -> str:
-        """Reject non-alphanumeric (except spaces/underscores) to prevent injection."""
+    def sanitize_subtype(cls, v: str) -> str:
+        """Sanitize and validate concept_subtype."""
+        v = str(v).strip()
         if not v:
             raise ValueError("concept_subtype must not be empty")
-        # Allow alphanumeric, spaces, and underscores only
-        if not all(c.isalnum() or c in " _" for c in v):
-            raise ValueError(
-                "concept_subtype must be alphanumeric, spaces, or underscores only"
-            )
+        import re
+
+        if re.search(r'[<>"\']', v):
+            raise ValueError("concept_subtype contains invalid characters")
         return v

@@ -70,7 +70,9 @@ DATASET_SPEC = DatasetSpec(
     owner="data",
     spatial_unit="restaurant",
     time_grain="date",
-    description="Review text and business metadata for enrichment only after coverage audit.",
+    description=(
+        "Review text and business metadata for enrichment only after coverage audit."
+    ),
     columns=("review_date", "business_id", "restaurant_id", "rating", "review_text"),
 )
 
@@ -236,16 +238,16 @@ def collect_yelp_businesses() -> pd.DataFrame:
                     payload = response.json()
                 except requests.RequestException as exc:
                     print(
-                        "Error collecting Yelp data for "
-                        f"anchor={anchor_name}, term={search_term}, offset={offset}: {exc}"
+                        f"Error collecting Yelp data for anchor={anchor_name}, "
+                        f"term={search_term}, offset={offset}: {exc}"
                     )
                     break
 
                 businesses = payload.get("businesses", [])
                 if not businesses:
                     print(
-                        "No more results for "
-                        f"anchor={anchor_name}, term={search_term}, offset={offset}. Stopping this query."
+                        f"No more results for anchor={anchor_name}, "
+                        f"term={search_term}, offset={offset}. Stopping query."
                     )
                     break
 
