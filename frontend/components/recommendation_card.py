@@ -274,33 +274,19 @@ def render_recommendation_card(
     latent_demand_score = row.get('latent_demand_score', None)
     cluster_confidence = row.get('cluster_confidence', None)
 
-    emoji = MARKET_TYPE_EMOJI.get(market_type, "📍")
+    badge_class = market_type.lower().replace(" ", "-")
 
-    with st.container(border=True):
+    with st.container():
         # Header
-        col_rank, col_title, col_badge = st.columns([1, 4, 2])
-        with col_rank:
-            st.markdown(f"### #{rank}")
+        col_title, col_badge = st.columns([5, 2])
         with col_title:
-            st.markdown(f"### {_display_name(nta_id)}")
+            st.markdown(f"### #{rank} {_display_name(nta_id)}")
             st.caption(f"{_borough(nta_id)} · {nta_id}")
         with col_badge:
-            st.markdown(f"**{emoji} {market_type}**")
+            st.markdown(f"<div class='market-badge badge-{badge_class}'>{market_type}</div>", unsafe_allow_html=True)
 
-        # Plain-English summary
-        st.markdown(
-            _opportunity_summary(
-                demand_score,
-                gap_score,
-                viability_score,
-                risk_bucket,
-                market_type,
-                int(halal_cuisine_diversity or 0),
-            )
-        )
-
-        # Radar + metrics side by side
-        col_radar, col_metrics = st.columns([2, 3])
+        # Radar + Score Gauge
+        col_radar, col_gauge = st.columns([2, 2])
         with col_radar:
             try:
                 fig = _build_radar_chart(
@@ -311,48 +297,57 @@ def render_recommendation_card(
                     halal_demand_forecast_norm,
                 )
                 st.plotly_chart(
-                    fig, use_container_width=True, config={"displayModeBar": False}
+                    fig, use_container_width=True, config={"displayModeBar": False}, key=f"radar_{nta_id}"
                 )
             except Exception:
                 pass
-        with col_metrics:
-            c1, c2, c3 = st.columns(3)
-            c1.metric(
-                "Overall fit",
-                _fmt_score(final_score),
-                help="Main ranking score: 0.4×demand + 0.4×gap + 0.2×viability.",
+        
+        with col_gauge:
+            import plotly.graph_objects as go
+            fig_gauge = go.Figure(go.Indicator(
+                mode = "gauge+number",
+                value = final_score,
+                domain = {'x': [0, 1], 'y': [0, 1]},
+                title = {'text': "Overall Fit", 'font': {'size': 14, 'color': '#e9c46a'}},
+                gauge = {
+                    'axis': {'range': [0, 1], 'tickwidth': 1, 'tickcolor': "#457b9d"},
+                    'bar': {'color': "#e9c46a"},
+                    'bgcolor': "rgba(0,0,0,0)",
+                    'borderwidth': 2,
+                    'bordercolor': "rgba(255,255,255,0.1)",
+                    'steps': [
+                        {'range': [0, 0.4], 'color': 'rgba(230, 57, 70, 0.2)'},
+                        {'range': [0.4, 0.7], 'color': 'rgba(42, 157, 143, 0.2)'},
+                        {'range': [0.7, 1], 'color': 'rgba(26, 71, 42, 0.4)'}],
+                }
+            ))
+            fig_gauge.update_layout(
+                height=220, 
+                margin=dict(l=30, r=30, t=50, b=20),
+                paper_bgcolor="rgba(0,0,0,0)",
+                font={'color': "#fafafa"}
             )
-            c2.metric(
-                "Demand",
-                _signal_label(demand_score),
-                help="Bayesian-shrunk halal review share across Yelp data.",
-            )
-            c3.metric(
-                "Gap",
-                _signal_label(gap_score),
-                help="max(demand − supply, 0) — unmet demand proxy.",
-            )
-            cl1, cl2 = st.columns([1, 2])
-            cl1.metric(
-                'Latent Demand',
-                _signal_label(latent_demand_score) if latent_demand_score is not None else '—',
-                help='Implicit halal interest + keyword signals + neighborhood activity. Captures demand in areas without established halal restaurants.',
-            )
-            if cluster_confidence is not None:
-                try:
-                    cc = float(cluster_confidence)
-                    if cc < 0.25:
-                        cl2.warning(f'⚠ Borderline cluster (confidence {cc:.2f}) — market type label may change with new data.')
-                except (TypeError, ValueError):
-                    pass
-            st.progress(float(final_score) if final_score else 0.0)
-            st.caption(
-                "Score = 0.4×demand + 0.4×gap + 0.2×viability. Radar shows 5 dimensions."
-            )
+            st.plotly_chart(fig_gauge, use_container_width=True, config={"displayModeBar": False}, key=f"gauge_{nta_id}")
+
+        # Summary Metrics
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Demand", _signal_label(demand_score))
+        m2.metric("Gap", _signal_label(gap_score))
+        m3.metric("Latent Demand", _signal_label(latent_demand_score) if latent_demand_score is not None else '—')
+        m4.metric("Risk", risk_bucket)
+
+        # Plain-English summary
+        st.info(_opportunity_summary(
+            demand_score,
+            gap_score,
+            viability_score,
+            risk_bucket,
+            market_type,
+            int(halal_cuisine_diversity or 0),
+        ))
 
         with st.expander('Score breakdown', expanded=False):
             try:
-                import plotly.graph_objects as go
                 contrib_fig = go.Figure(go.Bar(
                     x=[0.4 * float(demand_score), 0.4 * float(gap_score), 0.2 * float(viability_score)],
                     y=['Demand signal', 'Supply gap', 'Viability'],
@@ -366,9 +361,11 @@ def render_recommendation_card(
                     margin=dict(l=10, r=10, t=10, b=10),
                     height=150,
                     showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font={'color': "#fafafa"}
                 )
-                st.plotly_chart(contrib_fig, use_container_width=True, config={'displayModeBar': False})
-                st.caption(f'Weights: Demand 40% · Supply gap 40% · Viability 20%. Sum = {float(demand_score)*0.4 + float(gap_score)*0.4 + float(viability_score)*0.2:.3f}')
+                st.plotly_chart(contrib_fig, use_container_width=True, config={'displayModeBar': False}, key=f"breakdown_{nta_id}")
             except Exception:
                 pass
 
@@ -377,151 +374,48 @@ def render_recommendation_card(
             "Review evidence — sample Yelp rows (Gemini labels)", expanded=False
         ):
             if review_pool is None or review_pool.empty:
-                hint = ""
-                if repo_root is not None:
-                    hint = (
-                        f"Expected file missing: `{evidence_csv_path(repo_root)}`. "
-                        "Place Gemini-labeled review export under `data/raw/`."
-                    )
-                st.info(
-                    "No review evidence loaded. Run the dashboard from the repo with "
-                    "`data/raw/gemini_labels_full.csv` present, or check the path.\n\n"
-                    + hint
-                )
+                st.info("No review evidence loaded.")
             else:
-                st.markdown(
-                    f"| Pipeline metric | Value |\n|--|--|\n"
-                    f"| **`demand_score`** (Opportunity ranking + clustering) | **{_fmt_score(demand_score)}** |\n"
-                    f"| **Market type** (k-means on demand/supply/gap · not snippet counts) | **{market_type}** |"
-                )
-                st.info(
-                    "**Counts below** only reflect rows stored in **`gemini_labels_full.csv`** for "
-                    f"this NTA. **`demand_score`** is computed in **`halal_demand.py`** from the **full Yelp join** "
-                    "per neighborhood, **shrunk-share → min–max across all NTAs**. "
-                    "This is why the sample review counts below do not exactly match the ranking metrics above."
-                )
-
                 counts = nta_review_counts(review_pool, nta_id)
                 if counts["total"] == 0:
-                    st.caption(
-                        f"No review rows mapped to **`{nta_id}`** in the labeled Yelp export."
-                    )
+                    st.caption(f"No review rows mapped to **{nta_id}**.")
                 else:
-                    _other_note = ""
-                    if counts.get("other_labels", 0) > 0:
-                        _other_note = (
-                            f" · **{counts['other_labels']}** rows tagged with another "
-                            "**`halal_relevance`** value"
-                        )
-                    st.caption(
-                        f"In the labeled Yelp sample for **`{nta_id}`**: "
-                        f"**{counts['explicit_halal']}** explicit-halal · "
-                        f"**{counts['implicit_halal']}** implicit-halal · "
-                        f"**{counts['not_related']}** not halal-related (`not_related`). "
-                        f"**{counts['total']}** review rows · **{counts['unique_venues']}** distinct venues"
-                        f"{_other_note}."
-                    )
                     samples = sample_reviews_for_nta(review_pool, nta_id, k=6)
-                    if samples.empty:
-                        st.caption("No rows to preview after sorting.")
-                    else:
-                        st.caption(
-                            "Up to **6 unique venues** — one prioritized review each "
-                            "(explicit / implicit halal first, then by rating)."
-                        )
-
-                        display_rows = []
-                        for _, rr in samples.iterrows():
-                            name = (
-                                rr.get("business_name")
-                                or rr.get("restaurant_id")
-                                or "Unknown venue"
-                            )
-                            name = str(name).strip() or "Unknown venue"
-                            rt = rr.get("rating")
-                            rt_txt = f"★ {float(rt):.0f}" if pd.notna(rt) else ""
-                            rel = rr.get("halal_relevance", "")
-                            txt = clip_review(
-                                str(rr.get("review_text", "")), max_chars=400
-                            )
-                            display_rows.append(
-                                {
-                                    "Venue": name[:80],
-                                    "Rating": rt_txt,
-                                    "Halal label": _halal_rel_badge(rel),
-                                    "Review excerpt": txt,
-                                }
-                            )
-                        st.dataframe(
-                            pd.DataFrame(display_rows),
-                            use_container_width=True,
-                            hide_index=True,
-                        )
-
-        # Supply info
-        diversity = int(halal_cuisine_diversity) if halal_cuisine_diversity else 0
-        if diversity == 0:
-            st.caption("No halal-relevant restaurants are currently recorded here.")
-        else:
-            st.caption(
-                f"Current halal presence: {diversity} cuisine type{'s' if diversity > 1 else ''} recorded nearby."
-            )
+                    display_rows = []
+                    for _, rr in samples.iterrows():
+                        name = rr.get("business_name") or rr.get("restaurant_id") or "Unknown venue"
+                        rt = rr.get("rating")
+                        rt_txt = f"★ {float(rt):.0f}" if pd.notna(rt) else ""
+                        rel = rr.get("halal_relevance", "")
+                        txt = clip_review(str(rr.get("review_text", "")), max_chars=400)
+                        display_rows.append({
+                            "Venue": str(name)[:80],
+                            "Rating": rt_txt,
+                            "Label": _halal_rel_badge(rel),
+                            "Review": txt,
+                        })
+                    st.dataframe(pd.DataFrame(display_rows), use_container_width=True, hide_index=True)
 
         # Risk section
-        with st.expander("Risk", expanded=False):
-            try:
-                risk_prob = 1.0 - float(viability_score)
-            except (TypeError, ValueError):
-                risk_prob = 0.5
-
+        with st.expander("Risk Detail", expanded=False):
             risk_icon = RISK_ICONS.get(risk_bucket, "❓")
-
-            st.metric(
-                "Neighborhood risk",
-                f"{risk_icon} {risk_bucket}",
-                help="This reflects the local operating environment, not your specific business plan.",
-            )
-            st.progress(risk_prob)
-            st.caption(
-                f"Estimated chance of a tougher operating environment: {risk_prob:.0%}."
-            )
-
+            st.markdown(f"**Status**: {risk_icon} {risk_bucket}")
+            st.progress(1.0 - float(viability_score))
             if risk_confidence == "Low confidence":
-                st.warning(
-                    "Fewer than 10 inspection records were available here, so treat this risk reading cautiously.",
-                    icon="⚠️",
-                )
+                st.warning("Fewer than 10 records available — treat with caution.")
 
         # Phase 3 insight
         with st.expander("Next-Year Outlook", expanded=False):
             if halal_demand_forecast is not None:
-                try:
-                    val = float(halal_demand_forecast)
-                    if val > 0.5:
-                        st.success(
-                            f"Interest appears to be trending up next year. Projected halal discussion share: {val:.1%}"
-                        )
-                    elif val > 0.3:
-                        st.info(
-                            f"Interest looks fairly steady next year. Projected halal discussion share: {val:.1%}"
-                        )
-                    else:
-                        st.warning(
-                            f"Interest looks weaker next year. Projected halal discussion share: {val:.1%}"
-                        )
-                except (TypeError, ValueError):
-                    st.caption("Forecast not available for this neighborhood.")
+                val = float(halal_demand_forecast)
+                if val > 0.5: st.success(f"Trending Up: {val:.1%}")
+                elif val > 0.3: st.info(f"Steady: {val:.1%}")
+                else: st.warning(f"Weak: {val:.1%}")
             else:
-                st.caption("Forecast not available for this neighborhood.")
-            st.caption(
-                "Use this as a rough directional signal, not a precise prediction."
-            )
+                st.caption("Forecast not available.")
 
         # Similar NTAs
         if similar_ntas:
             with st.expander("Similar neighborhoods", expanded=False):
                 for nta in similar_ntas[:3]:
                     st.markdown(f"- **{_display_name(nta)}** ({nta})")
-                st.caption(
-                    "Based on cosine similarity across demand, supply, gap, and viability signals."
-                )

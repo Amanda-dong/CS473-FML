@@ -115,7 +115,19 @@ def main() -> None:
             'halal_supply_rate',
             'gap_score',
             'halal_cuisine_diversity',
-        ] + extra_demand_cols
+        ]
+        + extra_demand_cols
+        + [
+            c
+            for c in [
+                'cluster_confidence',
+                'latent_demand_score',
+                'halal_cuisine_diversity_norm',
+                'total_restaurants',
+                'halal_restaurants',
+            ]
+            if c in clustered.columns
+        ]
     ].sort_values(['cluster_id', 'nta_id'])
     assignments.to_csv(OUT_DIR / "phase1_cluster_assignments.csv", index=False)
     centroid_df.to_csv(OUT_DIR / "phase1_cluster_centroids.csv", index=False)

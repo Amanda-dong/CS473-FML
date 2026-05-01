@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 from src.config import CFG
+from src.utils import minmax as _minmax
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,9 +70,7 @@ def build_viability(cfg=CFG) -> pd.DataFrame:
 
     tmp = _zscore(agg[['grade_a_rate', 'critical_rate']], ['grade_a_rate', 'critical_rate'])
     raw = tmp['grade_a_rate'] - tmp['critical_rate']
-    min_r = raw.min()
-    max_r = raw.max()
-    agg["viability_score"] = (raw - min_r) / (max_r - min_r) if max_r != min_r else 0.5
+    agg["viability_score"] = _minmax(raw)
 
     agg["risk_bucket"] = agg["viability_score"].apply(
         lambda v: "Low" if v >= cfg.viability_low_threshold else ("Medium" if v >= cfg.viability_medium_threshold else "High")

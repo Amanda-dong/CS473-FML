@@ -15,6 +15,7 @@ import streamlit as st
 from frontend.components.input_form import render_input_form
 from frontend.components.map_view import render_map_view
 from frontend.components.results_panel import render_results_panel
+from frontend.components.theme import inject_custom_theme
 from frontend.review_evidence import load_labeled_reviews
 
 # ---------------------------------------------------------------------------
@@ -64,7 +65,7 @@ def filter_recommendations(
         result = result[result["risk_bucket"] == "Low"]
     elif risk_tolerance == "Medium":
         result = result[result["risk_bucket"].isin(["Low", "Medium"])]
-    result = result.sort_values("final_score", ascending=False)
+    result = result.sort_values("final_score_adjusted", ascending=False)
 
     if result.empty:
         return result
@@ -83,18 +84,21 @@ def main() -> None:
         page_icon="🕌",
         layout="wide",
     )
-    st.title("🕌 NYC Halal Restaurant Opportunity Finder")
-    st.caption("Find promising NYC neighborhoods for a halal restaurant launch.")
+    inject_custom_theme()
 
     df_all = load_recommendations()
 
     # Sidebar filters
     with st.sidebar:
-        st.header("Build Your Shortlist")
+        st.markdown("<h2 style='color: #e9c46a;'>🕌 Halal Scout</h2>", unsafe_allow_html=True)
         st.caption(
-            "Choose the borough, market type, and risk level that fit your halal restaurant plan."
+            "Build your shortlist by choosing the borough, market type, and risk level."
         )
         form_state = render_input_form()
+        
+        if st.button("🔄 Quick Reset", use_container_width=True):
+            st.rerun()
+            
         st.divider()
         st.caption(f"Neighborhoods in model: **{len(df_all)}**")
 
@@ -106,31 +110,57 @@ def main() -> None:
         limit=None,
         risk_tolerance=form_state.get("risk_tolerance", "High"),
     )
-    filtered = filtered_all.head(int(form_state.get("limit", 5)))
+    limit_val = int(form_state.get("limit", 5))
+    filtered = filtered_all.head(limit_val)
 
-    st.subheader("Welcome")
-    st.caption(
-        "This dashboard helps you compare NYC neighborhoods for a halal restaurant launch. Start with the best matches below, then use the map and neighborhood details to narrow your options."
-    )
+    # Tabs
+    tab_map, tab_compare, tab_analytics = st.tabs([
+        "📍 Map & Shortlist", 
+        "⚖️ Compare", 
+        "📊 Analytics"
+    ])
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Neighborhoods scored", len(df_all))
-    col2.metric("Showing now", len(filtered))
-    col3.metric("Risk filter", str(form_state.get("risk_tolerance", "Medium")))
-    st.caption(
-        "Labels like Very Strong or Moderate are simple relative rankings across the neighborhoods in this model."
-    )
+    with tab_map:
+        st.markdown("### 🗺️ Opportunity Map")
+        col_map, col_summary = st.columns([2, 1])
+        
+        with col_map:
+            render_map_view(filtered_all)
+            
+        with col_summary:
+            st.markdown("#### 🏆 Top 3 Summary")
+            top_3 = filtered.head(3)
+            if top_3.empty:
+                st.info("No matches found.")
+            for _, row in top_3.iterrows():
+                with st.container():
+                    st.markdown(f"**{row['nta_id']}**")
+                    st.caption(f"Score: {row['final_score']:.3f} | {row['market_type']}")
+                    st.progress(float(row['final_score']))
+            st.caption("Scroll down for full details and review evidence.")
 
-    st.divider()
-    review_pool = load_review_evidence_pool()
-    render_map_view(filtered_all)
-    st.divider()
-    render_results_panel(
-        filtered,
-        repo_root=_REPO_ROOT,
-        review_pool=review_pool,
-        df_all=df_all,
-    )
+        st.divider()
+        review_pool = load_review_evidence_pool()
+        render_results_panel(
+            filtered,
+            repo_root=_REPO_ROOT,
+            review_pool=review_pool,
+            df_all=df_all,
+        )
+
+    with tab_compare:
+        from frontend.components.comparison import render_comparison_view
+        render_comparison_view(filtered)
+
+    with tab_analytics:
+        st.subheader("📊 Market Analytics")
+        # results_panel will handle the rich analytics in step 5
+        from frontend.components.results_panel import render_analytics_view
+        render_analytics_view(filtered_all, filtered)
+
+
+if __name__ == "__main__":
+    main()
 
 
 if __name__ == "__main__":

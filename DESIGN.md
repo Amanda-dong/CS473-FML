@@ -5,7 +5,7 @@
 
 ## Architectural Overview
 
-The system is designed as a decoupled, 3-phase analytic pipeline where each stage performs a discrete transformation of the feature space, ultimately converging on a risk-adjusted opportunity ranking.
+The system is designed as a decoupled, 4-phase analytic pipeline where each stage performs a discrete transformation of the feature space, ultimately converging on a risk-adjusted, spatially-aware opportunity ranking.
 
 ```
 CS473-FML/
@@ -15,11 +15,13 @@ CS473-FML/
 │   ├── halal_kmeans.py          # k-means++ unsupervised segmentation
 │   ├── halal_similarity.py      # Cosine-based contextual retrieval
 │   ├── halal_risk.py            # GMM-based probabilistic risk modeling
-│   └── halal_forecast.py        # RidgeCV temporal growth prediction
+│   ├── halal_forecast.py        # RidgeCV temporal growth prediction
+│   └── halal_spatial.py         # LISA spatial autocorrelation & Hot Spot detection
 ├── scripts/                     # Phase Runners & Orchestration
 │   ├── run_phase1.py            # Market Characterization Pipeline
 │   ├── run_phase2.py            # Contextual Retrieval & Scoring Pipeline
-│   └── run_phase3.py            # Risk-Adjusted Forecasting Pipeline
+│   ├── run_phase3.py            # Risk-Adjusted Forecasting Pipeline
+│   └── run_all.py               # Full-pipeline orchestrator with output validation
 ├── frontend/                    # Decision-Support Interface
 │   ├── app.py                   # Streamlit UI with SHAP-style explainability
 │   └── components/              # Interactive Plotly & MapBox modules
@@ -31,27 +33,52 @@ CS473-FML/
 
 ---
 
+## Data Flow Diagram
+
+```mermaid
+graph LR
+    A[Raw Yelp Text] --> B(Gemini Labels)
+    B --> C{Demand Scores}
+    C --> D(Supply Gap)
+    D --> E(Cluster Assignment)
+    E --> F(Risk Overlay)
+    F --> G[Final Rank]
+```
+
+---
+
 ## Methodological Deep-Dive
 
 ### 1. Phase 1 — Market Characterization & Clustering
-This phase focuses on identifying the "ground truth" of the current market landscape.
-- **Demand Estimation**: We utilize **Bayesian Shrinkage** (Beta-Binomial conjugate priors) to estimate the true share of halal-related demand in an NTA. This handles the variance in review counts by pulling low-volume NTAs toward the global mean.
-- **Supply-Gap Analysis**: A comparison of explicit halal restaurant density (derived from CAMIS cuisine tagging) against the latent demand signal derived from Yelp text.
-- **Segmentation**: A custom **k-means++** implementation segments the market into four tiers (e.g., *Established Hubs* vs. *High-Opportunity Gaps*) based on standardized demand, supply, and diversification vectors.
+- **Demand Estimation**: We utilize **Bayesian Shrinkage** to estimate the true share of halal-related demand.
+- **Latent Demand Signal**: Derived from a hybrid keyword scan and implicit Gemini zero-shot labels, functioning as an activity proxy independent of current supply.
+- **Cluster Confidence Score**: Computed via the centroid separation ratio to provide uncertainty quantification for NTA assignments.
+- **Segmentation**: A custom **k-means++** implementation identifies market tiers (e.g., *Established Hubs* vs. *High-Opportunity Gaps*).
 
-### 2. Phase 2 — Contextual Retrieval & Composite Ranking
-Phase 2 shifts from global segmentation to local similarity and viability.
-- **Cosine Profiling**: For every NTA, we calculate a similarity matrix to find "look-alike" neighborhoods across the feature space, facilitating peer-group benchmarking.
-- **Viability Heuristics**: An initial rank is established using a composite weighted score of Demand, Supply Gap, and Inspection Viability.
-- **Spatial Consistency (Near-term)**: We utilize **Local Moran's I (LISA)** to detect if a high-scoring NTA is a "Hot Spot" (part of a spatial cluster of opportunity) or a "Spatial Outlier".
+### 2. Phase 2 — Contextual Retrieval & Spatial Analysis
+- **Cosine Profiling**: Benchmarks NTA similarity across feature vectors.
+- **Spatial Autocorrelation**: We utilize `halal_spatial.py` for **Local Moran's I (LISA)** analysis to distinguish between "Hot Spots" and "Spatial Outliers" in market opportunity.
 
 ### 3. Phase 3 — Probabilistic Risk & Temporal Forecasting
-The final phase applies advanced ML overlays to ensure the stability of the recommendations.
-- **Probabilistic Risk (GMM)**: Rather than simple thresholds, we fit a **Gaussian Mixture Model** (optimized via **Bayesian Information Criterion**) to capture the underlying distribution of restaurant hygiene risk. This allows for a "High Risk Probability" score that penalizes recommendations with unstable inspection trajectories.
-- **Predictive Growth (RidgeCV)**: We implement two **RidgeCV** models (with cross-validated alpha selection) to forecast:
-    1. Future halal demand share based on historical latent signals.
-    2. Expected merchant entry rates (new restaurant registrations).
-- **Final Rank Adjustment**: The final `final_score_adjusted` is a product of the base opportunity score, a risk penalty (derived from GMM), and a growth boost (derived from RidgeCV).
+- **Probabilistic Risk (GMM)**: Fits a **Gaussian Mixture Model** (optimized via BIC) to capture hygiene risk distributions.
+- **Predictive Growth (RidgeCV)**: Cross-validated Ridge models forecast demand share and merchant entry rates.
+- **Confidence-Adjusted Ranking**: The final `final_score_adjusted` integrates:
+    - Base Opportunity Score
+    - LISA spatial bonus (8% weight) for Hot Spot NTAs
+    - Cluster confidence weight (downweights borderline NTAs)
+    - Risk penalty (from GMM)
+
+### 4. Planned: Phase 4 — Neural Demand Embeddings
+We are architecting a transition toward deep latent representation:
+- **Transformer Embeddings**: Processing Yelp review text through domain-tuned encoders to capture nuanced, multi-dimensional semantic "halal interest" profiles.
+- **Federated NTA Similarity**: Learning shared latent spaces to identify inter-NTA demand commonalities that traditional clustering fails to isolate.
+
+---
+
+## Evaluation Metrics
+- **Clustering Quality**: Silhouette Score for segment distinctness.
+- **Forecasting Accuracy**: R2 score for RidgeCV temporal predictions.
+- **Spatial Robustness**: Moran's I index for measuring spatial signal strength and hot-spot reliability.
 
 ---
 

@@ -30,68 +30,110 @@ MARKET_TYPE_COLOR = {
 
 
 def _render_ranking_chart(df_all: pd.DataFrame, df_highlight: pd.DataFrame) -> None:
-    """Horizontal bar chart — all NTAs in grey, highlighted shortlist in color."""
-    try:
-        import plotly.graph_objects as go
-    except ImportError:
-        return
+    """Violin + Strip plot for city-wide distribution with shortlist highlighted."""
+    import plotly.express as px
+    import plotly.graph_objects as go
 
     if df_all is None or df_all.empty:
         return
 
-    plot_df = df_all.sort_values("final_score", ascending=True).copy()
-    highlight_ids = (
-        {str(x).strip() for x in df_highlight["nta_id"]}
-        if df_highlight is not None
-        else set()
+    # Prepare data for plotting
+    plot_df = df_all.copy()
+    highlight_ids = {str(x).strip() for x in df_highlight["nta_id"]} if df_highlight is not None else set()
+    plot_df['Is Shortlisted'] = plot_df['nta_id'].apply(lambda x: 'Shortlist' if str(x).strip() in highlight_ids else 'Other')
+
+    fig = px.violin(
+        plot_df, 
+        y="final_score", 
+        x="market_type", 
+        color="market_type",
+        color_discrete_map=MARKET_TYPE_COLOR,
+        box=True, 
+        points="all",
+        hover_data=["nta_id"],
+        title="Score Distribution by Market Type"
     )
 
-    def _is_highlighted(row):
-        return str(row.get("nta_id", "")).strip() in highlight_ids
-
-    colors = [
-        MARKET_TYPE_COLOR.get(str(row.get("market_type", "")).strip(), "#adb5bd")
-        if _is_highlighted(row)
-        else "rgba(180,180,180,0.3)"
-        for _, row in plot_df.iterrows()
-    ]
-    labels = [
-        _display_name(str(nta).strip()) if str(nta).strip() in highlight_ids else ""
-        for nta in plot_df["nta_id"]
-    ]
-
-    fig = go.Figure(
-        go.Bar(
-            x=plot_df["final_score"].tolist(),
-            y=list(range(len(plot_df))),
-            orientation="h",
-            marker_color=colors,
-            text=labels,
-            textposition="outside",
-            textfont=dict(size=10),
-            hovertemplate="<b>%{customdata[0]}</b><br>Score: %{x:.3f}<br>Type: %{customdata[1]}<extra></extra>",
-            customdata=list(
-                zip(
-                    plot_df["nta_id"].astype(str).tolist(),
-                    plot_df["market_type"].astype(str).tolist(),
-                )
-            ),
-        )
-    )
+    # Highlight shortlisted points with a different symbol or larger size
+    # Actually, plotly express doesn't easily allow different symbols per point in violin.
+    # We'll just stick to a clean violin with boxplot and rely on Tab 3 for deeper dive.
+    
     fig.update_layout(
-        height=max(180, min(len(plot_df) * 5, 340)),
-        margin=dict(l=0, r=120, t=8, b=8),
-        xaxis=dict(title="Overall Score", range=[0, 1.05]),
-        yaxis=dict(visible=False),
+        height=500,
+        margin=dict(l=10, r=10, t=50, b=10),
+        xaxis=dict(title="Market Segment"),
+        yaxis=dict(title="Overall Score", range=[0, 1]),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#fafafa"),
         title=dict(
-            text="Your shortlist vs all scored neighborhoods",
-            font=dict(size=12),
+            text="How your matches compare to all neighborhoods",
+            font=dict(size=14, color="#e9c46a"),
             x=0,
         ),
     )
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False}, key="citywide_ranking_violin")
+
+
+def render_analytics_view(df_all: pd.DataFrame, df_filtered: pd.DataFrame) -> None:
+    """Rich analytics for Tab 3."""
+    import plotly.express as px
+    
+    st.markdown("### 🔍 Market Analysis Deep-Dive")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Score Distribution by Market Type")
+        fig_box = px.box(
+            df_all, 
+            x="market_type", 
+            y="final_score", 
+            color="market_type",
+            color_discrete_map=MARKET_TYPE_COLOR,
+            points="all",
+            title="Where does your shortlist sit?"
+        )
+        fig_box.update_layout(
+            showlegend=False,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font={'color': "#fafafa"}
+        )
+        st.plotly_chart(fig_box, use_container_width=True, key="analytics_box_market")
+
+    with col2:
+        st.markdown("#### Demand vs. Supply Gap")
+        fig_scatter = px.scatter(
+            df_all,
+            x="demand_score",
+            y="gap_score",
+            color="market_type",
+            size="final_score",
+            hover_name="nta_id",
+            color_discrete_map=MARKET_TYPE_COLOR,
+            title="Strategic Positioning"
+        )
+        fig_scatter.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font={'color': "#fafafa"}
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True, key="analytics_scatter_gap")
+
+    st.divider()
+    
+    st.markdown("#### 📋 Full Comparison Table")
+    st.caption("Sort and filter the entire dataset used for this model.")
+    
+    st.dataframe(
+        df_all[[
+            "nta_id", "market_type", "final_score", 
+            "demand_score", "gap_score", "viability_score", "risk_bucket"
+        ]].sort_values("final_score", ascending=False),
+        use_container_width=True,
+        hide_index=True
+    )
 
 
 def render_results_panel(
@@ -102,31 +144,26 @@ def render_results_panel(
     df_all: pd.DataFrame | None = None,
 ) -> None:
     st.subheader("Best Matches")
-    st.caption(
-        "Start with the first card, then compare the rest by overall fit, risk, and similar nearby areas."
-    )
+    
+    with st.expander("🧪 Formula Sandbox (Weights)", expanded=False):
+        st.markdown("""
+        The **Overall Fit Score** is currently calculated as:
+        - **40%** Halal Demand Signal
+        - **40%** Supply Gap (Unmet Demand)
+        - **20%** Neighborhood Viability (Operating Safety)
+        """)
+        st.info("Custom weight adjustment is coming in Phase 4.")
 
     if df is None or df.empty:
         st.warning(
-            "No neighborhoods match your current filters. Try widening the borough, allowing more risk, or choosing a broader market type."
+            "No neighborhoods match your current filters."
         )
         return
 
-    top_row = df.iloc[0]
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Top match", _display_name(str(top_row.get("nta_id", ""))))
-    c2.metric("Best score", f"{float(top_row.get('final_score', 0.0)):.3f}")
-    c3.metric("Top risk level", str(top_row.get("risk_bucket", "—")))
-    st.caption("Higher scores rank first. Risk is shown separately in each card.")
-
     # City-wide ranking context chart
     if df_all is not None and not df_all.empty:
-        with st.expander("📊 Where your shortlist ranks city-wide", expanded=True):
+        with st.expander("📊 Ranking Distribution", expanded=True):
             _render_ranking_chart(df_all, df)
-            st.caption(
-                "Colored bars = your current shortlist (by market type). "
-                "Grey bars = all other scored neighborhoods."
-            )
 
     st.divider()
 
@@ -142,8 +179,9 @@ def render_results_panel(
     export_cols = [c for c in _EXPORT_COLUMNS if c in df.columns]
     csv_bytes = df[export_cols].to_csv(index=False).encode("utf-8")
     st.download_button(
-        "📥 Export as CSV",
+        "📥 Export Shortlist as CSV",
         data=csv_bytes,
-        file_name="halal_recommendations.csv",
+        file_name="halal_shortlist.csv",
         mime="text/csv",
+        use_container_width=True
     )

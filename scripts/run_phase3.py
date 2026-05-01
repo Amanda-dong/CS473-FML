@@ -36,7 +36,7 @@ def main() -> None:
     print(risk_diag["bic_table"].to_string(index=False))
 
     print(
-        f"\nRidge R² (in-sample): {forecast_diag['r2']:.4f}"
+        f"\nRidge R² (in-sample): {forecast_diag['r2_insample']:.4f}"
     )
     print(f"Ridge persistence baseline R²: {forecast_diag['baseline_r2']:.4f}")
     print("\nRidge feature coefficients:")
@@ -53,9 +53,9 @@ def main() -> None:
     print(forecast_diag["bottom_actual"].to_string(index=False))
 
     print(
-        f"\nEntry Ridge R² (in-sample): {entry_diag['r2']:.4f}"
+        f"\nEntry Ridge R² (in-sample): {entry_diag.get('r2_insample', entry_diag.get('r2_mean', 0.0)):.4f}"
     )
-    print(f"Entry Ridge persistence baseline R²: {entry_diag['baseline_r2']:.4f}")
+    print(f"Entry Ridge persistence baseline R²: {entry_diag.get('baseline_r2', 0.0):.4f}")
     print("\nEntry Ridge feature coefficients:")
     print(entry_diag["coefficients"].to_string(index=False))
     print("\nEntry Ridge ablation table:")
