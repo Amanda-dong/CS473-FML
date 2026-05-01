@@ -21,6 +21,7 @@ class ZoneRecommendation(BaseModel):
     similar_restaurants: list[str] = Field(default_factory=list)
     data_freshness: str = Field(default="2026-04")
     zone_type: str = Field(default="")
+    borough: str = Field(default="Any")
     healthy_gap_summary: str = Field(default="")
     freshness_note: str = Field(default="No source refresh recorded yet.")
     feature_contributions: dict[str, float] = Field(default_factory=dict)
