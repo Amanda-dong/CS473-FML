@@ -16,7 +16,9 @@ DATASET_SPEC = DatasetSpec(
     owner="data",
     spatial_unit="community_district",
     time_grain="month",
-    description="Quality-of-life and complaint signals for coarse neighborhood context.",
+    description=(
+        "Quality-of-life and complaint signals for coarse neighborhood context."
+    ),
     columns=("month", "community_district", "complaint_type", "count"),
 )
 

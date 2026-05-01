@@ -100,8 +100,14 @@ def fetch(limit: int = 50000) -> pd.DataFrame:
         params = {
             "$limit": batch_size,
             "$offset": offset,
-            "$select": "inspection_date,camis,grade,critical_flag,boro,zipcode,cuisine_description,dba",
-            "$where": f"inspection_date >= '{start_date}' AND inspection_date <= '{end_date}'",
+            "$select": (
+                "inspection_date,camis,grade,critical_flag,boro,"
+                "zipcode,cuisine_description,dba"
+            ),
+            "$where": (
+                f"inspection_date >= '{start_date}' AND "
+                f"inspection_date <= '{end_date}'"
+            ),
             "$order": "inspection_date DESC",
         }
         resp = requests.get(url, params=params, timeout=60)

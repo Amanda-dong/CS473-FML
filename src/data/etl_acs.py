@@ -87,7 +87,8 @@ def _transform(df: pd.DataFrame) -> pd.DataFrame:
                 "nta_id": df["GeoID"].astype(str),
                 "median_income": pd.to_numeric(df["MdHHIncE"], errors="coerce"),
                 "population": pd.to_numeric(df["Pop16plE"], errors="coerce"),
-                # Estimate from median income: 30% of monthly income as proxy for rent burden.
+                # Estimate from median income: 30% of monthly income
+                # as proxy for rent burden.
                 "rent_burden": pd.to_numeric(df["MdHHIncE"], errors="coerce")
                 * 0.30
                 / 12,

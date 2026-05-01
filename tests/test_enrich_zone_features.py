@@ -12,7 +12,7 @@ from src.data.enrich_zone_features import (
 
 def test_enrich_zone_main_merges_and_saves(monkeypatch) -> None:
     # Setup mocks
-    mock_zone_features = pd.DataFrame({"zone_id": ["Z1"], "nta_id": ["N1"]})
+    mock_zone_features = pd.DataFrame({"zone_id": ["N1"], "nta_id": ["N1"]})
     mock_inspections = pd.DataFrame({"nta_id": ["N1"], "cuisine_type": ["C1"]})
     mock_yelp = pd.DataFrame({"nta": ["N1"], "rating": [5.0]})
 

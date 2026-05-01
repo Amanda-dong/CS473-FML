@@ -177,9 +177,11 @@ _NYC_ZONES: list[tuple[str, str, str, str]] = [
 ]
 
 # Feature seeds per zone.
-# Columns: demand, gap, survival, rent, competition, review_share, license_vel, transit, income_alignment
+# Columns: demand, gap, survival, rent, competition, review_share,
+# license_vel, transit, income_alignment
 # transit: subway/ferry access score [0,1]
-# income_alignment: how well median income aligns with mid-tier restaurant (0=poor, 1=ideal)
+# income_alignment: how well median income aligns with mid-tier restaurant
+# (0=poor, 1=ideal)
 _ZONE_SEEDS: dict[
     str, tuple[float, float, float, float, float, float, float, float, float]
 ] = {
@@ -597,7 +599,10 @@ def _score_with_learned_model(
 
 
 def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
-    """Synchronous implementation — callable from both FastAPI and Streamlit in-process."""
+    """Synchronous implementation — callable from both FastAPI and Streamlit.
+
+    Works in-process for easier debugging and direct frontend usage.
+    """
     subtype = canonical_subtype(request.concept_subtype)
     borough_filter = (request.borough or "Any").strip()
     zone_type_filter = (request.zone_type or "").strip()
@@ -715,7 +720,10 @@ async def predict_cmf(request: RecommendationRequest) -> RecommendationResponse:
 
 @router.post("/predict/trajectory")
 async def predict_trajectory(request: RecommendationRequest) -> dict[str, str]:
-    """Assign a macro neighborhood-regime cluster for the requested concept + zone type."""
+    """Assign a macro neighborhood-regime cluster for the requested concept.
+
+    Works for the specified zone type.
+    """
     subtype = canonical_subtype(request.concept_subtype)
     zone_type = (request.zone_type or "campus_walkshed").strip()
 

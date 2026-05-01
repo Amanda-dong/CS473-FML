@@ -91,21 +91,25 @@ def build_log(
             ),
             (
                 "population_present: "
-                f"{has_population} (this workbook includes Pop16plE, a 16+ population field; "
-                "it does not include the Demographic workbook's total population field Pop_1E)"
+                f"{has_population} (this workbook includes Pop16plE, a 16+ "
+                "population field; it does not include the Demographic "
+                "workbook's total population field Pop_1E)"
             ),
             "column_names:",
             *columns,
             "",
             "notes:",
             (
-                "The NYC DCP ACS 2023 5-year NTA release is split into separate thematic workbooks. "
-                "The Economic workbook was selected because it is recent, NTA-level, and contains "
-                "median household income along with neighborhood identifiers and other economic fields."
+                "The NYC DCP ACS 2023 5-year NTA release is split into "
+                "separate thematic workbooks. The Economic workbook was "
+                "selected because it is recent, NTA-level, and contains "
+                "median household income along with neighborhood identifiers "
+                "and other economic fields."
             ),
             (
-                "An alternative candidate, Dem_1923_NTA.xlsx, contains total population but not median "
-                "household income, so it was not chosen as the primary single-file download for this phase."
+                "An alternative candidate, Dem_1923_NTA.xlsx, contains total "
+                "population but not median household income, so it was not "
+                "chosen as the primary single-file download for this phase."
             ),
         ]
     )
@@ -134,9 +138,10 @@ def main() -> None:
         looks_usable = looks_usable and True
 
     chosen_reason = (
-        "Selected the 2019-2023 ACS 5-year Neighborhood-NTA Economic workbook because it is the "
-        "most recent NTA-level file on the official NYC DCP ACS page that includes median household income "
-        "and neighborhood identifiers in a single workbook."
+        "Selected the 2019-2023 ACS 5-year Neighborhood-NTA Economic workbook "
+        "because it is the most recent NTA-level file on the official NYC DCP "
+        "ACS page that includes median household income and neighborhood "
+        "identifiers in a single workbook."
     )
     log_text = build_log(
         source_url=SOURCE_ZIP_URL,
@@ -163,7 +168,8 @@ def main() -> None:
     print("looks usable for later merge steps:")
     if has_identifier and has_median_income and has_population:
         print(
-            "yes, with the caveat that the population field here is Pop16plE rather than total population."
+            "yes, with the caveat that the population field here is "
+            "Pop16plE rather than total population."
         )
     else:
         print("no, this file is missing one or more core fields needed later.")

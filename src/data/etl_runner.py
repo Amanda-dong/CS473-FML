@@ -90,7 +90,8 @@ def run_all_etl(
             df = _run_module(module, limit=limit)
             if spec is None:
                 raise KeyError(
-                    f"{name} missing from DATASET_REGISTRY and module has no DATASET_SPEC"
+                    f"{name} missing from DATASET_REGISTRY and module has "
+                    "no DATASET_SPEC"
                 )
             validate_dataset_contract(df, spec)
             results[name] = df

@@ -16,7 +16,9 @@ DATASET_SPEC = DatasetSpec(
     owner="data",
     spatial_unit="restaurant",
     time_grain="year",
-    description="Official business-license activity for openings, renewals, and closures.",
+    description=(
+        "Official business-license activity for openings, renewals, and closures."
+    ),
     columns=(
         "event_date",
         "restaurant_id",

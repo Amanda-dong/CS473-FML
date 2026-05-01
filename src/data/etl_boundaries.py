@@ -91,7 +91,10 @@ def run_placeholder_etl() -> pd.DataFrame:
 
 
 def _static_fallback() -> pd.DataFrame:
-    """Return a minimal DataFrame with the 30 representative NTA codes and null geometry."""
+    """Return a minimal DataFrame with the 30 representative NTA codes.
+
+    Geometry will be null.
+    """
     return pd.DataFrame(
         {
             "zone_id": _STATIC_NTA_CODES,
@@ -142,7 +145,10 @@ def _load_geojson(path: Path) -> pd.DataFrame:
 
 
 def run_etl(limit: int = 50000) -> pd.DataFrame:  # noqa: ARG001
-    """Load NTA boundary GeoJSON. Downloads from NYC Open Data if not present locally."""
+    """Load NTA boundary GeoJSON.
+
+    Downloads from NYC Open Data if not present locally.
+    """
     _GEOJSON_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     if _GEOJSON_PATH.exists():
@@ -155,7 +161,8 @@ def run_etl(limit: int = 50000) -> pd.DataFrame:  # noqa: ARG001
             return _static_fallback()
         except Exception as exc:
             logger.warning(
-                "etl_boundaries: failed to parse local GeoJSON (%s) — downloading fresh",
+                "etl_boundaries: failed to parse local GeoJSON (%s) — "
+                "downloading fresh",
                 exc,
             )
 
