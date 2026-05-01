@@ -365,7 +365,7 @@ def test_pipeline_summary_dict_has_correct_keys() -> None:
                 "business_unique_id": ["B1"],
                 "category": ["Restaurant"],
             }
-        )
+        ),
     }
 
     with patch("run_full_pipeline.PROCESSED_DIR", Path("/tmp")):

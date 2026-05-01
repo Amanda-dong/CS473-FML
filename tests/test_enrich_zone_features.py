@@ -1,4 +1,3 @@
-
 import pandas as pd
 import pytest
 
@@ -10,67 +9,98 @@ from src.data.enrich_zone_features import (
 
 # ... [existing tests] ...
 
+
 def test_enrich_zone_main_merges_and_saves(monkeypatch) -> None:
     # Setup mocks
     mock_zone_features = pd.DataFrame({"zone_id": ["Z1"], "nta_id": ["N1"]})
     mock_inspections = pd.DataFrame({"nta_id": ["N1"], "cuisine_type": ["C1"]})
     mock_yelp = pd.DataFrame({"nta": ["N1"], "rating": [5.0]})
 
-    mock_cuisine_df = pd.DataFrame({
-        "zone_id": ["N1"],
-        "cuisine_diversity": [0.5],
-        "dominant_cuisine": ["C1"],
-        "high_risk_cuisine_share": [0.1],
-    })
+    mock_cuisine_df = pd.DataFrame(
+        {
+            "zone_id": ["N1"],
+            "cuisine_diversity": [0.5],
+            "dominant_cuisine": ["C1"],
+            "high_risk_cuisine_share": [0.1],
+        }
+    )
 
-    mock_yelp_df = pd.DataFrame({
-        "zone_id": ["N1"],
-        "yelp_avg_rating": [5.0],
-        "yelp_review_density": [1.0],
-    })
+    mock_yelp_df = pd.DataFrame(
+        {
+            "zone_id": ["N1"],
+            "yelp_avg_rating": [5.0],
+            "yelp_review_density": [1.0],
+        }
+    )
 
-    monkeypatch.setattr("pandas.read_parquet", lambda path: mock_zone_features if "zone_features" in str(path) else mock_inspections)
+    monkeypatch.setattr(
+        "pandas.read_parquet",
+        lambda path: (
+            mock_zone_features if "zone_features" in str(path) else mock_inspections
+        ),
+    )
     monkeypatch.setattr("pandas.read_csv", lambda path: mock_yelp)
-    monkeypatch.setattr("src.data.enrich_zone_features._cuisine_diversity_features", lambda x: mock_cuisine_df)
-    monkeypatch.setattr("src.data.enrich_zone_features._yelp_nta_features", lambda x: mock_yelp_df)
+    monkeypatch.setattr(
+        "src.data.enrich_zone_features._cuisine_diversity_features",
+        lambda x: mock_cuisine_df,
+    )
+    monkeypatch.setattr(
+        "src.data.enrich_zone_features._yelp_nta_features", lambda x: mock_yelp_df
+    )
     monkeypatch.setattr("pandas.DataFrame.to_parquet", lambda self, *a, **kw: None)
 
     # Call main
     main()
 
+
 def test_enrich_zone_main_drops_old_columns(monkeypatch) -> None:
     # Setup mocks with old columns
-    mock_zone_features = pd.DataFrame({
-        "zone_id": ["N1"],
-        "nta_id": ["N1"],
-        "cuisine_diversity": [0.9],
-        "dominant_cuisine": ["Old"],
-    })
+    mock_zone_features = pd.DataFrame(
+        {
+            "zone_id": ["N1"],
+            "nta_id": ["N1"],
+            "cuisine_diversity": [0.9],
+            "dominant_cuisine": ["Old"],
+        }
+    )
     mock_inspections = pd.DataFrame({"nta_id": ["N1"], "cuisine_type": ["C1"]})
     mock_yelp = pd.DataFrame({"nta": ["N1"], "rating": [5.0]})
 
-    mock_cuisine_df = pd.DataFrame({
-        "zone_id": ["N1"],
-        "cuisine_diversity": [0.5],
-        "dominant_cuisine": ["C1"],
-        "high_risk_cuisine_share": [0.1],
-    })
+    mock_cuisine_df = pd.DataFrame(
+        {
+            "zone_id": ["N1"],
+            "cuisine_diversity": [0.5],
+            "dominant_cuisine": ["C1"],
+            "high_risk_cuisine_share": [0.1],
+        }
+    )
 
-    mock_yelp_df = pd.DataFrame({
-        "zone_id": ["N1"],
-        "yelp_avg_rating": [5.0],
-        "yelp_review_density": [1.0],
-    })
+    mock_yelp_df = pd.DataFrame(
+        {
+            "zone_id": ["N1"],
+            "yelp_avg_rating": [5.0],
+            "yelp_review_density": [1.0],
+        }
+    )
 
-    monkeypatch.setattr("pandas.read_parquet", lambda path: mock_zone_features if "zone_features" in str(path) else mock_inspections)
+    monkeypatch.setattr(
+        "pandas.read_parquet",
+        lambda path: (
+            mock_zone_features if "zone_features" in str(path) else mock_inspections
+        ),
+    )
     monkeypatch.setattr("pandas.read_csv", lambda path: mock_yelp)
-    monkeypatch.setattr("src.data.enrich_zone_features._cuisine_diversity_features", lambda x: mock_cuisine_df)
-    monkeypatch.setattr("src.data.enrich_zone_features._yelp_nta_features", lambda x: mock_yelp_df)
+    monkeypatch.setattr(
+        "src.data.enrich_zone_features._cuisine_diversity_features",
+        lambda x: mock_cuisine_df,
+    )
+    monkeypatch.setattr(
+        "src.data.enrich_zone_features._yelp_nta_features", lambda x: mock_yelp_df
+    )
     monkeypatch.setattr("pandas.DataFrame.to_parquet", lambda self, *a, **kw: None)
 
     # Call main - should not raise Duplicate column error
     main()
-
 
 
 # ── _cuisine_diversity_features ───────────────────────────────────────────────

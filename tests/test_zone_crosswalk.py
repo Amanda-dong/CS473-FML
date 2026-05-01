@@ -23,12 +23,13 @@ def test_resolve_unknown_nta_returns_none() -> None:
 
 def test_load_all_nta_codes_fallback(monkeypatch, tmp_path) -> None:
     # Mock Path to point to a non-existent or malformed file
-    from pathlib import Path
-    
+
     # First test: no files exist
-    monkeypatch.setattr("src.features.zone_crosswalk.Path", lambda x: tmp_path / "nonexistent")
+    monkeypatch.setattr(
+        "src.features.zone_crosswalk.Path", lambda x: tmp_path / "nonexistent"
+    )
     assert _load_all_nta_codes() == []
-    
+
     # Second test: malformed JSON
     malformed = tmp_path / "malformed.geojson"
     malformed.write_text("not json")
