@@ -50,23 +50,16 @@ Canonical identifiers:
 - `review_id`: review-label key
 - `time_key`: canonical derived year field for model tables
 
-Current implemented zone-year matrix columns are documented in `docs/DataDictionary.md`
-and currently include:
+The processed zone-year matrix (`data/processed/feature_matrix.parquet`) is the
+canonical scoring table: it currently ships **726 rows × 49 columns** (identifiers
+plus engineered numeric features). **Do not treat a short inline list here as the
+schema** — names evolve with ETL. Authoritative column definitions live in
+`docs/DataDictionary.md` (and the parquet header on disk).
 
-- `zone_id`
-- `time_key`
-- `license_velocity`
-- `net_opens`
-- `net_closes`
-- `healthy_review_share`
-- `social_buzz`
-- `population`
-- `median_income`
-- `rent_burden`
-- `inspection_grade_avg`
-- `restaurant_count`
-- `rent_pressure`
-- `mean_assessed_value`
+Representative columns present today include `zone_id`, `time_key`, `license_velocity`,
+`net_opens`, `net_closes`, `trip_count`, `station_count`, `healthy_food_share`,
+`inspection_grade_avg`, `median_income_static`, `rent_pressure`, `mean_assessed_value`,
+`target`, `label_quality`.
 
 The exact model input and output contracts are documented in `docs/ModelInterfaces.md`.
 Those two files should be treated as the detailed reference when the proposal text

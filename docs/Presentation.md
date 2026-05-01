@@ -209,7 +209,7 @@ Streamlit shell: **two in-app tabs** on `frontend/app.py` — **Top Picks** and 
    - Zone type badge (e.g. campus walkshed, lunch corridor, transit catchment, business district)
    - Opportunity score (0–100 in UI — scaled from the 0–1 backend score)
    - Survival risk percentage
-   - Confidence **bucket** / tier
+   - Confidence interval
    - Trajectory cluster label (emerging / fast-growing / stable / declining)
    - Risk flags (e.g., "high competition density", "rent pressure above median")
    - Positive drivers (e.g., "strong healthy demand signal", "subtype gap: no Indian supply")
@@ -233,7 +233,7 @@ Streamlit shell: **two in-app tabs** on `frontend/app.py` — **Top Picks** and 
 
 - Campus walk-sheds consistently show lower survival risk than CBD business districts — stable demand from a enrolled population vs. economic-cycle-sensitive office foot traffic
 - Transit-adjacent zones score highest on demand signals but also carry the highest competition penalty — the opportunity signal is real but the window may already be closing
-- Zones labeled "emerging" by the phase model outperform "stable" zones in 2-year survival for new entrants — consistent with first-mover dynamics in gentrifying areas
+- Zones labeled "emerging" by the phase model outperform "stable" zones in 2-year survival for new entrants — consistent with first-mover dynamics in fast-changing corridors
 
 ---
 

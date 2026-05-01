@@ -11,7 +11,6 @@ _ZONE_TYPE_BADGE = {
     "lunch_corridor": "🥗 Lunch Corridor",
     "transit_catchment": "🚇 Transit",
     "business_district": "💼 Business District",
-    "nta_fallback": "🗺️ NTA Fallback",
 }
 _CLUSTER_BADGE = {
     "emerging": "🌱 Emerging",

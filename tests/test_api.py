@@ -4,8 +4,15 @@ from __future__ import annotations
 
 import pytest
 import pandas as pd
+from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 
 from src.api.main import app
+
+
+@pytest.fixture
+def client():
+    return TestClient(app)
 
 
 # ── basic route checks ────────────────────────────────────────────────────────
@@ -32,20 +39,34 @@ def test_api_has_routes() -> None:
 
 @pytest.mark.asyncio
 async def test_health_check() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.get("/health")
     assert resp.status_code == 200
-    assert resp.json()["status"] == "ok"
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert "feature_matrix_rows" in data
+    assert "feature_matrix_cols" in data
+    assert "model_files_present" in data
+
+
+@pytest.mark.asyncio
+async def test_zones_endpoint() -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.get("/zones")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data, list)
+    if len(data) > 0:
+        assert "zone_id" in data[0]
+        assert "zone_name" in data[0]
 
 
 @pytest.mark.asyncio
 async def test_datasets_endpoint_returns_list() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -59,8 +80,6 @@ async def test_datasets_endpoint_returns_list() -> None:
 
 @pytest.mark.asyncio
 async def test_predict_cmf_healthy_indian() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -77,8 +96,6 @@ async def test_predict_cmf_healthy_indian() -> None:
 @pytest.mark.asyncio
 async def test_predict_cmf_ramen() -> None:
     """CMF endpoint must handle non-healthy cuisine types."""
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -95,8 +112,6 @@ async def test_predict_cmf_ramen() -> None:
 @pytest.mark.asyncio
 async def test_predict_cmf_custom_cuisine() -> None:
     """Free-text custom cuisine should not raise an error."""
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -109,14 +124,12 @@ async def test_predict_cmf_custom_cuisine() -> None:
 
 @pytest.mark.asyncio
 async def test_predict_cmf_returns_sorted_scores() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.post(
             "/predict/cmf",
-            json={"concept_subtype": "mediterranean_bowls", "limit": 5},
+            json={"concept_subtype": "healthy_mediterranean", "limit": 5},
         )
     recs = resp.json()["recommendations"]
     scores = [r["opportunity_score"] for r in recs]
@@ -127,13 +140,11 @@ async def test_predict_cmf_returns_sorted_scores() -> None:
 
 @pytest.mark.asyncio
 async def test_predict_cmf_confidence_buckets() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.post(
-            "/predict/cmf", json={"concept_subtype": "salad_bowls", "limit": 5}
+            "/predict/cmf", json={"concept_subtype": "healthy_salad", "limit": 5}
         )
     recs = resp.json()["recommendations"]
     for r in recs:
@@ -142,13 +153,11 @@ async def test_predict_cmf_confidence_buckets() -> None:
 
 @pytest.mark.asyncio
 async def test_predict_trajectory_returns_cluster() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.post(
-            "/predict/trajectory", json={"concept_subtype": "korean"}
+            "/predict/trajectory", json={"concept_subtype": "healthy_indian"}
         )
     assert resp.status_code == 200
     data = resp.json()
@@ -158,20 +167,60 @@ async def test_predict_trajectory_returns_cluster() -> None:
 
 @pytest.mark.asyncio
 async def test_predict_cmf_borough_filter() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         resp = await client.post(
             "/predict/cmf",
             json={
-                "concept_subtype": "vegan_grab_and_go",
+                "concept_subtype": "healthy_indian",
                 "borough": "Brooklyn",
                 "limit": 3,
             },
         )
     assert resp.status_code == 200
+
+
+# ── hardening tests ───────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_cmf_predict_rejects_invalid_subtype() -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.post(
+            "/predict/cmf",
+            json={"concept_subtype": "<script>xss</script>", "limit": 3},
+        )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_cmf_predict_rejects_too_many_results() -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.post(
+            "/predict/cmf",
+            json={"concept_subtype": "healthy_indian", "limit": 999},
+        )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_cmf_predict_rejects_invalid_price_tier() -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        resp = await client.post(
+            "/predict/cmf",
+            json={"concept_subtype": "healthy_indian", "price_tier": "ultra-premium"},
+        )
+    assert resp.status_code == 422
+
+
+# ── internal logic tests ───────────────────────────────────────────────────────
 
 
 def test_score_with_learned_model_uses_latest_time_key_and_survival_score() -> None:
@@ -195,7 +244,7 @@ def test_score_with_learned_model_uses_latest_time_key_and_survival_score() -> N
     rec = _score_with_learned_model(
         "bk-tandon",
         "NYU Tandon / MetroTech",
-        "salad_bowls",
+        "healthy_indian",
         feature_matrix,
         DummyScoringModel(),
         None,
@@ -254,9 +303,6 @@ def test_score_with_learned_model_applies_request_context() -> None:
     assert aggressive.opportunity_score > conservative.opportunity_score
 
 
-# ── _confidence_bucket — all thresholds ──────────────────────────────────────
-
-
 @pytest.mark.parametrize(
     "score,expected",
     [
@@ -275,15 +321,11 @@ def test_confidence_bucket(score: float, expected: str) -> None:
     assert _confidence_bucket(score) == expected
 
 
-# ── _get_zone_type_clusters ───────────────────────────────────────────────────
-
-
 def test_get_zone_type_clusters_returns_dict() -> None:
     from src.api.routers.recommendations import _get_zone_type_clusters
 
     result = _get_zone_type_clusters("healthy_indian", "medium", "mid")
     assert isinstance(result, dict)
-    # Should have entries for all zone types present in _NYC_ZONES
     for zt in (
         "campus_walkshed",
         "lunch_corridor",
@@ -291,7 +333,6 @@ def test_get_zone_type_clusters_returns_dict() -> None:
         "business_district",
     ):
         assert zt in result
-    # Each value should be a string cluster label
     for label in result.values():
         assert isinstance(label, str)
 
@@ -299,12 +340,9 @@ def test_get_zone_type_clusters_returns_dict() -> None:
 def test_get_zone_type_clusters_aggressive_risk() -> None:
     from src.api.routers.recommendations import _get_zone_type_clusters
 
-    result = _get_zone_type_clusters("ramen", "aggressive", "premium")
+    result = _get_zone_type_clusters("healthy_ramen", "aggressive", "premium")
     assert isinstance(result, dict)
     assert len(result) > 0
-
-
-# ── _score_one ────────────────────────────────────────────────────────────────
 
 
 def test_score_one_returns_zone_recommendation() -> None:
@@ -327,14 +365,13 @@ def test_score_one_returns_zone_recommendation() -> None:
 
 
 def test_score_one_unknown_zone_uses_default_seed() -> None:
-    """A zone_id not in _ZONE_SEEDS uses the default seed tuple."""
     from src.api.routers.recommendations import _score_one
 
     result = _score_one(
         "zz-unknown",
         "transit_catchment",
         "Unknown Zone",
-        "ramen",
+        "healthy_ramen",
         "conservative",
         "budget",
     )
@@ -343,17 +380,14 @@ def test_score_one_unknown_zone_uses_default_seed() -> None:
 
 
 def test_score_one_price_and_risk_adjustments() -> None:
-    """Conservative+premium suppresses survival → higher risk than aggressive+budget."""
     from src.api.routers.recommendations import _score_one
 
     rec_premium = _score_one(
-        "bk-tandon", "campus_walkshed", "L", "salad_bowls", "conservative", "premium"
+        "bk-tandon", "campus_walkshed", "L", "healthy_salad", "conservative", "premium"
     )
     rec_budget = _score_one(
-        "bk-tandon", "campus_walkshed", "L", "salad_bowls", "aggressive", "budget"
+        "bk-tandon", "campus_walkshed", "L", "healthy_salad", "aggressive", "budget"
     )
-    # _RISK_ADJUST[conservative]=-0.06, _PRICE_ADJUST[premium]=-0.04 → lower survival_score
-    # _RISK_ADJUST[aggressive]=+0.06, _PRICE_ADJUST[budget]=+0.04 → higher survival_score
     assert rec_premium.survival_risk > rec_budget.survival_risk
 
 
@@ -376,7 +410,12 @@ def test_score_with_learned_model_index_lookup() -> None:
         {"feat1": [0.5]}, index=pd.Index(["bk-tandon"], name="zone_id")
     )
     rec = _score_with_learned_model(
-        "bk-tandon", "Label", "subtype", feature_matrix, DummyScoringModel(), None
+        "bk-tandon",
+        "Label",
+        "healthy_indian",
+        feature_matrix,
+        DummyScoringModel(),
+        None,
     )
     assert rec is not None
     assert rec.zone_id == "bk-tandon"
@@ -387,7 +426,7 @@ def test_score_with_learned_model_missing_zone() -> None:
 
     feature_matrix = pd.DataFrame({"zone_id": ["other"], "feat1": [0.5]})
     rec = _score_with_learned_model(
-        "missing", "Label", "subtype", feature_matrix, None, None
+        "missing", "Label", "healthy_indian", feature_matrix, None, None
     )
     assert rec is None
 
@@ -403,7 +442,12 @@ def test_score_with_learned_model_predict_fallback() -> None:
         {"zone_id": ["bk-tandon"], "feat1": [0.5], "survival_score": [0.8]}
     )
     rec = _score_with_learned_model(
-        "bk-tandon", "Label", "subtype", feature_matrix, DummyScoringModel(), None
+        "bk-tandon",
+        "Label",
+        "healthy_indian",
+        feature_matrix,
+        DummyScoringModel(),
+        None,
     )
     assert rec.survival_risk == pytest.approx(0.2)  # 1.0 - 0.8
 
@@ -427,7 +471,7 @@ def test_score_with_learned_model_shap_tree_explainer() -> None:
 
     feature_matrix = pd.DataFrame({"zone_id": ["bk-tandon"], "f1": [1.0], "f2": [2.0]})
     rec = _score_with_learned_model(
-        "bk-tandon", "Label", "subtype", feature_matrix, Wrapper(model), None
+        "bk-tandon", "Label", "healthy_indian", feature_matrix, Wrapper(model), None
     )
     assert "f1" in rec.feature_contributions
 
@@ -441,7 +485,9 @@ def test_predict_cmf_sync_borough_fallback(monkeypatch) -> None:
     monkeypatch.setattr(rec_mod, "_SCORING_MODEL", None)
     monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", None)
 
-    req = RecommendationRequest(concept_subtype="ramen", borough="XYZNOTREAL", limit=2)
+    req = RecommendationRequest(
+        concept_subtype="healthy_ramen", borough="XYZNOTREAL", limit=2
+    )
     resp = predict_cmf_sync(req)
     assert len(resp.recommendations) > 0
 
@@ -455,7 +501,7 @@ def test_predict_cmf_sync_heuristic_path(monkeypatch) -> None:
     monkeypatch.setattr(rec_mod, "_SCORING_MODEL", None)
     monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", None)
 
-    req = RecommendationRequest(concept_subtype="ramen", limit=1)
+    req = RecommendationRequest(concept_subtype="healthy_ramen", limit=1)
     resp = predict_cmf_sync(req)
     assert resp.recommendations[0].scoring_path == "heuristic"
 
@@ -475,7 +521,7 @@ def test_predict_cmf_sync_heuristic_fallback_mixed(monkeypatch) -> None:
     monkeypatch.setattr(rec_mod, "_SCORING_MODEL", DummyScorer())
     monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", feature_matrix)
 
-    req = RecommendationRequest(concept_subtype="ramen", limit=20)
+    req = RecommendationRequest(concept_subtype="healthy_ramen", limit=20)
     resp = predict_cmf_sync(req)
     paths = [r.scoring_path for r in resp.recommendations]
     assert "heuristic_fallback" in paths
@@ -483,8 +529,6 @@ def test_predict_cmf_sync_heuristic_fallback_mixed(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_predict_trajectory_nonexistent_zone_type() -> None:
-    from httpx import ASGITransport, AsyncClient
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -498,7 +542,6 @@ async def test_predict_trajectory_nonexistent_zone_type() -> None:
 def test_score_with_learned_model_survival_predict(monkeypatch) -> None:
     from src.api.routers.recommendations import _score_with_learned_model
     import numpy as np
-    import pandas as pd
 
     class FakeScoring:
         def predict(self, X):
@@ -536,7 +579,6 @@ def test_score_with_learned_model_survival_no_score_defaults_to_half() -> None:
         def feature_names(self):
             return ["f1"]
 
-    # No survival_score column → defaults to 0.5 viability → risk = 0.5
     feature_matrix = pd.DataFrame({"zone_id": ["Z1"], "f1": [1.0], "time_key": [2024]})
     res = _score_with_learned_model(
         "Z1", "L1", "S1", feature_matrix, FakeScoring(), None
@@ -547,13 +589,10 @@ def test_score_with_learned_model_survival_no_score_defaults_to_half() -> None:
 
 @pytest.mark.asyncio
 async def test_lifespan_runs():
-    from src.api.main import lifespan, app
+    from src.api.main import lifespan
 
     async with lifespan(app):
         pass
-
-
-# ── _safe_float ───────────────────────────────────────────────────────────────
 
 
 def test_safe_float_none_returns_fallback():
@@ -566,9 +605,6 @@ def test_safe_float_non_numeric_returns_fallback():
     from src.api.routers.recommendations import _safe_float
 
     assert _safe_float(object(), 0.5) == 0.5
-
-
-# ── Cover specifically requested branches (Lines 62, 65, 273, 309) ──────────
 
 
 def test_resolve_scoring_version_none():
@@ -589,18 +625,31 @@ def test_resolve_scoring_version_known(monkeypatch):
     assert _resolve_scoring_version(DummyModel(), "dummy") == "v1.0"
 
 
-def test_infer_zone_type_generic_zone():
-    from src.api.routers.recommendations import _infer_zone_type
-
-    assert _infer_zone_type("generic_id_123") == "zone"
-
-
 def test_training_window_empty_years(monkeypatch):
     from src.api.routers.recommendations import _training_window
     import src.api.routers.recommendations as rec_mod
-    import pandas as pd
 
     df = pd.DataFrame({"time_key": ["not_a_year", None]})
     monkeypatch.setattr(rec_mod, "_FEATURE_MATRIX", df)
 
     assert _training_window() == "unknown"
+
+
+def test_cmf_predict_rejects_empty_subtype(client):
+    resp = client.post("/predict/cmf", json={"concept_subtype": "", "max_results": 5})
+    assert resp.status_code in (400, 422)
+
+
+def test_cmf_predict_caps_max_results(client):
+    resp = client.post(
+        "/predict/cmf", json={"concept_subtype": "salad_bowls", "max_results": 999}
+    )
+    assert resp.status_code == 422
+
+
+def test_cmf_predict_invalid_price_tier(client):
+    resp = client.post(
+        "/predict/cmf",
+        json={"concept_subtype": "salad_bowls", "price_tier": "ultra-premium"},
+    )
+    assert resp.status_code == 422

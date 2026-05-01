@@ -15,7 +15,7 @@ The current app has:
 - a main home page in [frontend/app.py](/Users/Catherine/Desktop/CS473-FML/frontend/app.py)
 - a front-page Methodology tab
 - a Data Sources tab
-- a separate review-zone demo page in [frontend/pages/2_Review_Zones_Demo.py](/Users/Catherine/Desktop/CS473-FML/frontend/pages/2_Review_Zones_Demo.py)
+- ~~a separate review-zone demo page in `frontend/pages/2_Review_Zones_Demo.py`~~ (removed)
 - filter and scenario controls distributed across sidebar components
 
 The requested UI changes are:

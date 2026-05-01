@@ -35,6 +35,9 @@ def build_synthetic_restaurant_history(n: int = 200, seed: int = 42) -> pd.DataF
     )
 
 
+from src.config.constants import FM_COLS
+
+
 @dataclass
 class SurvivalModelBundle:
     """Scaffold for restaurant survival work."""
@@ -43,7 +46,14 @@ class SurvivalModelBundle:
     duration_col: str = "duration_days"
     event_col: str = "event_observed"
     fitted_: bool = field(default=False, init=False)
-    feature_columns_: list[str] = field(default_factory=list, init=False)
+    feature_columns_: list[str] = field(
+        default_factory=lambda: [
+            c
+            for c in FM_COLS
+            if c not in ("target", "time_key", "zone_id", "dominant_subtype")
+        ],
+        init=False,
+    )
     cox_model_: Any = field(default=None, init=False)
     rsf_model_: object | None = field(default=None, init=False)
     uses_heuristic_: bool = field(default=False, init=False)
@@ -161,9 +171,17 @@ class SurvivalModelBundle:
                     [0.0] * len(candidate_frame), index=candidate_frame.index
                 )
             )
+            _comp_col = next(
+                (
+                    c
+                    for c in ("restaurant_count_static", "competition_score")
+                    if c in candidate_frame
+                ),
+                None,
+            )
             competition = (
-                candidate_frame["competition_score"]
-                if "competition_score" in candidate_frame
+                candidate_frame[_comp_col].clip(upper=1.0)
+                if _comp_col is not None
                 else pd.Series(
                     [0.0] * len(candidate_frame), index=candidate_frame.index
                 )
@@ -461,14 +479,14 @@ def build_real_restaurant_history(
         Must contain: restaurant_id, grade (A/B/C).
     zone_features : pd.DataFrame | None
         Optional zone-level features keyed by zone_id with columns:
-        rent_pressure, competition_score, transit_access.
+        rent_pressure, restaurant_count_static, trip_count.
 
     Returns
     -------
     pd.DataFrame with columns:
         restaurant_id, zone_id, cuisine_type,
         duration_days, event_observed (1=closed, 0=right-censored),
-        rent_pressure, competition_score, transit_access,
+        rent_pressure, restaurant_count_static, trip_count,
         inspection_grade_numeric
     """
     licenses = licenses_df.copy()
@@ -528,8 +546,8 @@ def build_real_restaurant_history(
                 "event_observed",
                 "inspection_grade_numeric",
                 "rent_pressure",
-                "competition_score",
-                "transit_access",
+                "restaurant_count_static",
+                "trip_count",
             ]
         )
 
@@ -649,7 +667,7 @@ def build_real_restaurant_history(
             )
             for c in zone_cols:
                 result[c] = result[c].fillna(0.5)
-    for c in ["rent_pressure", "competition_score", "transit_access"]:
+    for c in ["rent_pressure", "restaurant_count_static", "trip_count"]:
         if c not in result.columns:
             result[c] = 0.5
 

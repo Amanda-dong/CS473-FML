@@ -13,7 +13,6 @@ class ZoneRecommendation(BaseModel):
     rank: int = Field(default=0)
     score: float = Field(default=0.0)
     opportunity_score: float = Field(default=0.0)
-    confidence_tier: str = Field(default="low")
     confidence_bucket: str = Field(default="low")
     concept_subtype: str
     positive_drivers: list[str] = Field(default_factory=list)
@@ -22,6 +21,7 @@ class ZoneRecommendation(BaseModel):
     similar_restaurants: list[str] = Field(default_factory=list)
     data_freshness: str = Field(default="2026-04")
     zone_type: str = Field(default="")
+    borough: str = Field(default="Any")
     healthy_gap_summary: str = Field(default="")
     freshness_note: str = Field(default="No source refresh recorded yet.")
     feature_contributions: dict[str, float] = Field(default_factory=dict)
@@ -44,6 +44,17 @@ class RecommendationResponse(BaseModel):
 
     query: dict[str, str]
     recommendations: list[ZoneRecommendation] = Field(default_factory=list)
+
+
+class HealthResponse(BaseModel):
+    """System health and data stats."""
+
+    status: str
+    fm_row_count: int = 0
+    feature_count: int = 0
+    feature_matrix_rows: int = 0
+    feature_matrix_cols: int = 0
+    model_files_present: bool = False
 
 
 def build_placeholder_response(

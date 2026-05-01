@@ -1521,3 +1521,123 @@ def test_build_zone_year_matrix_loads_phase1_static(monkeypatch, tmp_path) -> No
     assert "restaurant_count_static" in result.columns
     assert "halal_count_static" in result.columns
     assert "median_income_static" in result.columns
+
+
+def test_build_zone_year_matrix_acs_overlap_drop_coverage(monkeypatch) -> None:
+    """Explicitly targets src/features/feature_matrix.py:304."""
+    from src.features.feature_matrix import build_zone_year_matrix
+    import src.features.feature_matrix as fm
+
+    import src.features.license_velocity as lv
+
+    monkeypatch.setattr(
+        lv,
+        "build_license_velocity_features",
+        lambda df: pd.DataFrame(
+            {
+                "zone_id": ["BK0202"],
+                "time_key": [2024],
+                "license_velocity": [1.0],
+                "net_opens": [1],
+                "net_closes": [0],
+                "population": [0.0],  # Inject overlap
+            }
+        ),
+    )
+
+    etl_outputs = {
+        "licenses": pd.DataFrame({"a": [1]}),
+        "acs": pd.DataFrame(
+            {
+                "nta_id": ["BK0202"],
+                "population": [1000.0],
+                "median_income": [50000.0],
+                "rent_burden": [0.3],
+            }
+        ),
+    }
+    monkeypatch.setattr(fm, "_load_gemini_review_features", lambda *a: pd.DataFrame())
+    from pathlib import Path
+
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+
+    result = build_zone_year_matrix(etl_outputs)
+    assert "population" in result.columns
+    val = result.loc[result["zone_id"] == "bk-downtownbk", "population"].iloc[0]
+    assert val == 1000.0
+
+
+def test_build_zone_year_matrix_gemini_overlap_drop_coverage(
+    monkeypatch, tmp_path
+) -> None:
+    """Explicitly targets src/features/feature_matrix.py:392."""
+    from src.features.feature_matrix import build_zone_year_matrix
+
+    # Mock pd.read_csv to return our data when it's the gemini cache
+    original_read_csv = pd.read_csv
+
+    def mock_read_csv(path, *args, **kwargs):
+        if "gemini_labels_full.csv" in str(path):
+            return pd.DataFrame(
+                {
+                    "zone_id": ["bk-downtownbk"],
+                    "time_key": [2024],
+                    "halal_related_share": [0.8],  # Overlap
+                }
+            )
+        return original_read_csv(path, *args, **kwargs)
+
+    monkeypatch.setattr(pd, "read_csv", mock_read_csv)
+
+    # Also need to make sure Path.exists() returns True for the cache
+    from pathlib import Path
+
+    original_exists = Path.exists
+
+    def mock_exists(self):
+        if "gemini_labels_full.csv" in str(self):
+            return True
+        return False
+
+    monkeypatch.setattr(Path, "exists", mock_exists)
+
+    # Mock the aggregation function that _load_gemini_review_features calls
+    import src.nlp.review_aggregates as ra
+
+    monkeypatch.setattr(
+        ra,
+        "aggregate_healthy_review_features",
+        lambda df: pd.DataFrame(
+            {
+                "zone_id": ["bk-downtownbk"],
+                "time_key": [2024],
+                "halal_related_share": [0.8],
+            }
+        ),
+    )
+
+    import src.features.license_velocity as lv
+
+    monkeypatch.setattr(
+        lv,
+        "build_license_velocity_features",
+        lambda df: pd.DataFrame(
+            {
+                "zone_id": ["BK0202"],
+                "time_key": [2024],
+                "license_velocity": [1.0],
+                "net_opens": [1],
+                "net_closes": [0],
+                "halal_related_share": [0.0],  # Inject overlap
+            }
+        ),
+    )
+
+    etl_outputs = {"licenses": pd.DataFrame({"a": [1]})}
+
+    result = build_zone_year_matrix(etl_outputs)
+    assert "halal_related_share" in result.columns
+    val = result.loc[result["zone_id"] == "bk-downtownbk", "halal_related_share"].iloc[
+        0
+    ]
+    assert val == 0.8

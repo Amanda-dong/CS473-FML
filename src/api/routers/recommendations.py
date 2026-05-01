@@ -286,11 +286,12 @@ def _build_zone_catalog() -> list[tuple[str, str, str, str]]:
     for zone_id in zone_ids:
         if zone_id in seen:
             continue
+        # NTA fallback zones are intentionally excluded from the UI candidate set;
+        # only curated micro-zones / boroughs are shown to the user.
+        if zone_id.startswith("nta-"):
+            continue
         zone_type = _infer_zone_type(zone_id)
-        if zone_type == "nta_fallback":
-            zone_label = f"NTA Fallback ({zone_id[4:].upper()})"
-        else:
-            zone_label = zone_id.replace("-", " ").title()
+        zone_label = zone_id.replace("-", " ").title()
         borough = "Any"
         catalog.append((zone_id, zone_type, zone_label, borough))
         seen.add(zone_id)
@@ -430,11 +431,13 @@ def _score_one(
     survival_risk = round(1.0 - components.merchant_viability_score, 4)
     gap_pct = int(feats["subtype_gap"] * 100)
     concept_display = concept_subtype.replace("_", " ")
+    borough = _ZONE_META.get(zone_id, ("", "", "Any"))[2]
     return ZoneRecommendation(
         zone_id=zone_id,
         zone_name=describe_microzone(zone_type, zone_label),
         concept_subtype=concept_subtype,
         zone_type=zone_type,
+        borough=borough,
         opportunity_score=opp_score,
         confidence_bucket=_confidence_bucket(opp_score),
         healthy_gap_summary=(
@@ -490,7 +493,7 @@ def _apply_request_context_adjustment(
 
     adjusted = (
         base_score
-        + cuisine_adj * 0.35
+        + cuisine_adj * 0.75
         + risk_adj * 0.35
         + price_adj * 0.25
         + risk_context_adj
@@ -567,12 +570,14 @@ def _score_with_learned_model(
         "target", feats.get("merchant_viability", feats.get("survival_score", 0.5))
     )
     survival_risk = round(1.0 - float(survival_score), 4)
+    borough = _ZONE_META.get(zone_id, ("", "", "Any"))[2]
 
     return ZoneRecommendation(
         zone_id=zone_id,
         zone_name=zone_label,
         concept_subtype=concept_subtype,
         zone_type=zone_type,
+        borough=borough,
         opportunity_score=float(np.clip(pred_score, 0.0, 1.0)),
         confidence_bucket=_confidence_bucket(pred_score),
         healthy_gap_summary=(
@@ -668,8 +673,8 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
             for zid, ztype, zlabel, _boro in candidates
         ]
 
-    ranked_dicts = rank_zones([r.model_dump() for r in scored])
-    top_n = [ZoneRecommendation(**d) for d in ranked_dicts[: request.limit]]
+    ranked_dicts = rank_zones([r.model_dump() for r in scored], diversity_weight=0.5)
+    top_n = [ZoneRecommendation(**d) for d in ranked_dicts[: request.max_results]]
 
     return RecommendationResponse(
         query={
@@ -681,6 +686,24 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
         },
         recommendations=top_n,
     )
+
+
+@router.get("/zones", response_model=list[dict[str, str]])
+async def list_zones() -> list[dict[str, str]]:
+    """Return all unique zone IDs and their display names from the Gemini featureset."""
+    if not _GEMINI_ZONE_PATH.exists():
+        return []
+
+    try:
+        df = pd.read_csv(_GEMINI_ZONE_PATH)
+        zone_ids = sorted(df["zone_id"].dropna().unique().tolist())
+        return [
+            {"zone_id": zid, "zone_name": zid.replace("-", " ").title()}
+            for zid in zone_ids
+        ]
+    except Exception as e:
+        logger.warning("recommendations: failed to list zones: %r", e)
+        return []
 
 
 @router.post("/predict/cmf", response_model=RecommendationResponse)

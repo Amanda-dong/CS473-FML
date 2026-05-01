@@ -29,14 +29,50 @@ _NDCG_GRADE_BINS = 4
 
 def rank_zones(
     scored_rows: Iterable[dict[str, float | str]],
+    diversity_weight: float = 0.0,
 ) -> list[dict[str, float | str]]:
-    """Sort scored rows by descending opportunity score."""
+    """Sort scored rows by descending opportunity score with optional diversity.
 
-    return sorted(
+    If diversity_weight > 0, we apply a small penalty to zones from a borough
+    that is already well-represented in the top results.
+    """
+    sorted_rows = sorted(
         scored_rows,
         key=lambda row: float(row.get("opportunity_score", 0.0)),
         reverse=True,
     )
+
+    if diversity_weight <= 0.0:
+        return sorted_rows
+
+    # Simple diversity re-ranking (MMR-lite)
+    diverse_results: list[dict[str, float | str]] = []
+    candidates = list(sorted_rows)
+    borough_counts: dict[str, int] = {}
+
+    while candidates and len(diverse_results) < len(sorted_rows):
+        best_idx = -1
+        best_score = -1e9
+
+        for i, cand in enumerate(candidates):
+            score = float(cand.get("opportunity_score", 0.0))
+            borough = str(cand.get("borough", "Any"))
+
+            # Penalty for borough redundancy
+            count = borough_counts.get(borough, 0)
+            penalty = diversity_weight * count * 0.05
+            adjusted_score = score - penalty
+
+            if adjusted_score > best_score:
+                best_score = adjusted_score
+                best_idx = i
+
+        selected = candidates.pop(best_idx)
+        diverse_results.append(selected)
+        borough = str(selected.get("borough", "Any"))
+        borough_counts[borough] = borough_counts.get(borough, 0) + 1
+
+    return diverse_results
 
 
 # ---------------------------------------------------------------------------

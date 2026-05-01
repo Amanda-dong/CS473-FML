@@ -140,12 +140,12 @@ def fill_feature_matrix_nulls(
                     code = zid[4:6].upper()
                 else:
                     code = zid[:2].upper()
-                mapping = {"BK": "BK", "MN": "MN", "QN": "QN", "BX": "BX", "SI": "SI"}
-                return mapping.get(code, "UNKNOWN")
+                _BOROUGH_CODES = {"BK", "MN", "QN", "BX", "SI"}
+                return code if code in _BOROUGH_CODES else "UNKNOWN"
 
             df["borough"] = df["zone_id"].apply(get_borough)
-            acs = acs_df.copy()
-            acs["borough"] = acs["nta_id"].str[:2].str.upper()
+            acs = acs_df
+            acs = acs.assign(borough=acs["nta_id"].str[:2].str.upper())
             acs_borough_medians = (
                 acs.groupby(["borough"])[["median_income", "population", "rent_burden"]]
                 .median()
@@ -155,40 +155,49 @@ def fill_feature_matrix_nulls(
             df = df.merge(
                 acs_borough_medians, on=["borough"], how="left", suffixes=("", "_med")
             )
-            df["median_income"] = df["median_income"].fillna(df["median_income_med"])
-            df["population"] = df["population"].fillna(df["population_med"])
-            df["rent_burden"] = df["rent_burden"].fillna(df["rent_burden_med"])
+            for _acs_col in ("median_income", "population", "rent_burden"):
+                _med_col = f"{_acs_col}_med"
+                if _acs_col in df.columns and _med_col in df.columns:
+                    df[_acs_col] = df[_acs_col].fillna(df[_med_col])
+                elif _med_col in df.columns:
+                    df.rename(columns={_med_col: _acs_col}, inplace=True)
             df.drop(
                 columns=[
-                    "borough",
-                    "median_income_med",
-                    "population_med",
-                    "rent_burden_med",
+                    c
+                    for c in (
+                        "borough",
+                        "median_income_med",
+                        "population_med",
+                        "rent_burden_med",
+                    )
+                    if c in df.columns
                 ],
                 inplace=True,
             )
 
-        # 11. Static features
-        if "median_income_static" in df.columns:
+        # 11. Static features — only if source columns present
+        if "median_income_static" in df.columns and "median_income" in df.columns:
             df["median_income_static"] = df["median_income_static"].fillna(
                 df["median_income"]
             )
-        if "rent_pressure" in df.columns:
-            df["rent_pressure"] = df["rent_pressure"].fillna(
-                df["rent_burden"] / df["rent_burden"].max()
-            )
-        if "mean_assessed_value" in df.columns:
+        if "rent_pressure" in df.columns and "rent_burden" in df.columns:
+            _max_rb = df["rent_burden"].max()
+            if _max_rb > 0:
+                df["rent_pressure"] = df["rent_pressure"].fillna(
+                    df["rent_burden"] / _max_rb
+                )
+        if "mean_assessed_value" in df.columns and "median_income" in df.columns:
             df["mean_assessed_value"] = df["mean_assessed_value"].fillna(
                 df["median_income"] * 12
             )
 
         # 12. Final fallback
+        numeric_medians = df.select_dtypes(exclude="object").median()
         for col in df.columns:
-            if df[col].isnull().sum() > 0:
-                if df[col].dtype == "object":
-                    df[col] = df[col].fillna("unknown")
-                else:
-                    df[col] = df[col].fillna(df[col].median())
+            if df[col].dtype == "object":
+                df[col] = df[col].fillna("unknown")
+            else:
+                df[col] = df[col].fillna(numeric_medians.get(col, df[col].median()))
 
     return df
 

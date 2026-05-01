@@ -58,6 +58,11 @@ class ScoreComponents:
     )
     income_alignment_score: float = 0.5  # median income vs price tier alignment
 
+    @property
+    def composite_score(self) -> float:
+        """Compute the overall weighted opening score."""
+        return compute_opening_score(self)
+
 
 def compute_opening_score(components: ScoreComponents) -> float:
     """Compute a transparent weighted opening score.
@@ -66,21 +71,21 @@ def compute_opening_score(components: ScoreComponents) -> float:
     commercial success for a new restaurant concept in a micro-zone.
 
     Weight rationale:
-    - demand_signal_score (0.20): foot-traffic is the strongest single predictor
-    - merchant_viability_score (0.18): survival outlook gates everything
-    - subtype_gap_score (0.16): concept-specific whitespace is the core thesis
+    - subtype_gap_score (0.24): concept-specific whitespace is the core thesis (priority)
+    - merchant_viability_score (0.16): survival outlook (reduced weight to allow concept fit to lead)
+    - demand_signal_score (0.14): foot-traffic baseline (reduced weight to prevent neighborhood dominance)
     - healthy_gap_score (0.12): overall under-supply in category
     - license_velocity_score (0.10): growing area reduces risk
     - review_demand_score (0.08): NLP sentiment confirms latent demand
     - transit_access_score (0.07): accessibility amplifies foot-traffic
     - income_alignment_score (0.05): concept/price fit to local income
     - competition_penalty (0.08): penalise saturated markets
-    - rent_pressure_penalty (0.04): penalise high-rent zones (moderate weight — offset by high demand)
+    - rent_pressure_penalty (0.04): penalise high-rent zones
     """
     score = (
-        components.demand_signal_score * 0.20
-        + components.merchant_viability_score * 0.18
-        + components.subtype_gap_score * 0.16
+        components.subtype_gap_score * 0.24
+        + components.merchant_viability_score * 0.16
+        + components.demand_signal_score * 0.14
         + components.healthy_gap_score * 0.12
         + components.license_velocity_score * 0.10
         + components.review_demand_score * 0.08
@@ -116,7 +121,6 @@ def score_zone_for_concept(
 
     demand = _safe(zone_features.get("halal_related_share"), 0.5)
     gap = _safe(zone_features.get("subtype_gap"), 0.5)
-    subtype_gap = gap
     review_share = _safe(zone_features.get("overall_positive_rate"), 0.0)
     survival = _safe(zone_features.get("target"), 0.5)
     vel_raw = _safe(zone_features.get("license_velocity"), 0.0)
@@ -139,7 +143,7 @@ def score_zone_for_concept(
 
     return ScoreComponents(
         healthy_gap_score=gap,
-        subtype_gap_score=subtype_gap,
+        subtype_gap_score=gap,
         demand_signal_score=demand,
         review_demand_score=review_share,
         merchant_viability_score=survival,

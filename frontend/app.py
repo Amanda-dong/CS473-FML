@@ -169,9 +169,6 @@ def _render_current_query(active_query: dict) -> None:
     price = str(active_query.get("price_tier", "mid")).title()
     risk = str(active_query.get("risk_tolerance", "balanced")).title()
     limit = int(active_query.get("limit", 5))
-    concept_mode = str(active_query.get("concept_mode", "Use structured controls"))
-    concept_description = str(active_query.get("concept_description", "") or "").strip()
-    use_nlp_suggestions = bool(active_query.get("use_nlp_suggestions", False))
 
     st.subheader("Current Query")
     st.caption("These settings produced the shortlist below.")
@@ -184,14 +181,6 @@ def _render_current_query(active_query: dict) -> None:
     st.markdown(
         f"**Borough:** {borough}  |  **Zone type:** {zone_type.replace('_', ' ').title() if zone_type != 'All' else 'All'}  |  **Shortlist size:** {limit}"
     )
-    mode_label = concept_mode
-    if concept_mode == "Describe my halal concept" and concept_description:
-        mode_label += (
-            " (NLP suggestions on)" if use_nlp_suggestions else " (manual price/risk)"
-        )
-    st.markdown(f"**Input mode:** {mode_label}")
-    if concept_description:
-        st.markdown(f"**Merchant description:** {concept_description}")
     st.divider()
 
 
@@ -204,9 +193,9 @@ def main() -> None:
 
     # Sidebar
     with st.sidebar:
-        st.header("Plan Your Halal Concept")
-        st.caption("Set your concept and filters, then run the search.")
-        with st.form("halal_query_form", clear_on_submit=False):
+        st.header("Plan Your Concept")
+        st.caption("Pick a cuisine subtype and filters, then run the search.")
+        with st.form("cuisine_query_form", clear_on_submit=False):
             form_state = render_input_form()
             scenario_state = render_scenario_panel()
             user_state = {**form_state, **scenario_state}
@@ -229,7 +218,7 @@ def main() -> None:
     with tab_picks:
         render_page_intro(
             "How to use this page",
-            "Describe your halal concept in the left sidebar, click **Find Best Matches**, then review the shortlist, map, and top recommendation.",
+            "Pick a cuisine subtype and filters in the left sidebar, click **Find Best Matches**, then review the shortlist, map, and top recommendation.",
         )
         active_query = st.session_state.get("submitted_query") or {}
         query_submitted = bool(st.session_state.get("query_submitted", False))
@@ -248,9 +237,11 @@ def main() -> None:
         compare_mode = bool(active_query.get("compare_mode", False))
         compare_concept = active_query.get("compare_concept")
         # Header metrics row
-        hm1, hm2 = st.columns(2)
+        hm1, hm2, hm3, hm4 = st.columns(4)
         hm1.metric("NYC zones analyzed", "137")
         hm2.metric("Feature signals", "49")
+        hm3.metric("Time range", "2020-2024")
+        hm4.metric("Data sources", "10")
 
         if not query_submitted:
             st.info(
@@ -259,8 +250,12 @@ def main() -> None:
         else:
             _render_current_query(active_query)
             with st.spinner("Scoring zones..."):
-                recs = _fetch_recs(concept, price, borough, risk, zone_type, limit)
-                cluster_map = _fetch_clusters(concept, risk, price)
+                try:
+                    recs = _fetch_recs(concept, price, borough, risk, zone_type, limit)
+                    cluster_map = _fetch_clusters(concept, risk, price)
+                except Exception as e:
+                    st.error(f"Error scoring zones: {e}")
+                    st.stop()
 
             featured_zone_id = render_top_match_panel(
                 active_query,
