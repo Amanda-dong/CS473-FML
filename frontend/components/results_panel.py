@@ -41,19 +41,22 @@ def _render_ranking_chart(df_all: pd.DataFrame, df_highlight: pd.DataFrame) -> N
 
     plot_df = df_all.sort_values("final_score", ascending=True).copy()
     highlight_ids = (
-        set(df_highlight["nta_id"].astype(str).tolist())
+        {str(x).strip() for x in df_highlight["nta_id"]}
         if df_highlight is not None
         else set()
     )
 
+    def _is_highlighted(row):
+        return str(row.get("nta_id", "")).strip() in highlight_ids
+
     colors = [
-        MARKET_TYPE_COLOR.get(str(row.get("market_type", "")), "#adb5bd")
-        if str(row.get("nta_id", "")) in highlight_ids
+        MARKET_TYPE_COLOR.get(str(row.get("market_type", "")).strip(), "#adb5bd")
+        if _is_highlighted(row)
         else "rgba(180,180,180,0.3)"
         for _, row in plot_df.iterrows()
     ]
     labels = [
-        _display_name(str(nta)) if str(nta) in highlight_ids else ""
+        _display_name(str(nta).strip()) if str(nta).strip() in highlight_ids else ""
         for nta in plot_df["nta_id"]
     ]
 
