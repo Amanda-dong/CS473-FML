@@ -140,12 +140,12 @@ def fill_feature_matrix_nulls(
                     code = zid[4:6].upper()
                 else:
                     code = zid[:2].upper()
-                mapping = {"BK": "BK", "MN": "MN", "QN": "QN", "BX": "BX", "SI": "SI"}
-                return mapping.get(code, "UNKNOWN")
+                _BOROUGH_CODES = {"BK", "MN", "QN", "BX", "SI"}
+                return code if code in _BOROUGH_CODES else "UNKNOWN"
 
             df["borough"] = df["zone_id"].apply(get_borough)
-            acs = acs_df.copy()
-            acs["borough"] = acs["nta_id"].str[:2].str.upper()
+            acs = acs_df
+            acs = acs.assign(borough=acs["nta_id"].str[:2].str.upper())
             acs_borough_medians = (
                 acs.groupby(["borough"])[["median_income", "population", "rent_burden"]]
                 .median()
@@ -183,12 +183,12 @@ def fill_feature_matrix_nulls(
             )
 
         # 12. Final fallback
+        numeric_medians = df.select_dtypes(exclude="object").median()
         for col in df.columns:
-            if df[col].isnull().sum() > 0:
-                if df[col].dtype == "object":
-                    df[col] = df[col].fillna("unknown")
-                else:
-                    df[col] = df[col].fillna(df[col].median())
+            if df[col].dtype == "object":
+                df[col] = df[col].fillna("unknown")
+            else:
+                df[col] = df[col].fillna(numeric_medians.get(col, df[col].median()))
 
     return df
 

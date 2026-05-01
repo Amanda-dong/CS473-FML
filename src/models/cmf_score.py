@@ -116,7 +116,6 @@ def score_zone_for_concept(
 
     demand = _safe(zone_features.get("halal_related_share"), 0.5)
     gap = _safe(zone_features.get("subtype_gap"), 0.5)
-    subtype_gap = gap
     review_share = _safe(zone_features.get("overall_positive_rate"), 0.0)
     survival = _safe(zone_features.get("target"), 0.5)
     vel_raw = _safe(zone_features.get("license_velocity"), 0.0)
@@ -139,7 +138,7 @@ def score_zone_for_concept(
 
     return ScoreComponents(
         healthy_gap_score=gap,
-        subtype_gap_score=subtype_gap,
+        subtype_gap_score=gap,
         demand_signal_score=demand,
         review_demand_score=review_share,
         merchant_viability_score=survival,

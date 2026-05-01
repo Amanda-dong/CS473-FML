@@ -69,23 +69,30 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
         )
 
     comp_score = zone_features.get("restaurant_count_static", 0.0)
-    if comp_score > 0.5:
+    comp_norm = min(float(comp_score) / 50.0, 1.0)
+    if comp_norm > 0.5:
         risks.append(
-            f"Saturated market ({comp_score:.0%} competitor density) — differentiation required"
+            f"Saturated market ({comp_norm:.0%} competitor density) — differentiation required"
         )
 
     survival_score = zone_features.get("target", 0.0)
     if survival_score < 0.4:
         risks.append("Below-average survival outlook — consider more established zone")
 
-    income_alignment = zone_features.get("median_income_static", 0.0)
+    income_raw = float(zone_features.get("median_income_static", 0.0))
+    income_alignment = (
+        min(max((income_raw - 30_000.0) / 170_000.0, 0.0), 1.0)
+        if income_raw > 1.0
+        else income_raw
+    )
     if income_alignment < 0.35:
         risks.append(
             "Income/price-tier mismatch — local spending power may not support this concept"
         )
 
     trip_count = zone_features.get("trip_count", 0.0)
-    if trip_count < 0.45:
+    trip_norm = min(float(trip_count) / 200_000.0, 1.0)
+    if trip_norm < 0.45:
         risks.append(
             "Limited transit access — foot-traffic relies on local residents only"
         )

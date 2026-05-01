@@ -13,7 +13,6 @@ class ZoneRecommendation(BaseModel):
     rank: int = Field(default=0)
     score: float = Field(default=0.0)
     opportunity_score: float = Field(default=0.0)
-    confidence_tier: str = Field(default="low")
     confidence_bucket: str = Field(default="low")
     concept_subtype: str
     positive_drivers: list[str] = Field(default_factory=list)
