@@ -3,7 +3,7 @@
 import streamlit as st
 
 def inject_custom_theme():
-    """Injects premium CSS for a standalone app feel with Islamic green + gold palette."""
+    """Injects light-mode CSS with the app's green/gold palette."""
     st.markdown(
         """
         <style>
@@ -13,8 +13,8 @@ def inject_custom_theme():
             --accent: #e9c46a;
             --danger: #e63946;
             --success: #2a9d8f;
-            --bg-glass: rgba(255, 255, 255, 0.05);
-            --border-glass: rgba(255, 255, 255, 0.1);
+            --bg-glass: rgba(26, 71, 42, 0.05);
+            --border-glass: rgba(26, 71, 42, 0.15);
         }
 
         /* Hide Streamlit chrome */
@@ -24,8 +24,8 @@ def inject_custom_theme():
 
         /* App Background & Font */
         .stApp {
-            background-color: #0e1117;
-            color: #fafafa;
+            background-color: #fafaf8;
+            color: #1a1a1a;
         }
 
         /* Fix top cutoff */
@@ -48,17 +48,17 @@ def inject_custom_theme():
 
         /* Recommendation Card (Container) */
         div[data-testid="stVerticalBlock"] > div[style*="border: 1px solid"] {
-            background: #161b22;
+            background: #ffffff;
             border: 1px solid var(--border-glass) !important;
             border-radius: 16px !important;
             padding: 1.5rem !important;
             margin-bottom: 1rem !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(20, 30, 20, 0.08);
             transition: all 0.3s ease;
         }
         div[data-testid="stVerticalBlock"] > div[style*="border: 1px solid"]:hover {
             border-color: var(--accent) !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px rgba(20, 30, 20, 0.12);
             transform: translateY(-4px);
         }
 
@@ -80,7 +80,7 @@ def inject_custom_theme():
 
         /* Sidebar Styling */
         section[data-testid="stSidebar"] {
-            background-color: #0d0f14;
+            background-color: #f0f4f0;
             border-right: 1px solid var(--border-glass);
         }
         section[data-testid="stSidebar"] .stSelectbox label,
@@ -107,12 +107,12 @@ def inject_custom_theme():
             gap: 1rem;
             padding-top: 10px;
             padding-bottom: 10px;
-            color: #fafafa;
+            color: #1a1a1a;
         }
         .stTabs [aria-selected="true"] {
             background-color: var(--bg-glass);
             border-bottom: 2px solid var(--accent) !important;
-            color: var(--accent) !important;
+            color: #1a472a !important;
         }
 
         /* Buttons */
@@ -132,7 +132,7 @@ def inject_custom_theme():
         .stExpander {
             border: 1px solid var(--border-glass) !important;
             border-radius: 8px !important;
-            background: transparent !important;
+            background: #ffffff !important;
         }
         </style>
         """,
