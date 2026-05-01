@@ -1,0 +1,5100 @@
+{
+  "nodes": [
+    {
+      "id": "build_halal_scores_py",
+      "label": "build_halal_scores.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "build_halal_scores_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "graphify_out_run_ast_py",
+      "label": "run_ast.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/run_ast.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "graphify_out_save_py_py",
+      "label": "save_py.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/save_py.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "graphify_out_detect_run_py",
+      "label": "detect_run.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_run.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "graphify_out_detect_summary_py",
+      "label": "detect_summary.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_summary.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_utils_py",
+      "label": "utils.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_minmax",
+      "label": "minmax()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "utils_rationale_1",
+      "label": "Shared utilities \u2014 math helpers and domain constants for the halal pipeline.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "utils_rationale_27",
+      "label": "Min-max normalize a Series to [0, 1]. Returns 0.0 if constant or all-null.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "src_halal_opportunity_py",
+      "label": "halal_opportunity.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "halal_opportunity_build_supply",
+      "label": "build_supply()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L15"
+    },
+    {
+      "id": "halal_opportunity_build_gap",
+      "label": "build_gap()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "src_halal_kmeans_py",
+      "label": "halal_kmeans.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "halal_kmeans_halalkmeans",
+      "label": "HalalKMeans",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L7"
+    },
+    {
+      "id": "halal_kmeans_halalkmeans_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "halal_kmeans_halalkmeans_assign",
+      "label": "._assign()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L20"
+    },
+    {
+      "id": "halal_kmeans_halalkmeans_fit",
+      "label": ".fit()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L24"
+    },
+    {
+      "id": "halal_kmeans_halalkmeans_predict",
+      "label": ".predict()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "halal_kmeans_run_kmeans",
+      "label": "run_kmeans()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "src_halal_demand_py",
+      "label": "halal_demand.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "halal_demand_build_demand",
+      "label": "build_demand()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "src_halal_similarity_py",
+      "label": "halal_similarity.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_similarity.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "halal_similarity_build_similarity",
+      "label": "build_similarity()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_similarity.py",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_halal_forecast_py",
+      "label": "halal_forecast.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "halal_forecast_load_yearly_nta_signals",
+      "label": "_load_yearly_nta_signals()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "halal_forecast_build_forecast",
+      "label": "build_forecast()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L73"
+    },
+    {
+      "id": "halal_forecast_build_entry_forecast",
+      "label": "build_entry_forecast()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L180"
+    },
+    {
+      "id": "src_halal_risk_py",
+      "label": "halal_risk.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "halal_risk_load_inspection_agg",
+      "label": "_load_inspection_agg()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "halal_risk_zscore",
+      "label": "_zscore()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L56"
+    },
+    {
+      "id": "halal_risk_build_viability",
+      "label": "build_viability()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "halal_risk_build_gmm_risk",
+      "label": "build_gmm_risk()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L97"
+    },
+    {
+      "id": "src_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "init_rationale_1",
+      "label": "Halal pipeline package.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_pipeline_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/pipeline/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_utils_logger_py",
+      "label": "logger.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "logger_setup_logger",
+      "label": "setup_logger()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "src_utils_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_config_settings_py",
+      "label": "settings.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/settings.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "settings_settings",
+      "label": "Settings",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/settings.py",
+      "source_location": "L4"
+    },
+    {
+      "id": "basesettings",
+      "label": "BaseSettings",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "src_config_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_core_clustering_py",
+      "label": "clustering.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "clustering_kmeansscratch",
+      "label": "KMeansScratch",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L5"
+    },
+    {
+      "id": "clustering_kmeansscratch_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L10"
+    },
+    {
+      "id": "clustering_kmeansscratch_init_centroids",
+      "label": "._init_centroids()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "clustering_kmeansscratch_fit",
+      "label": ".fit()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "clustering_kmeansscratch_predict",
+      "label": ".predict()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L82"
+    },
+    {
+      "id": "clustering_kmeansscratch_transform",
+      "label": ".transform()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L90"
+    },
+    {
+      "id": "clustering_rationale_6",
+      "label": "A K-Means implementation built from scratch using NumPy.     Supports K-Means++",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "clustering_rationale_27",
+      "label": "K-Means++ initialization.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "clustering_rationale_83",
+      "label": "Assign each sample to the nearest centroid.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L83"
+    },
+    {
+      "id": "clustering_rationale_91",
+      "label": "Transform X to a cluster-distance space.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "src_core_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_features_demand_py",
+      "label": "demand.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "demand_demandschema",
+      "label": "DemandSchema",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "demand_demandengine",
+      "label": "DemandEngine",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "demand_demandengine_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "demand_demandengine_minmax_normalize",
+      "label": "._minmax_normalize()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "demand_demandengine_run",
+      "label": ".run()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "demand_rationale_17",
+      "label": "Engine for computing composite demand scores.     Integrates Revealed Demand (Ye",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L17"
+    },
+    {
+      "id": "src_features_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_schemas_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/src/schemas/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_test_halal_risk_py",
+      "label": "test_halal_risk.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "test_halal_risk_test_build_viability_columns",
+      "label": "test_build_viability_columns()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "test_halal_risk_test_viability_score_range",
+      "label": "test_viability_score_range()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L19"
+    },
+    {
+      "id": "test_halal_risk_test_risk_bucket_values",
+      "label": "test_risk_bucket_values()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L25"
+    },
+    {
+      "id": "scripts_check_camis_time_py",
+      "label": "check_camis_time.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/check_camis_time.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "check_camis_time_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/check_camis_time.py",
+      "source_location": "L13"
+    },
+    {
+      "id": "scripts_process_demographics_py",
+      "label": "process_demographics.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/process_demographics.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "process_demographics_process_demographics",
+      "label": "process_demographics()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/process_demographics.py",
+      "source_location": "L5"
+    },
+    {
+      "id": "scripts_run_phase1_py",
+      "label": "run_phase1.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "run_phase1_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "scripts_run_phase3_py",
+      "label": "run_phase3.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "run_phase3_minmax",
+      "label": "_minmax()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "run_phase3_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "scripts_run_phase2_py",
+      "label": "run_phase2.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "run_phase2_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "frontend_app_py",
+      "label": "app.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_load_recommendations",
+      "label": "load_recommendations()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "app_load_review_evidence_pool",
+      "label": "load_review_evidence_pool()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "app_filter_recommendations",
+      "label": "filter_recommendations()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L49"
+    },
+    {
+      "id": "app_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "app_rationale_1",
+      "label": "Streamlit entrypoint \u2014 NYC Halal Restaurant Opportunity Finder.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "app_rationale_33",
+      "label": "Yelp reviews with Gemini halal labels \u2014 used for qualitative evidence per NTA.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "frontend_methodology_content_py",
+      "label": "methodology_content.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/methodology_content.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "methodology_content_render_methodology_page",
+      "label": "render_methodology_page()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/methodology_content.py",
+      "source_location": "L10"
+    },
+    {
+      "id": "methodology_content_rationale_1",
+      "label": "Methodology content for the main Streamlit app.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/methodology_content.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_review_evidence_py",
+      "label": "review_evidence.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "review_evidence_venue_key_column",
+      "label": "_venue_key_column()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "review_evidence_evidence_csv_path",
+      "label": "evidence_csv_path()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L31"
+    },
+    {
+      "id": "review_evidence_load_labeled_reviews",
+      "label": "load_labeled_reviews()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L35"
+    },
+    {
+      "id": "review_evidence_nta_review_counts",
+      "label": "nta_review_counts()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L73"
+    },
+    {
+      "id": "review_evidence_sample_reviews_for_nta",
+      "label": "sample_reviews_for_nta()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L97"
+    },
+    {
+      "id": "review_evidence_clip_review",
+      "label": "clip_review()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L112"
+    },
+    {
+      "id": "review_evidence_rationale_1",
+      "label": "Load Yelp + Gemini labeled reviews for Streamlit neighborhood evidence.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "review_evidence_rationale_13",
+      "label": "Stable key per venue: restaurant_id when present, else normalized business_name,",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L13"
+    },
+    {
+      "id": "review_evidence_rationale_36",
+      "label": "Returns a normalized dataframe for lookups, or None if file missing.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "review_evidence_rationale_98",
+      "label": "Prefer explicit_halal \u2192 implicit_halal; then rating desc; at most one row per ve",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L98"
+    },
+    {
+      "id": "frontend_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_pages_presentation_py",
+      "label": "presentation.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "presentation_render_intro_flowchart",
+      "label": "_render_intro_flowchart()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L14"
+    },
+    {
+      "id": "presentation_load_phase1_results",
+      "label": "_load_phase1_results()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L95"
+    },
+    {
+      "id": "presentation_load_phase2_results",
+      "label": "_load_phase2_results()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "presentation_load_phase3_results",
+      "label": "_load_phase3_results()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "presentation_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "presentation_rationale_1",
+      "label": "Presentation-style slide deck page for the halal pipeline project.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_pages_methodology_py",
+      "label": "methodology.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "methodology_load_phase1",
+      "label": "_load_phase1()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L15"
+    },
+    {
+      "id": "methodology_load_final",
+      "label": "_load_final()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "methodology_load_elbow",
+      "label": "_load_elbow()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "methodology_render_cluster_scatter",
+      "label": "_render_cluster_scatter()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "methodology_render_elbow_chart",
+      "label": "_render_elbow_chart()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L67"
+    },
+    {
+      "id": "methodology_render_formula_sandbox",
+      "label": "_render_formula_sandbox()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L105"
+    },
+    {
+      "id": "methodology_render_risk_histogram",
+      "label": "_render_risk_histogram()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L173"
+    },
+    {
+      "id": "methodology_render_methodology_page",
+      "label": "render_methodology_page()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L203"
+    },
+    {
+      "id": "methodology_rationale_1",
+      "label": "Methodology page \u2014 interactive explanation of the three-phase pipeline.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "methodology_rationale_106",
+      "label": "Interactive weight slider \u2014 adjust 0.4/0.4/0.2 and see top NTAs change.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L106"
+    },
+    {
+      "id": "frontend_pages_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_components_results_panel_py",
+      "label": "results_panel.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "results_panel_render_ranking_chart",
+      "label": "_render_ranking_chart()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "results_panel_render_results_panel",
+      "label": "render_results_panel()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L94"
+    },
+    {
+      "id": "results_panel_rationale_1",
+      "label": "Results panel \u2014 renders ranking bar chart + recommendation cards.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "results_panel_rationale_33",
+      "label": "Horizontal bar chart \u2014 all NTAs in grey, highlighted shortlist in color.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "frontend_components_data_freshness_py",
+      "label": "data_freshness.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "data_freshness_render_data_freshness",
+      "label": "render_data_freshness()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L64"
+    },
+    {
+      "id": "data_freshness_rationale_1",
+      "label": "Data freshness helpers for the frontend.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "data_freshness_rationale_65",
+      "label": "Render per-source freshness with live availability status.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "frontend_components_recommendation_card_py",
+      "label": "recommendation_card.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "recommendation_card_load_nta_zone_lookup",
+      "label": "_load_nta_zone_lookup()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L72"
+    },
+    {
+      "id": "recommendation_card_borough",
+      "label": "_borough()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L100"
+    },
+    {
+      "id": "recommendation_card_prettify_zone_id",
+      "label": "_prettify_zone_id()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "recommendation_card_display_name",
+      "label": "_display_name()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L115"
+    },
+    {
+      "id": "recommendation_card_format_similar_neighborhoods",
+      "label": "_format_similar_neighborhoods()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L125"
+    },
+    {
+      "id": "recommendation_card_fmt_score",
+      "label": "_fmt_score()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L129"
+    },
+    {
+      "id": "recommendation_card_signal_label",
+      "label": "_signal_label()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L136"
+    },
+    {
+      "id": "recommendation_card_halal_rel_badge",
+      "label": "_halal_rel_badge()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L150"
+    },
+    {
+      "id": "recommendation_card_build_radar_chart",
+      "label": "_build_radar_chart()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L159"
+    },
+    {
+      "id": "recommendation_card_opportunity_summary",
+      "label": "_opportunity_summary()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L213"
+    },
+    {
+      "id": "recommendation_card_render_recommendation_card",
+      "label": "render_recommendation_card()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L252"
+    },
+    {
+      "id": "recommendation_card_rationale_1",
+      "label": "Recommendation card \u2014 displays one neighborhood recommendation card.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "recommendation_card_rationale_166",
+      "label": "Radar chart: 5 opportunity dimensions, all on [0, 1].",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L166"
+    },
+    {
+      "id": "recommendation_card_rationale_221",
+      "label": "Generate plain-English 2-sentence opportunity summary from signal values.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L221"
+    },
+    {
+      "id": "frontend_components_map_view_py",
+      "label": "map_view.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "map_view_deterministic_jitter",
+      "label": "_deterministic_jitter()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "map_view_render_map_view",
+      "label": "render_map_view()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "map_view_rationale_1",
+      "label": "Map view \u2014 plots NTA recommendations using borough centroids.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_components_form_keys_py",
+      "label": "_form_keys.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/_form_keys.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "form_keys_rationale_1",
+      "label": "Single source of truth for sidebar control keys and defaults.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/_form_keys.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_components_scenario_panel_py",
+      "label": "scenario_panel.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "scenario_panel_render_scenario_panel",
+      "label": "render_scenario_panel()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L50"
+    },
+    {
+      "id": "scenario_panel_rationale_1",
+      "label": "Scenario controls \u2014 supports any cuisine type via free-text or dropdown.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "scenario_panel_rationale_51",
+      "label": "Render concept, price, and risk controls.  Supports any cuisine type.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "frontend_components_input_form_py",
+      "label": "input_form.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/input_form.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "input_form_render_input_form",
+      "label": "render_input_form()",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/input_form.py",
+      "source_location": "L8"
+    },
+    {
+      "id": "input_form_rationale_1",
+      "label": "Input form \u2014 borough, market type, and risk filters.",
+      "file_type": "rationale",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/input_form.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "frontend_components_init_py",
+      "label": "__init__.py",
+      "file_type": "code",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "design_nyc_halal_opportunity_finder",
+      "label": "NYC Halal Opportunity Finder (Design Doc)",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": "Amanda Dong, Tony Zhao, Harsh Agarwal, Siqi Zhu, Catherine Yi",
+      "contributor": null
+    },
+    {
+      "id": "design_src_halal_demand",
+      "label": "src/halal_demand.py \u2014 Gemini-labeled Yelp text \u2192 NTA demand_score features",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Siqi Zhu"
+    },
+    {
+      "id": "design_src_halal_opportunity",
+      "label": "src/halal_opportunity.py \u2014 CAMIS cuisines \u2192 halal supply rates, gaps, diversification",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Harsh Agarwal"
+    },
+    {
+      "id": "design_src_halal_kmeans",
+      "label": "src/halal_kmeans.py \u2014 Custom NumPy k-means clustering + centroid labeling",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Tony Zhao"
+    },
+    {
+      "id": "design_src_halal_similarity",
+      "label": "src/halal_similarity.py \u2014 Cosine-similarity neighborhood look-alikes",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Tony Zhao"
+    },
+    {
+      "id": "design_src_halal_risk",
+      "label": "src/halal_risk.py \u2014 Inspection aggregation, viability heuristic, Gaussian-mixture risk",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 21",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Catherine Yi"
+    },
+    {
+      "id": "design_src_halal_forecast",
+      "label": "src/halal_forecast.py \u2014 Temporal ridge models for halal chatter + entry dynamics",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 22",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Catherine Yi"
+    },
+    {
+      "id": "design_scripts_run_phase1",
+      "label": "scripts/run_phase1.py \u2014 Elbow analysis, clustering exports, centroid tables",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 24",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Tony Zhao"
+    },
+    {
+      "id": "design_scripts_run_phase2",
+      "label": "scripts/run_phase2.py \u2014 Risk viability merge, final_score + similarity rankings",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 25",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Tony Zhao"
+    },
+    {
+      "id": "design_scripts_run_phase3",
+      "label": "scripts/run_phase3.py \u2014 Ridge forecasts, GMM risk, final CSV outputs",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Catherine Yi"
+    },
+    {
+      "id": "design_scripts_check_camis_time",
+      "label": "scripts/check_camis_time.py \u2014 CAMIS timeline QA vs Yelp and parquet",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 27",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Harsh Agarwal"
+    },
+    {
+      "id": "design_frontend_app",
+      "label": "frontend/app.py \u2014 Primary Streamlit recommender UX",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Amanda Dong"
+    },
+    {
+      "id": "design_frontend_methodology_content",
+      "label": "frontend/methodology_content.py \u2014 Narrative + metrics for investor slides",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Amanda Dong"
+    },
+    {
+      "id": "design_build_halal_scores",
+      "label": "build_halal_scores.py \u2014 Planned merge fa\u00e7ade (currently dormant)",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_data_raw_yelp_reviews",
+      "label": "data/raw/yelp_reviews_with_zones.csv \u2014 Review text with NTA + Gemini join keys",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Siqi Zhu"
+    },
+    {
+      "id": "design_data_raw_gemini_labels",
+      "label": "data/raw/gemini_labels_full.csv \u2014 Gemini halal relevance labels",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Siqi Zhu"
+    },
+    {
+      "id": "design_data_raw_restaurant_hygiene",
+      "label": "data/raw/restaurant_hygiene.csv \u2014 CAMIS universe with cuisine descriptors",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "Harsh Agarwal"
+    },
+    {
+      "id": "design_data_processed_inspections",
+      "label": "data/processed/inspections.parquet \u2014 Per-inspection parquet with grades + nta_id",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_data_output",
+      "label": "data/output/ \u2014 Derived CSVs powering Streamlit dashboards",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_teammate_amanda_dong",
+      "label": "Amanda Dong (yd2825) \u2014 Frontend/UX owner",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_teammate_catherine_yi",
+      "label": "Catherine Yi (cgy2014) \u2014 Probabilistic overlays + forecasting",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_teammate_harsh_agarwal",
+      "label": "Harsh Agarwal (ha2957) \u2014 CAMIS supply metrics + reproducibility",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_teammate_siqi_zhu",
+      "label": "Siqi Zhu (sz3950) \u2014 Gemini/Yelp ingestion + demand-signal QA",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 53",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_teammate_tony_zhao",
+      "label": "Tony Zhao (sz3822) \u2014 Unsupervised clustering + ranking blends",
+      "file_type": "document",
+      "source_file": "DESIGN.md",
+      "source_location": "line 54",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_problem_statement",
+      "label": "Problem: halal restaurant location selection for NYC operators \u2014 information gap",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_nta_granularity",
+      "label": "NTA (Neighborhood Tabulation Area) \u2014 unit of analysis",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_data_yelp_gemini",
+      "label": "Yelp review text + Gemini labels \u2014 demand signal source",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_data_camis",
+      "label": "NYC DOHMH CAMIS hygiene extracts \u2014 restaurant supply + cuisine source",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_data_inspections_parquet",
+      "label": "data/processed/inspections.parquet \u2014 inspection-grade history aggregated to NTAs",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_kmeans_clustering",
+      "label": "k-means clustering (NumPy, explicit) \u2014 NTA market archetype segmentation",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_inertia_silhouette",
+      "label": "Inertia + silhouette analysis \u2014 cluster count selection",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_cosine_similarity",
+      "label": "Cosine similarity \u2014 analog NTA neighbor scouting",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_gmm_risk",
+      "label": "Gaussian Mixture Model (BIC-guided components) \u2014 soft-assignment NTA risk",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_ridge_regression",
+      "label": "Ridge regression + k-fold CV \u2014 forward-looking halal discussion + entry-count forecasts",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_weighted_linear_composite",
+      "label": "Weighted linear composite ranking \u2014 auditable supply-demand-viability score",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_streamlit_frontend",
+      "label": "Streamlit \u2014 merchant-facing recommender UI",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_rationale_kmeans_numpy",
+      "label": "Rationale: k-means implemented explicitly in NumPy (not sklearn) for interpretability/coursework traceability",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_rationale_ridge_cv",
+      "label": "Rationale: ridge regression + k-fold CV chosen to stabilize moderately-sized longitudinal fits",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_rationale_gmm",
+      "label": "Rationale: GMM chosen over hard clustering to capture heterogeneous NTA geometry",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "proposal_rationale_weighted_composite",
+      "label": "Rationale: weighted linear composite chosen to keep ranking logic auditable",
+      "file_type": "document",
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_phase1",
+      "label": "Phase 1 \u2014 demand/supply gap \u2192 clustered market types (phase1_*.csv)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "line 25",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_phase2",
+      "label": "Phase 2 \u2014 opportunity score, viability, cosine neighbors (phase2_opportunity_scores.csv)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "line 26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_phase3",
+      "label": "Phase 3 \u2014 GMM risk, ridge forecasts, adjusted ranking (final_recommendations.csv)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "line 27",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_env_setup",
+      "label": "Environment setup \u2014 Python 3.10+, venv, pip install -r requirements.txt",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "line 48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_pandas",
+      "label": "pandas>=2.0.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 4",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_numpy",
+      "label": "numpy>=1.24.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_scipy",
+      "label": "scipy>=1.10.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 6",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_scikit_learn",
+      "label": "scikit-learn>=1.3.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 7",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_pyarrow",
+      "label": "pyarrow>=14.0.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_streamlit",
+      "label": "streamlit>=1.28.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 9",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "req_plotly",
+      "label": "plotly>=5.18.0",
+      "file_type": "document",
+      "source_file": "requirements.txt",
+      "source_location": "line 10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "build_halal_scores_py",
+      "target": "logging",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "build_halal_scores_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "build_halal_scores_py",
+      "target": "os",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "build_halal_scores_py",
+      "target": "scripts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "build_halal_scores_py",
+      "target": "build_halal_scores_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/build_halal_scores.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_run_ast_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/run_ast.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_run_ast_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/run_ast.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_run_ast_py",
+      "target": "graphify_extract",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/run_ast.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_run_ast_py",
+      "target": "graphify_detect",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/run_ast.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_run_ast_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/run_ast.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_save_py_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/save_py.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_detect_run_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_run.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_detect_run_py",
+      "target": "graphify_detect",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_run.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_detect_run_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_run.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_detect_summary_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_summary.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_detect_summary_py",
+      "target": "graphify_detect",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_summary.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_detect_summary_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/graphify-out/detect_summary.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_py",
+      "target": "utils_minmax",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_rationale_1",
+      "target": "src_utils_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "utils_rationale_27",
+      "target": "utils_minmax",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_opportunity_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_opportunity_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_opportunity_py",
+      "target": "src_utils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_opportunity_py",
+      "target": "halal_opportunity_build_supply",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_opportunity_py",
+      "target": "halal_opportunity_build_gap",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_kmeans_py",
+      "target": "numpy",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_kmeans_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_kmeans_py",
+      "target": "halal_kmeans_halalkmeans",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_halalkmeans",
+      "target": "halal_kmeans_halalkmeans_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_halalkmeans",
+      "target": "halal_kmeans_halalkmeans_assign",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_halalkmeans",
+      "target": "halal_kmeans_halalkmeans_fit",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_halalkmeans",
+      "target": "halal_kmeans_halalkmeans_predict",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_kmeans_py",
+      "target": "halal_kmeans_run_kmeans",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_halalkmeans_fit",
+      "target": "halal_kmeans_halalkmeans_assign",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_halalkmeans_predict",
+      "target": "halal_kmeans_halalkmeans_assign",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_run_kmeans",
+      "target": "halal_kmeans_halalkmeans",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_kmeans_run_kmeans",
+      "target": "halal_kmeans_halalkmeans_fit",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_kmeans.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_demand_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_demand_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_demand_py",
+      "target": "src_utils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_demand_py",
+      "target": "halal_demand_build_demand",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_similarity_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_similarity.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_similarity_py",
+      "target": "sklearn_metrics_pairwise",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_similarity.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_similarity_py",
+      "target": "halal_similarity_build_similarity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_similarity.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "sklearn_linear_model",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "sklearn_metrics",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "sklearn_model_selection",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "src_utils",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "halal_forecast_load_yearly_nta_signals",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "halal_forecast_build_forecast",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_forecast_py",
+      "target": "halal_forecast_build_entry_forecast",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L180",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_forecast_build_forecast",
+      "target": "halal_forecast_load_yearly_nta_signals",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_forecast_build_entry_forecast",
+      "target": "halal_forecast_load_yearly_nta_signals",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "sklearn_mixture",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "sklearn_metrics",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "halal_risk_load_inspection_agg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "halal_risk_zscore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "halal_risk_build_viability",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "src_halal_risk_py",
+      "target": "halal_risk_build_gmm_risk",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_risk_build_viability",
+      "target": "halal_risk_load_inspection_agg",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_risk_build_gmm_risk",
+      "target": "halal_risk_load_inspection_agg",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_risk_build_gmm_risk",
+      "target": "halal_risk_zscore",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "init_rationale_1",
+      "target": "src_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_logger_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_logger_py",
+      "target": "logging",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_logger_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_logger_py",
+      "target": "src_config_settings",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_utils_logger_py",
+      "target": "logger_setup_logger",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/utils/logger.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "src_config_settings_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/settings.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_config_settings_py",
+      "target": "pydantic_settings",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/settings.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_config_settings_py",
+      "target": "settings_settings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/settings.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "settings_settings",
+      "target": "basesettings",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/config/settings.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_core_clustering_py",
+      "target": "numpy",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_core_clustering_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_core_clustering_py",
+      "target": "src_utils_logger",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_core_clustering_py",
+      "target": "clustering_kmeansscratch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch",
+      "target": "clustering_kmeansscratch_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch",
+      "target": "clustering_kmeansscratch_init_centroids",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch",
+      "target": "clustering_kmeansscratch_fit",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch",
+      "target": "clustering_kmeansscratch_predict",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch",
+      "target": "clustering_kmeansscratch_transform",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch_fit",
+      "target": "clustering_kmeansscratch_init_centroids",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_kmeansscratch_fit",
+      "target": "clustering_kmeansscratch_predict",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_rationale_6",
+      "target": "clustering_kmeansscratch",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_rationale_27",
+      "target": "clustering_kmeansscratch_init_centroids",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_rationale_83",
+      "target": "clustering_kmeansscratch_predict",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "clustering_rationale_91",
+      "target": "clustering_kmeansscratch_transform",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/core/clustering.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "polars",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "pandera",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "pandera_typing",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "src_config_settings",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "src_utils_logger",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "demand_demandschema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_demand_py",
+      "target": "demand_demandengine",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "demand_demandengine",
+      "target": "demand_demandengine_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "demand_demandengine",
+      "target": "demand_demandengine_minmax_normalize",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "demand_demandengine",
+      "target": "demand_demandengine_run",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "demand_demandengine_run",
+      "target": "demand_demandengine_minmax_normalize",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "demand_rationale_17",
+      "target": "demand_demandengine",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/src/features/demand.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_test_halal_risk_py",
+      "target": "pytest",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_test_halal_risk_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_test_halal_risk_py",
+      "target": "src_halal_risk",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_test_halal_risk_py",
+      "target": "test_halal_risk_test_build_viability_columns",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_test_halal_risk_py",
+      "target": "test_halal_risk_test_viability_score_range",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_test_halal_risk_py",
+      "target": "test_halal_risk_test_risk_bucket_values",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_check_camis_time_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/check_camis_time.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_check_camis_time_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/check_camis_time.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_check_camis_time_py",
+      "target": "check_camis_time_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/check_camis_time.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_process_demographics_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/process_demographics.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_process_demographics_py",
+      "target": "src_config_settings",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/process_demographics.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_process_demographics_py",
+      "target": "src_utils_logger",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/process_demographics.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_process_demographics_py",
+      "target": "process_demographics_process_demographics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/process_demographics.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "sklearn_metrics",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "numpy",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "src_halal_demand",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "src_halal_opportunity",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "src_halal_kmeans",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase1_py",
+      "target": "run_phase1_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "src_halal_forecast",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "src_halal_risk",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "run_phase3_minmax",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase3_py",
+      "target": "run_phase3_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase3_main",
+      "target": "run_phase3_minmax",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "scipy_stats",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "src_halal_risk",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "src_halal_similarity",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_run_phase2_py",
+      "target": "run_phase2_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "frontend_components_input_form",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "frontend_components_map_view",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "frontend_components_results_panel",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "frontend_review_evidence",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "app_load_recommendations",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "app_load_review_evidence_pool",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "app_filter_recommendations",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_py",
+      "target": "app_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "app_load_recommendations",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L89",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "app_filter_recommendations",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "app_load_review_evidence_pool",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "app_rationale_1",
+      "target": "frontend_app_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "app_rationale_33",
+      "target": "app_load_review_evidence_pool",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_methodology_content_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/methodology_content.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_methodology_content_py",
+      "target": "methodology_content_render_methodology_page",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/methodology_content.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_content_rationale_1",
+      "target": "frontend_methodology_content_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/methodology_content.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "review_evidence_venue_key_column",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "review_evidence_evidence_csv_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "review_evidence_load_labeled_reviews",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "review_evidence_nta_review_counts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "review_evidence_sample_reviews_for_nta",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_review_evidence_py",
+      "target": "review_evidence_clip_review",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_load_labeled_reviews",
+      "target": "review_evidence_evidence_csv_path",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_load_labeled_reviews",
+      "target": "review_evidence_venue_key_column",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_sample_reviews_for_nta",
+      "target": "review_evidence_venue_key_column",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_rationale_1",
+      "target": "frontend_review_evidence_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_rationale_13",
+      "target": "review_evidence_venue_key_column",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_rationale_36",
+      "target": "review_evidence_load_labeled_reviews",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "review_evidence_rationale_98",
+      "target": "review_evidence_sample_reviews_for_nta",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/review_evidence.py",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "init_rationale_1",
+      "target": "frontend_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "presentation_render_intro_flowchart",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "presentation_load_phase1_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "presentation_load_phase2_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "presentation_load_phase3_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_presentation_py",
+      "target": "presentation_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "presentation_main",
+      "target": "presentation_render_intro_flowchart",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "presentation_main",
+      "target": "presentation_load_phase1_results",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "presentation_main",
+      "target": "presentation_load_phase2_results",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "presentation_main",
+      "target": "presentation_load_phase3_results",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L327",
+      "weight": 1.0
+    },
+    {
+      "source": "presentation_rationale_1",
+      "target": "frontend_pages_presentation_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/presentation.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_load_phase1",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_load_final",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_load_elbow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_render_cluster_scatter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_render_elbow_chart",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_render_formula_sandbox",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_render_risk_histogram",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_pages_methodology_py",
+      "target": "methodology_render_methodology_page",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_load_phase1",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L231",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_load_elbow",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L232",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_render_cluster_scatter",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_render_elbow_chart",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_load_final",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L259",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_render_formula_sandbox",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L265",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_render_methodology_page",
+      "target": "methodology_render_risk_histogram",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L294",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_rationale_1",
+      "target": "frontend_pages_methodology_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "methodology_rationale_106",
+      "target": "methodology_render_formula_sandbox",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/methodology.py",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "init_rationale_1",
+      "target": "frontend_pages_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/pages/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_results_panel_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_results_panel_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_results_panel_py",
+      "target": "frontend_components_recommendation_card",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_results_panel_py",
+      "target": "results_panel_render_ranking_chart",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_results_panel_py",
+      "target": "results_panel_render_results_panel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "results_panel_render_results_panel",
+      "target": "results_panel_render_ranking_chart",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "results_panel_rationale_1",
+      "target": "frontend_components_results_panel_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "results_panel_rationale_33",
+      "target": "results_panel_render_ranking_chart",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_data_freshness_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_data_freshness_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_data_freshness_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_data_freshness_py",
+      "target": "data_freshness_render_data_freshness",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "data_freshness_rationale_1",
+      "target": "frontend_components_data_freshness_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "data_freshness_rationale_65",
+      "target": "data_freshness_render_data_freshness",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/data_freshness.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "frontend_review_evidence",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_load_nta_zone_lookup",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_borough",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_prettify_zone_id",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_display_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_format_similar_neighborhoods",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L125",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_fmt_score",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_signal_label",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_halal_rel_badge",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_build_radar_chart",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_opportunity_summary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L213",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_recommendation_card_py",
+      "target": "recommendation_card_render_recommendation_card",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_display_name",
+      "target": "recommendation_card_load_nta_zone_lookup",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_display_name",
+      "target": "recommendation_card_prettify_zone_id",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_display_name",
+      "target": "recommendation_card_borough",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_format_similar_neighborhoods",
+      "target": "recommendation_card_display_name",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_display_name",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L283",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_borough",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L284",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_opportunity_summary",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L290",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_build_radar_chart",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L304",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_fmt_score",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L320",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_signal_label",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L325",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "recommendation_card_halal_rel_badge",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L414",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_rationale_1",
+      "target": "frontend_components_recommendation_card_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_rationale_166",
+      "target": "recommendation_card_build_radar_chart",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_rationale_221",
+      "target": "recommendation_card_opportunity_summary",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L221",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_map_view_py",
+      "target": "random",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_map_view_py",
+      "target": "pandas",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_map_view_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_map_view_py",
+      "target": "frontend_components_recommendation_card",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_map_view_py",
+      "target": "map_view_deterministic_jitter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_map_view_py",
+      "target": "map_view_render_map_view",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "map_view_render_map_view",
+      "target": "map_view_deterministic_jitter",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "map_view_rationale_1",
+      "target": "frontend_components_map_view_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "form_keys_rationale_1",
+      "target": "frontend_components_form_keys_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/_form_keys.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_scenario_panel_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_scenario_panel_py",
+      "target": "src_utils_taxonomy",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_scenario_panel_py",
+      "target": "frontend_components_form_keys",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_scenario_panel_py",
+      "target": "scenario_panel_render_scenario_panel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "scenario_panel_rationale_1",
+      "target": "frontend_components_scenario_panel_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "scenario_panel_rationale_51",
+      "target": "scenario_panel_render_scenario_panel",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/scenario_panel.py",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_input_form_py",
+      "target": "streamlit",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/input_form.py",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_components_input_form_py",
+      "target": "input_form_render_input_form",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/input_form.py",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "input_form_rationale_1",
+      "target": "frontend_components_input_form_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/input_form.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "init_rationale_1",
+      "target": "frontend_components_init_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/__init__.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_opportunity_build_gap",
+      "target": "run_phase3_minmax",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_opportunity.py",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_demand_build_demand",
+      "target": "run_phase3_minmax",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_demand.py",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_forecast_build_forecast",
+      "target": "clustering_kmeansscratch_fit",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_forecast_build_forecast",
+      "target": "clustering_kmeansscratch_predict",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_forecast_build_entry_forecast",
+      "target": "clustering_kmeansscratch_fit",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_forecast_build_entry_forecast",
+      "target": "clustering_kmeansscratch_predict",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_forecast.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_risk_build_gmm_risk",
+      "target": "clustering_kmeansscratch_fit",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "halal_risk_build_gmm_risk",
+      "target": "clustering_kmeansscratch_predict",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/src/halal_risk.py",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "test_halal_risk_test_build_viability_columns",
+      "target": "halal_risk_build_viability",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "test_halal_risk_test_viability_score_range",
+      "target": "halal_risk_build_viability",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "test_halal_risk_test_risk_bucket_values",
+      "target": "halal_risk_build_viability",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/tests/test_halal_risk.py",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase1_main",
+      "target": "halal_demand_build_demand",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase1_main",
+      "target": "halal_opportunity_build_supply",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase1_main",
+      "target": "halal_opportunity_build_gap",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase1_main",
+      "target": "halal_kmeans_halalkmeans",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase1_main",
+      "target": "clustering_kmeansscratch_fit",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase1_main",
+      "target": "halal_kmeans_run_kmeans",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase1.py",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase3_main",
+      "target": "halal_risk_build_gmm_risk",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase3_main",
+      "target": "halal_forecast_build_forecast",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase3_main",
+      "target": "halal_forecast_build_entry_forecast",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase3.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase2_main",
+      "target": "halal_risk_build_viability",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "run_phase2_main",
+      "target": "halal_similarity_build_similarity",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/scripts/run_phase2.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "app_load_review_evidence_pool",
+      "target": "review_evidence_load_labeled_reviews",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "input_form_render_input_form",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "results_panel_render_results_panel",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "app_main",
+      "target": "map_view_render_map_view",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/app.py",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "results_panel_render_ranking_chart",
+      "target": "recommendation_card_display_name",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "results_panel_render_results_panel",
+      "target": "recommendation_card_display_name",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "results_panel_render_results_panel",
+      "target": "recommendation_card_render_recommendation_card",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/results_panel.py",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "review_evidence_evidence_csv_path",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L346",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "review_evidence_nta_review_counts",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L367",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "review_evidence_sample_reviews_for_nta",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L387",
+      "weight": 1.0
+    },
+    {
+      "source": "recommendation_card_render_recommendation_card",
+      "target": "review_evidence_clip_review",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/recommendation_card.py",
+      "source_location": "L407",
+      "weight": 1.0
+    },
+    {
+      "source": "map_view_render_map_view",
+      "target": "recommendation_card_display_name",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "/home/bossman/projects/cs473-fml/frontend/components/map_view.py",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "design_src_halal_demand",
+      "target": "design_data_raw_yelp_reviews",
+      "relation": "reads_from",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "design_src_halal_demand",
+      "target": "design_data_raw_gemini_labels",
+      "relation": "reads_from",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "design_src_halal_opportunity",
+      "target": "design_data_raw_restaurant_hygiene",
+      "relation": "reads_from",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 18",
+      "weight": 1.0
+    },
+    {
+      "source": "design_src_halal_risk",
+      "target": "design_data_processed_inspections",
+      "relation": "reads_from",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 21",
+      "weight": 1.0
+    },
+    {
+      "source": "design_scripts_run_phase1",
+      "target": "design_src_halal_kmeans",
+      "relation": "invokes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 24",
+      "weight": 1.0
+    },
+    {
+      "source": "design_scripts_run_phase2",
+      "target": "design_src_halal_similarity",
+      "relation": "invokes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 25",
+      "weight": 1.0
+    },
+    {
+      "source": "design_scripts_run_phase3",
+      "target": "design_src_halal_forecast",
+      "relation": "invokes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 26",
+      "weight": 1.0
+    },
+    {
+      "source": "design_scripts_run_phase3",
+      "target": "design_src_halal_risk",
+      "relation": "invokes",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 26",
+      "weight": 1.0
+    },
+    {
+      "source": "design_frontend_app",
+      "target": "design_data_output",
+      "relation": "reads_from",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 32",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_amanda_dong",
+      "target": "design_frontend_app",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 50",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_amanda_dong",
+      "target": "design_frontend_methodology_content",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 50",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_catherine_yi",
+      "target": "design_src_halal_forecast",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 51",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_catherine_yi",
+      "target": "design_src_halal_risk",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 51",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_catherine_yi",
+      "target": "design_scripts_run_phase3",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 51",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_harsh_agarwal",
+      "target": "design_src_halal_opportunity",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 52",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_harsh_agarwal",
+      "target": "design_scripts_check_camis_time",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 52",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_harsh_agarwal",
+      "target": "design_data_raw_restaurant_hygiene",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 52",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_siqi_zhu",
+      "target": "design_src_halal_demand",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 53",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_siqi_zhu",
+      "target": "design_data_raw_yelp_reviews",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 53",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_siqi_zhu",
+      "target": "design_data_raw_gemini_labels",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 53",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_tony_zhao",
+      "target": "design_src_halal_kmeans",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 54",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_tony_zhao",
+      "target": "design_src_halal_similarity",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 54",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_tony_zhao",
+      "target": "design_scripts_run_phase1",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 54",
+      "weight": 1.0
+    },
+    {
+      "source": "design_teammate_tony_zhao",
+      "target": "design_scripts_run_phase2",
+      "relation": "owns",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 54",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_problem_statement",
+      "target": "proposal_nta_granularity",
+      "relation": "scoped_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_problem_statement",
+      "target": "proposal_data_yelp_gemini",
+      "relation": "uses_data",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_problem_statement",
+      "target": "proposal_data_camis",
+      "relation": "uses_data",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_problem_statement",
+      "target": "proposal_data_inspections_parquet",
+      "relation": "uses_data",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 3",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_kmeans_clustering",
+      "target": "design_src_halal_kmeans",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_inertia_silhouette",
+      "target": "design_scripts_run_phase1",
+      "relation": "executed_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_cosine_similarity",
+      "target": "design_src_halal_similarity",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_gmm_risk",
+      "target": "design_src_halal_risk",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_ridge_regression",
+      "target": "design_src_halal_forecast",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_weighted_linear_composite",
+      "target": "design_scripts_run_phase2",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_streamlit_frontend",
+      "target": "design_frontend_app",
+      "relation": "implemented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_rationale_kmeans_numpy",
+      "target": "proposal_kmeans_clustering",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_rationale_ridge_cv",
+      "target": "proposal_ridge_regression",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_rationale_gmm",
+      "target": "proposal_gmm_risk",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "proposal_rationale_weighted_composite",
+      "target": "proposal_weighted_linear_composite",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PROPOSAL.md",
+      "source_location": "line 5",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase1",
+      "target": "design_scripts_run_phase1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 25",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase1",
+      "target": "design_src_halal_kmeans",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 25",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase2",
+      "target": "design_scripts_run_phase2",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 26",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase2",
+      "target": "design_src_halal_similarity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 26",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase3",
+      "target": "design_scripts_run_phase3",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase3",
+      "target": "design_src_halal_forecast",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "readme_phase3",
+      "target": "design_src_halal_risk",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "req_numpy",
+      "target": "proposal_kmeans_clustering",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "requirements.txt",
+      "source_location": "line 5",
+      "weight": 0.9
+    },
+    {
+      "source": "req_numpy",
+      "target": "design_src_halal_kmeans",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "requirements.txt",
+      "source_location": "line 5",
+      "weight": 0.9
+    },
+    {
+      "source": "req_scikit_learn",
+      "target": "proposal_gmm_risk",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "requirements.txt",
+      "source_location": "line 7",
+      "weight": 0.9
+    },
+    {
+      "source": "req_scikit_learn",
+      "target": "proposal_ridge_regression",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "requirements.txt",
+      "source_location": "line 7",
+      "weight": 0.9
+    },
+    {
+      "source": "req_scikit_learn",
+      "target": "proposal_cosine_similarity",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "requirements.txt",
+      "source_location": "line 7",
+      "weight": 0.85
+    },
+    {
+      "source": "req_pyarrow",
+      "target": "design_data_processed_inspections",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "requirements.txt",
+      "source_location": "line 8",
+      "weight": 0.9
+    },
+    {
+      "source": "req_streamlit",
+      "target": "design_frontend_app",
+      "relation": "dependency_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "requirements.txt",
+      "source_location": "line 9",
+      "weight": 1.0
+    },
+    {
+      "source": "req_plotly",
+      "target": "design_frontend_app",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "requirements.txt",
+      "source_location": "line 10",
+      "weight": 0.9
+    },
+    {
+      "source": "req_pandas",
+      "target": "design_src_halal_demand",
+      "relation": "dependency_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "requirements.txt",
+      "source_location": "line 4",
+      "weight": 0.85
+    },
+    {
+      "source": "design_scripts_run_phase1",
+      "target": "design_data_output",
+      "relation": "writes_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": "line 25",
+      "weight": 0.9
+    },
+    {
+      "source": "design_scripts_run_phase2",
+      "target": "design_data_output",
+      "relation": "writes_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": "line 26",
+      "weight": 0.9
+    },
+    {
+      "source": "design_scripts_run_phase3",
+      "target": "design_data_output",
+      "relation": "writes_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": "line 27",
+      "weight": 0.9
+    },
+    {
+      "source": "design_scripts_run_phase2",
+      "target": "design_scripts_run_phase1",
+      "relation": "depends_on_output_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "DESIGN.md",
+      "source_location": "line 25",
+      "weight": 0.85
+    },
+    {
+      "source": "design_scripts_run_phase3",
+      "target": "design_scripts_run_phase2",
+      "relation": "depends_on_output_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "DESIGN.md",
+      "source_location": "line 26",
+      "weight": 0.85
+    },
+    {
+      "source": "design_nyc_halal_opportunity_finder",
+      "target": "proposal_problem_statement",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DESIGN.md",
+      "source_location": "line 1",
+      "weight": 1.0
+    },
+    {
+      "source": "design_nyc_halal_opportunity_finder",
+      "target": "readme_env_setup",
+      "relation": "documented_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": "line 48",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}
