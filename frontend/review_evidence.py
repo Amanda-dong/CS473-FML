@@ -71,16 +71,23 @@ def load_labeled_reviews(repo_root: Path) -> pd.DataFrame | None:
 def nta_review_counts(pool: pd.DataFrame, nta_id: str) -> dict[str, int]:
     nid = str(nta_id).strip().upper()
     sub = pool[pool["nta_norm"] == nid]
-    rel = sub["halal_relevance"]
+    rel_norm = sub["halal_relevance"].astype(str).str.strip().str.lower()
     uniq = (
         int(sub["_venue_key"].nunique())
         if not sub.empty and "_venue_key" in sub.columns
         else 0
     )
+    explicit_halal = int((rel_norm == "explicit_halal").sum())
+    implicit_halal = int((rel_norm == "implicit_halal").sum())
+    not_related = int((rel_norm == "not_related").sum())
+    accounted = explicit_halal + implicit_halal + not_related
+    other_labels = max(0, len(sub) - accounted)
     return {
         "total": len(sub),
-        "explicit_halal": int((rel == "explicit_halal").sum()),
-        "implicit_halal": int((rel == "implicit_halal").sum()),
+        "explicit_halal": explicit_halal,
+        "implicit_halal": implicit_halal,
+        "not_related": not_related,
+        "other_labels": other_labels,
         "unique_venues": uniq,
     }
 

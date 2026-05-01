@@ -41,13 +41,6 @@ def _borough(nta_id: str) -> str:
     return BOROUGH_NAME.get(str(nta_id)[:2].upper(), "NYC")
 
 
-def _fmt_pct(val) -> str:
-    try:
-        return f"{float(val) * 100:.0f}%"
-    except (TypeError, ValueError):
-        return "—"
-
-
 def _fmt_score(val) -> str:
     try:
         return f"{float(val):.3f}"
@@ -95,10 +88,7 @@ def render_recommendation_card(
     halal_cuisine_diversity = row.get("halal_cuisine_diversity", 0)
     risk_bucket = str(row.get("risk_bucket", "Unknown"))
     risk_confidence = str(row.get("risk_confidence", ""))
-    high_risk_prob = row.get("high_risk_prob", 0.5)
     halal_demand_forecast = row.get("halal_demand_forecast", None)
-    critical_rate = row.get("critical_rate", 0.0)
-    grade_a_rate = row.get("grade_a_rate", 0.0)
     similar_ntas_raw = str(row.get("similar_ntas", "") or "")
     similar_ntas = [s.strip() for s in similar_ntas_raw.split(",") if s.strip()]
 
@@ -125,7 +115,10 @@ def render_recommendation_card(
         c2.metric(
             "Halal Discussion Signal",
             _signal_label(demand_score),
-            help="Share of Yelp reviews mentioning halal (proxy, not true demand)",
+            help=(
+                "Pipeline metric: shrunk halal-share from all merged Yelp × Gemini rows for this NTA, "
+                "then min–max scaled across neighborhoods — not equal to Gemini-row counts below."
+            ),
         )
         c3.metric(
             "Opportunity Gap",
@@ -136,7 +129,7 @@ def render_recommendation_card(
         st.progress(float(final_score) if final_score else 0.0)
 
         # Yelp / Gemini labeled review evidence for this zone
-        with st.expander("Review evidence — what diners wrote (Yelp × Gemini)", expanded=False):
+        with st.expander("Review evidence — sample Yelp rows (Gemini labels)", expanded=False):
             if review_pool is None or review_pool.empty:
                 hint = ""
                 if repo_root is not None:
@@ -149,16 +142,36 @@ def render_recommendation_card(
                     "`data/raw/gemini_labels_full.csv` present, or check the path.\n\n" + hint
                 )
             else:
+                st.markdown(
+                    f"| Pipeline metric | Value |\n|--|--|\n"
+                    f"| **`demand_score`** (Opportunity ranking + clustering) | **{_fmt_score(demand_score)}** |\n"
+                    f"| **Market type** (k-means on demand/supply/gap · not snippet counts) | **{market_type}** |"
+                )
+                st.info(
+                    "**Counts below** only reflect rows stored in **`gemini_labels_full.csv`** for "
+                    f"this NTA. **`demand_score`** is computed in **`halal_demand.py`** from the **full Yelp join** "
+                    "per neighborhood, **shrunk-share → min–max across all NTAs**. "
+                    "Many explicit Gemini labels still fit a **Low Demand** cluster whenever the "
+                    "city-relative demand rank stays modest."
+                )
+
                 counts = nta_review_counts(review_pool, nta_id)
                 if counts["total"] == 0:
                     st.caption(f"No review rows mapped to **`{nta_id}`** in the labeled Yelp export.")
                 else:
+                    _other_note = ""
+                    if counts.get("other_labels", 0) > 0:
+                        _other_note = (
+                            f" · **{counts['other_labels']}** rows tagged with another "
+                            "**`halal_relevance`** value"
+                        )
                     st.caption(
                         f"In the labeled Yelp sample for **`{nta_id}`**: "
-                        f"**{counts['explicit_halal']}** explicit-halal, "
-                        f"**{counts['implicit_halal']}** implicit-halal, "
-                        f"**{counts['total']}** review rows · "
-                        f"**{counts['unique_venues']}** distinct venues."
+                        f"**{counts['explicit_halal']}** explicit-halal · "
+                        f"**{counts['implicit_halal']}** implicit-halal · "
+                        f"**{counts['not_related']}** not halal-related (`not_related`). "
+                        f"**{counts['total']}** review rows · **{counts['unique_venues']}** distinct venues"
+                        f"{_other_note}."
                     )
                     samples = sample_reviews_for_nta(review_pool, nta_id, k=6)
                     if samples.empty:
@@ -198,11 +211,6 @@ def render_recommendation_card(
 
         # Risk section
         with st.expander("Risk & Environment", expanded=False):
-            try:
-                float(high_risk_prob)
-            except (TypeError, ValueError):
-                pass
-
             risk_icon = RISK_ICONS.get(risk_bucket, "❓")
             risk_description = {
                 "Low": "This neighborhood has a relatively clean inspection record. Lower regulatory risk for new restaurant operators.",

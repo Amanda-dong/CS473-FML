@@ -132,8 +132,9 @@ def main() -> None:
         st.divider()
         st.subheader("Recommendations")
         st.caption(
-            "Expand **Review evidence — what diners wrote** on each card for real Yelp snippets "
-            "(Gemini halal labels) backing the demand signal for that neighborhood."
+            "Open **Review evidence — sample Yelp rows** for Gemini-labeled excerpts; "
+            "read the boxed note explaining how counts differ from pipeline `demand_score` "
+            "(full Yelp merge, city-wide min–max)."
         )
         review_pool = load_review_evidence_pool()
         render_results_panel(
