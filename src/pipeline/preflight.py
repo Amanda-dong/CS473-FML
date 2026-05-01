@@ -265,8 +265,7 @@ def run_processed_data_preflight(
                     name="survival_training",
                     passed=False,
                     message=(
-                        f"Could not validate survival artifacts under "
-                        f"{base_dir}: {exc}"
+                        f"Could not validate survival artifacts under {base_dir}: {exc}"
                     ),
                 )
             )

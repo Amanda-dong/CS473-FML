@@ -73,8 +73,7 @@ def build_placeholder_response(
             opportunity_score=round(0.75 - index * 0.05, 4),
             confidence_bucket="medium",
             healthy_gap_summary=(
-                "Healthy options are under-supplied relative to quick "
-                "lunch demand."
+                "Healthy options are under-supplied relative to quick lunch demand."
             ),
             positives=[
                 "Strong daytime footfall proxy",
