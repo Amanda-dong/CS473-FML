@@ -17,6 +17,14 @@ BOROUGH_CENTROIDS = {
     "SI": (40.5795, -74.1502),
 }
 
+PREFIX_TO_BOROUGH = {
+    "BK": "Brooklyn",
+    "QN": "Queens",
+    "MN": "Manhattan",
+    "BX": "Bronx",
+    "SI": "Staten Island",
+}
+
 MARKET_TYPE_COLOR = {
     "High Opportunity": "red",
     "Established Hub": "blue",
@@ -113,7 +121,35 @@ def render_map_view(df: pd.DataFrame) -> None:
         import plotly.express as px
         import plotly.graph_objects as go
 
+        # If results span multiple boroughs (e.g., sidebar borough == Any),
+        # let users quickly focus one borough in the map only.
+        available_prefixes = sorted(
+            p
+            for p in points_df["nta_id"].astype(str).str[:2].str.upper().unique().tolist()
+            if p in PREFIX_TO_BOROUGH
+        )
+        available_boroughs = [PREFIX_TO_BOROUGH[p] for p in available_prefixes]
+
         map_df = points_df
+        if len(available_boroughs) > 1:
+            chosen_borough = st.selectbox(
+                "Choose borough",
+                ["All boroughs"] + available_boroughs,
+                help="Optional map-only focus when your current results include multiple boroughs.",
+            )
+            if chosen_borough != "All boroughs":
+                chosen_prefix = next(
+                    (k for k, v in PREFIX_TO_BOROUGH.items() if v == chosen_borough),
+                    "",
+                )
+                if chosen_prefix:
+                    map_df = points_df[
+                        points_df["nta_id"].astype(str).str.startswith(chosen_prefix)
+                    ].copy()
+
+        if map_df.empty:
+            st.info("No current results are shown for that borough.")
+            return
 
         # "Current neighborhood" defaults to the top-ranked item in the current map scope.
         name_to_nta = dict(zip(map_df["label"], map_df["nta_id"]))
