@@ -101,8 +101,6 @@ if BUSINESS_PATH.is_file():
     )
     df["restaurant_id"] = df["restaurant_id"].astype(str).str.strip()
     df = df.merge(biz_geo, on="restaurant_id", how="left")
-else:
-    st.warning(f"No `{BUSINESS_PATH}` — map disabled.")
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Review rows", f"{len(df):,}")
@@ -330,11 +328,6 @@ if {"latitude", "longitude"}.issubset(df.columns):
             use_container_width=True,
             height=min(640, 140 + 36 * min(len(sub), 18)),
         )
-else:
-    st.info(
-        "Add lat/lon by placing `yelp_business.csv` under `data/raw/` to enable the map."
-    )
-
 st.divider()
 
 zc = df.loc[df["has_zone"], "zone_id"].value_counts().head(25)

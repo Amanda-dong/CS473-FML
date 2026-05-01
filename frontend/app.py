@@ -15,7 +15,6 @@ import streamlit as st
 from frontend.components.input_form import render_input_form
 from frontend.components.map_view import render_map_view
 from frontend.components.results_panel import render_results_panel
-from frontend.pages.methodology import render_methodology_page
 
 # ---------------------------------------------------------------------------
 # Data loading
@@ -57,6 +56,7 @@ def filter_recommendations(
     borough: str | None,
     market_type: str | None,
     limit: int,
+    risk_tolerance: str = "High",
 ) -> pd.DataFrame:
     result = df.copy()
     if borough and borough != "Any":
@@ -65,7 +65,16 @@ def filter_recommendations(
             result = result[result["nta_id"].str.startswith(prefix)]
     if market_type and market_type != "All":
         result = result[result["market_type"] == market_type]
-    return result.sort_values("final_score", ascending=False).head(limit)
+    if risk_tolerance == "Low":
+        result = result[result["risk_bucket"] == "Low"]
+    elif risk_tolerance == "Medium":
+        result = result[result["risk_bucket"].isin(["Low", "Medium"])]
+    result = result.sort_values("final_score", ascending=False)
+
+    if result.empty:
+        return result
+
+    return result.head(limit)
 
 
 # ---------------------------------------------------------------------------
@@ -95,35 +104,27 @@ def main() -> None:
         borough=form_state.get("borough"),
         market_type=form_state.get("market_type"),
         limit=int(form_state.get("limit", 5)),
+        risk_tolerance=form_state.get("risk_tolerance", "High"),
     )
 
     # Tabs
-    tab_picks, tab_map, tab_method = st.tabs(
-        ["🎯 Top Picks", "🗺️ Map View", "📖 Methodology"]
-    )
+    (tab_overview,) = st.tabs(["📍 Overview"])
 
-    with tab_picks:
+    with tab_overview:
         # Header metrics
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2 = st.columns(2)
         col1.metric("NTAs Analyzed", len(df_all))
         col2.metric("Showing", len(filtered))
-        col3.metric(
-            "Top NTA",
-            filtered.iloc[0]["nta_id"] if len(filtered) > 0 else "—",
-        )
-        col4.metric(
-            "Avg Gap Score",
-            f"{filtered['gap_score'].mean():.2f}" if len(filtered) > 0 else "—",
+        st.caption(
+            "ℹ️ Signal strength labels (Very Strong / Moderate / Weak / Low) are relative rankings across 144 NYC neighborhoods, not absolute percentages."
         )
 
         st.divider()
-        render_results_panel(filtered)
-
-    with tab_map:
+        st.subheader("Neighborhood Map")
         render_map_view(filtered)
-
-    with tab_method:
-        render_methodology_page()
+        st.divider()
+        st.subheader("Recommendations")
+        render_results_panel(filtered)
 
 
 if __name__ == "__main__":

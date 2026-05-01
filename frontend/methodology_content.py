@@ -1,17 +1,66 @@
-"""Methodology page — explains the three-phase pipeline."""
+"""Methodology content for the main Streamlit app."""
 
 from __future__ import annotations
 
 import streamlit as st
 
+APPROACH_IMAGE = (
+    "/Users/amandadongsmacbookpro/Desktop/截屏2026-05-01 00.51.55.png"
+)
+
 
 def render_methodology_page() -> None:
-    st.header("How This Works")
+    st.header("Introduction")
 
-    st.write(
-        "This tool helps halal food merchants identify NYC neighborhoods with the "
-        "strongest opportunity for opening a new halal restaurant. It uses three "
-        "phases of analysis, each building on the previous."
+    st.markdown("### The Problem")
+    st.markdown(
+        """
+        Independent operators face an information gap when choosing NYC locations.
+
+        - Chains can commission site-selection analytics; independents often rely on intuition.
+        - NYC has **195 NTAs**, but opportunity is usually hidden at neighborhood granularity.
+        - Public data comes with survivorship bias, platform coverage gaps, and neighborhood-level masking.
+        """
+    )
+    st.caption("The challenge is not a lack of neighborhoods — it is a lack of halal-specific decision support.")
+
+    st.divider()
+
+    top_left, top_right = st.columns([1.1, 0.9], gap="large")
+    with top_left:
+        st.markdown("### The Approach")
+        st.markdown(
+            """
+            We combine three phases of analysis:
+
+            - **Phase 1:** identify halal market type
+            - **Phase 2:** rank neighborhood opportunity
+            - **Phase 3:** add risk and forward-looking insight
+            """
+        )
+    with top_right:
+        st.metric("NYC NTAs", "195")
+        st.metric("NTAs scored", "144")
+    st.image(APPROACH_IMAGE)
+
+    st.divider()
+
+    st.markdown("### The Result")
+    st.markdown(
+        """
+        The system produces a merchant-facing shortlist of NYC neighborhoods with:
+
+        - ranked opportunity score
+        - halal market type
+        - risk bucket and confidence
+        - similar neighborhoods
+        - demand and entry insight
+        """
+    )
+    st.caption("Designed as decision support, not as a guaranteed forecast.")
+
+    st.info(
+        "The final output is a ranked neighborhood shortlist for halal food merchants, with current opportunity as the main signal and risk/forecast shown as supporting context."
     )
 
     st.divider()

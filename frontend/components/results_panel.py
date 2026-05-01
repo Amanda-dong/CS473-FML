@@ -19,26 +19,12 @@ _EXPORT_COLUMNS = [
 ]
 
 
-def _render_summary(df: pd.DataFrame) -> None:
-    if df.empty:
-        return
-    top_market = df["market_type"].mode().iloc[0] if not df.empty else "—"
-    avg_gap = df["gap_score"].mean()
-    low_risk_count = (df["risk_bucket"] == "Low").sum()
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Top market type", top_market)
-    c2.metric("Avg gap score", f"{avg_gap:.2f}")
-    c3.metric("Low-risk NTAs", f"{low_risk_count} of {len(df)}")
-
-
 def render_results_panel(df: pd.DataFrame) -> None:
     if df is None or df.empty:
-        st.info("No NTAs match the current filters. Try broadening your search.")
+        st.warning(
+            "No neighborhoods match your current filters. Try relaxing Risk Tolerance or changing the Borough filter."
+        )
         return
-
-    _render_summary(df)
-    st.divider()
 
     for i, (_, row) in enumerate(df.iterrows()):
         render_recommendation_card(row.to_dict(), rank=i + 1)

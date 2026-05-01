@@ -17,6 +17,12 @@ RISK_COLOR = {
     "High": "inverse",
 }
 
+RISK_ICONS = {
+    "Low": "✅",
+    "Medium": "⚠️",
+    "High": "🔴",
+}
+
 BOROUGH_NAME = {
     "BK": "Brooklyn",
     "QN": "Queens",
@@ -44,6 +50,20 @@ def _fmt_score(val) -> str:
         return "—"
 
 
+def _signal_label(val) -> str:
+    try:
+        v = float(val)
+        if v >= 0.7:
+            return "Very Strong"
+        if v >= 0.4:
+            return "Moderate"
+        if v >= 0.2:
+            return "Weak"
+        return "Low"
+    except (TypeError, ValueError):
+        return "—"
+
+
 def render_recommendation_card(row: dict, rank: int) -> None:
     nta_id = str(row.get("nta_id", ""))
     market_type = str(row.get("market_type", ""))
@@ -57,6 +77,8 @@ def render_recommendation_card(row: dict, rank: int) -> None:
     risk_confidence = str(row.get("risk_confidence", ""))
     high_risk_prob = row.get("high_risk_prob", 0.5)
     halal_demand_forecast = row.get("halal_demand_forecast", None)
+    critical_rate = row.get("critical_rate", 0.0)
+    grade_a_rate = row.get("grade_a_rate", 0.0)
     similar_ntas_raw = str(row.get("similar_ntas", "") or "")
     similar_ntas = [s.strip() for s in similar_ntas_raw.split(",") if s.strip()]
 
@@ -82,62 +104,73 @@ def render_recommendation_card(row: dict, rank: int) -> None:
         )
         c2.metric(
             "Halal Discussion Signal",
-            _fmt_pct(demand_score),
+            _signal_label(demand_score),
             help="Share of Yelp reviews mentioning halal (proxy, not true demand)",
         )
         c3.metric(
             "Opportunity Gap",
-            _fmt_pct(gap_score),
+            _signal_label(gap_score),
             help="Demand proxy minus supply proxy (heuristic estimate)",
         )
 
         st.progress(float(final_score) if final_score else 0.0)
 
         # Supply info
-        st.caption(
-            f"Halal-relevant cuisine density: {_fmt_pct(halal_supply_rate)} of restaurants "
-            f"| Cuisine types: {int(halal_cuisine_diversity) if halal_cuisine_diversity else 0}"
-        )
+        diversity = int(halal_cuisine_diversity) if halal_cuisine_diversity else 0
+        if diversity == 0:
+            st.caption("No halal-relevant restaurants currently recorded in this area.")
+        else:
+            st.caption(
+                f"Halal-relevant restaurants present · {diversity} cuisine type{'s' if diversity > 1 else ''}"
+            )
 
         # Risk section
         with st.expander("Risk & Environment", expanded=False):
-            rc1, rc2 = st.columns(2)
-            rc1.metric(
-                "Risk Level",
-                risk_bucket,
-                help="Rule-based risk index from inspection data",
+            try:
+                risk_prob = float(high_risk_prob)
+            except (TypeError, ValueError):
+                risk_prob = 0.5
+
+            risk_icon = RISK_ICONS.get(risk_bucket, "❓")
+
+            st.metric(
+                "Risk Score",
+                f"{risk_icon} {risk_bucket}",
+                help="Probability of belonging to a high-risk restaurant environment",
             )
-            rc2.metric(
-                "Inspection Viability",
-                _fmt_pct(viability_score),
+            st.progress(risk_prob)
+            st.caption(
+                f"Risk probability: {risk_prob:.0%} — based on GMM clustering of inspection patterns across this neighborhood."
             )
+
             if risk_confidence == "Low confidence":
                 st.warning(
-                    "⚠️ Low confidence: fewer than 10 inspection records for this NTA.",
+                    "Fewer than 10 inspection records — treat with caution.",
                     icon="⚠️",
                 )
 
         # Phase 3 insight
-        with st.expander("Demand Insight (directional only)", expanded=False):
+        with st.expander("Next-Year Demand Outlook", expanded=False):
             if halal_demand_forecast is not None:
                 try:
-                    forecast_val = float(halal_demand_forecast)
-                    st.metric(
-                        "Halal Demand Forecast",
-                        f"{forecast_val:.1%}",
-                        help=(
-                            "Ridge regression projection of 2023 halal review share. "
-                            "R²=0.16 — treat as directional signal, not precise forecast."
-                        ),
-                    )
+                    val = float(halal_demand_forecast)
+                    if val > 0.5:
+                        st.success(
+                            f"Demand trending up — projected halal discussion share: {val:.1%}"
+                        )
+                    elif val > 0.3:
+                        st.info(
+                            f"Demand stable — projected halal discussion share: {val:.1%}"
+                        )
+                    else:
+                        st.warning(
+                            f"Demand signal weak — projected halal discussion share: {val:.1%}"
+                        )
                 except (TypeError, ValueError):
-                    st.caption("Forecast unavailable for this NTA.")
+                    st.caption("Forecast not available for this NTA.")
             else:
-                st.caption("Forecast unavailable for this NTA.")
-            st.caption(
-                "⚠️ This forecast does not beat the persistence baseline. "
-                "Use for directional context only."
-            )
+                st.caption("Forecast not available for this NTA.")
+            st.caption("R² = 0.16 — treat as directional signal only, not a precise forecast.")
 
         # Similar NTAs
         if similar_ntas:
