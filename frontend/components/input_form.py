@@ -33,7 +33,7 @@ def render_input_form() -> dict:
     risk_tolerance = st.selectbox(
         "Max risk allowed",
         ["Low", "Medium", "High"],
-        index=1,
+        index=2,
         help="Low shows only lower-risk neighborhoods. Medium adds moderate-risk options. High shows the full list.",
     )
 

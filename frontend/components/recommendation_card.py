@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from frontend.review_evidence import (
@@ -403,8 +404,8 @@ def render_recommendation_card(
                     font={'color': "#fafafa"}
                 )
                 st.plotly_chart(contrib_fig, use_container_width=True, config={'displayModeBar': False}, key=f"breakdown_{nta_id}")
-            except Exception:
-                pass
+            except Exception as exc:
+                st.info(f"Score breakdown unavailable for this row ({exc}).")
 
         # Yelp / Gemini labeled review evidence for this zone
         with st.expander(

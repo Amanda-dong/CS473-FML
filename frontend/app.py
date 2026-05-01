@@ -110,6 +110,25 @@ def main() -> None:
         limit=None,
         risk_tolerance=form_state.get("risk_tolerance", "High"),
     )
+    selected_market = form_state.get("market_type")
+    selected_risk = form_state.get("risk_tolerance", "High")
+    if (
+        filtered_all.empty
+        and selected_market not in (None, "All")
+        and selected_risk != "High"
+    ):
+        filtered_all = filter_recommendations(
+            df_all,
+            borough=form_state.get("borough"),
+            market_type=selected_market,
+            limit=None,
+            risk_tolerance="High",
+        )
+        if not filtered_all.empty:
+            st.info(
+                f"No rows matched `{selected_market}` under risk `{selected_risk}`. "
+                "Showing available rows with `High` risk."
+            )
     limit_val = int(form_state.get("limit", 5))
     filtered = filtered_all.head(limit_val)
 
