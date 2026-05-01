@@ -2,33 +2,6 @@
 
 import streamlit as st
 
-MARKET_TYPE_COLORS: dict[str, dict[str, str]] = {
-    "High Opportunity": {"bg": "#fde8e8", "border": "#e63946", "text": "#c0392b"},
-    "Established Hub":  {"bg": "#e3edf7", "border": "#457b9d", "text": "#2c5f7a"},
-    "Growing Market":   {"bg": "#e8f5e9", "border": "#2a9d8f", "text": "#1e7a6e"},
-    "Low Demand":       {"bg": "#f5f5f5", "border": "#adb5bd", "text": "#6c757d"},
-}
-
-MARKET_TYPE_EMOJI: dict[str, str] = {
-    "High Opportunity": "🔴",
-    "Established Hub": "🔵",
-    "Growing Market": "🟢",
-    "Low Demand": "⚫",
-}
-
-
-def market_type_pill(market_type: str) -> str:
-    """Return an HTML inline pill badge for the given market type."""
-    colors = MARKET_TYPE_COLORS.get(market_type, MARKET_TYPE_COLORS["Low Demand"])
-    emoji = MARKET_TYPE_EMOJI.get(market_type, "📍")
-    return (
-        f'<span style="background:{colors["bg"]};border:1.5px solid {colors["border"]};'
-        f'border-radius:20px;padding:3px 12px;font-size:0.82em;font-weight:600;'
-        f'color:{colors["text"]};display:inline-block;">'
-        f"{emoji} {market_type}</span>"
-    )
-
-
 def inject_custom_theme():
     """Injects premium CSS for a standalone app feel with Islamic green + gold palette."""
     st.markdown(
@@ -40,8 +13,8 @@ def inject_custom_theme():
             --accent: #e9c46a;
             --danger: #e63946;
             --success: #2a9d8f;
-            --bg-glass: rgba(26, 71, 42, 0.04);
-            --border-glass: rgba(26, 71, 42, 0.12);
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --border-glass: rgba(255, 255, 255, 0.1);
         }
 
         /* Hide Streamlit chrome */
@@ -49,16 +22,10 @@ def inject_custom_theme():
         footer {visibility: hidden;}
         header {visibility: hidden;}
 
-        /* App Background & Font — light mode */
+        /* App Background & Font */
         .stApp {
-            background-color: #fafaf8;
-            color: #1a1a1a;
-        }
-
-        /* Force all tab content panels to match app background */
-        [data-baseweb="tab-panel"] {
-            background-color: #fafaf8 !important;
-            color: #1a1a1a !important;
+            background-color: #0e1117;
+            color: #fafafa;
         }
 
         /* Fix top cutoff */
@@ -81,18 +48,18 @@ def inject_custom_theme():
 
         /* Recommendation Card (Container) */
         div[data-testid="stVerticalBlock"] > div[style*="border: 1px solid"] {
-            background: #ffffff;
+            background: #161b22;
             border: 1px solid var(--border-glass) !important;
             border-radius: 16px !important;
             padding: 1.5rem !important;
             margin-bottom: 1rem !important;
-            box-shadow: 0 2px 8px rgba(26,71,42,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
         }
         div[data-testid="stVerticalBlock"] > div[style*="border: 1px solid"]:hover {
             border-color: var(--accent) !important;
-            box-shadow: 0 6px 20px rgba(26,71,42,0.14);
-            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transform: translateY(-4px);
         }
 
         /* Market Type Pills */
@@ -113,12 +80,12 @@ def inject_custom_theme():
 
         /* Sidebar Styling */
         section[data-testid="stSidebar"] {
-            background-color: #f0f4f0;
-            border-right: 3px solid var(--primary);
+            background-color: #0d0f14;
+            border-right: 1px solid var(--border-glass);
         }
         section[data-testid="stSidebar"] .stSelectbox label,
         section[data-testid="stSidebar"] .stSlider label {
-            color: var(--primary) !important;
+            color: var(--accent) !important;
             font-weight: 600;
         }
 
@@ -132,10 +99,7 @@ def inject_custom_theme():
             gap: 2rem;
             background-color: transparent;
         }
-        .stTabs [data-baseweb="tab"],
-        .stTabs button[role="tab"],
-        .stTabs [data-baseweb="tab"] *,
-        .stTabs button[role="tab"] * {
+        .stTabs [data-baseweb="tab"] {
             height: 50px;
             white-space: pre-wrap;
             background-color: transparent;
@@ -143,15 +107,12 @@ def inject_custom_theme():
             gap: 1rem;
             padding-top: 10px;
             padding-bottom: 10px;
-            color: #333333 !important;
+            color: #fafafa;
         }
-        .stTabs [aria-selected="true"],
-        .stTabs [aria-selected="true"] *,
-        .stTabs button[role="tab"][aria-selected="true"],
-        .stTabs button[role="tab"][aria-selected="true"] * {
+        .stTabs [aria-selected="true"] {
             background-color: var(--bg-glass);
-            border-bottom: 3px solid var(--primary) !important;
-            color: var(--primary) !important;
+            border-bottom: 2px solid var(--accent) !important;
+            color: var(--accent) !important;
         }
 
         /* Buttons */
@@ -177,6 +138,3 @@ def inject_custom_theme():
         """,
         unsafe_allow_html=True,
     )
-
-
-inject_theme = inject_custom_theme

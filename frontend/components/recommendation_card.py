@@ -298,8 +298,8 @@ def render_recommendation_card(
                 unsafe_allow_html=True,
             )
 
-        # Radar (left) + Metrics & Gauge (right)
-        col_radar, col_metrics = st.columns([2, 3])
+        # Radar + Score Gauge
+        col_radar, col_gauge = st.columns([2, 2])
         with col_radar:
             try:
                 fig = _build_radar_chart(
@@ -314,61 +314,64 @@ def render_recommendation_card(
                 )
             except Exception:
                 pass
+        
+        with col_gauge:
+            pass # Gauge moved to consolidated block below
 
-        with col_metrics:
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric(
-                'Overall fit',
-                _fmt_score(final_score),
-                help='Main ranking score: 0.4×demand + 0.4×gap + 0.2×viability.',
-            )
-            c2.metric(
-                'Demand',
-                _signal_label(demand_score),
-                help='Bayesian-shrunk halal review share across Yelp data.',
-            )
-            c3.metric(
-                'Gap',
-                _signal_label(gap_score),
-                help='max(demand − supply, 0) — unmet demand proxy.',
-            )
-            c4.metric(
-                'Latent Demand',
-                _signal_label(latent_demand_score) if latent_demand_score is not None else '—',
-                help='Implicit halal interest + keyword signals. Captures demand where halal restaurants are absent.',
-            )
-            if cluster_confidence is not None:
-                try:
-                    cc = float(cluster_confidence)
-                    if cc < 0.25:
-                        st.warning(f'⚠ Borderline cluster (confidence {cc:.2f}) — market type may shift with new data.')
-                except (TypeError, ValueError):
-                    pass
+        # Consolidated Metrics & Gauge
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric(
+            'Overall fit',
+            _fmt_score(final_score),
+            help='Main ranking score: 0.4×demand + 0.4×gap + 0.2×viability.',
+        )
+        c2.metric(
+            'Demand',
+            _signal_label(demand_score),
+            help='Bayesian-shrunk halal review share across Yelp data.',
+        )
+        c3.metric(
+            'Gap',
+            _signal_label(gap_score),
+            help='max(demand − supply, 0) — unmet demand proxy.',
+        )
+        c4.metric(
+            'Latent Demand',
+            _signal_label(latent_demand_score) if latent_demand_score is not None else '—',
+            help='Implicit halal interest + keyword signals. Captures demand where halal restaurants are absent.',
+        )
+        if cluster_confidence is not None:
             try:
-                import plotly.graph_objects as _go
-                _score_val = float(final_score) * 100 if final_score else 0.0
-                _gauge = _go.Figure(_go.Indicator(
-                    mode='gauge+number',
-                    value=_score_val,
-                    domain={'x': [0, 1], 'y': [0, 1]},
-                    gauge={
-                        'axis': {'range': [0, 100], 'tickfont': {'size': 9}},
-                        'bar': {'color': '#1a472a'},
-                        'steps': [
-                            {'range': [0, 40], 'color': '#fde8e8'},
-                            {'range': [40, 70], 'color': '#fff8e1'},
-                            {'range': [70, 100], 'color': '#e8f5e9'},
-                        ],
-                        'threshold': {'line': {'color': '#e9c46a', 'width': 3}, 'thickness': 0.8, 'value': _score_val},
-                    },
-                    number={'suffix': '/100', 'font': {'size': 14}},
-                    title={'text': 'Overall Score', 'font': {'size': 11}},
-                ))
-                _gauge.update_layout(height=140, margin=dict(l=10, r=10, t=20, b=10), paper_bgcolor='rgba(0,0,0,0)')
-                st.plotly_chart(_gauge, use_container_width=True, config={'displayModeBar': False})
-            except Exception:
-                st.progress(float(final_score) if final_score else 0.0)
-            st.caption('Score = 0.4×demand + 0.4×gap + 0.2×viability. Radar shows 5 dimensions.')
+                cc = float(cluster_confidence)
+                if cc < 0.25:
+                    st.warning(f'⚠ Borderline cluster (confidence {cc:.2f}) — market type may shift with new data.')
+            except (TypeError, ValueError):
+                pass
+        try:
+            import plotly.graph_objects as _go
+            _score_val = float(final_score) * 100 if final_score else 0.0
+            _gauge = _go.Figure(_go.Indicator(
+                mode='gauge+number',
+                value=_score_val,
+                domain={'x': [0, 1], 'y': [0, 1]},
+                gauge={
+                    'axis': {'range': [0, 100], 'tickfont': {'size': 9}},
+                    'bar': {'color': '#1a472a'},
+                    'steps': [
+                        {'range': [0, 40], 'color': '#fde8e8'},
+                        {'range': [40, 70], 'color': '#fff8e1'},
+                        {'range': [70, 100], 'color': '#e8f5e9'},
+                    ],
+                    'threshold': {'line': {'color': '#e9c46a', 'width': 3}, 'thickness': 0.8, 'value': _score_val},
+                },
+                number={'suffix': '/100', 'font': {'size': 14}},
+                title={'text': 'Overall Score', 'font': {'size': 11}},
+            ))
+            _gauge.update_layout(height=130, margin=dict(l=10, r=10, t=20, b=10), paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(_gauge, use_container_width=True, config={'displayModeBar': False})
+        except Exception:
+            st.progress(float(final_score) if final_score else 0.0)
+        st.caption('Score = 0.4×demand + 0.4×gap + 0.2×viability. Radar shows 5 dimensions.')
 
         # Plain-English summary
         st.info(_opportunity_summary(
@@ -397,7 +400,7 @@ def render_recommendation_card(
                     showlegend=False,
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
-                    font={'color': '#1a1a1a'}
+                    font={'color': "#fafafa"}
                 )
                 st.plotly_chart(contrib_fig, use_container_width=True, config={'displayModeBar': False}, key=f"breakdown_{nta_id}")
             except Exception:

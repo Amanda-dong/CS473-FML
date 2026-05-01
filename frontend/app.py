@@ -95,10 +95,10 @@ def main() -> None:
             "Build your shortlist by choosing the borough, market type, and risk level."
         )
         form_state = render_input_form()
-
+        
         if st.button("🔄 Quick Reset", use_container_width=True):
             st.rerun()
-
+            
         st.divider()
         st.caption(f"Neighborhoods in model: **{len(df_all)}**")
 
@@ -115,18 +115,18 @@ def main() -> None:
 
     # Tabs
     tab_map, tab_compare, tab_analytics = st.tabs([
-        "📍 Map & Shortlist",
-        "⚖️ Compare",
+        "📍 Map & Shortlist", 
+        "⚖️ Compare", 
         "📊 Analytics"
     ])
 
     with tab_map:
         st.markdown("### 🗺️ Opportunity Map")
         col_map, col_summary = st.columns([2, 1])
-
+        
         with col_map:
             render_map_view(filtered_all)
-
+            
         with col_summary:
             st.markdown("#### 🏆 Top 3 Summary")
             top_3 = filtered.head(3)
@@ -156,6 +156,7 @@ def main() -> None:
 
     with tab_analytics:
         st.subheader("📊 Market Analytics")
+        # results_panel will handle the rich analytics in step 5
         from frontend.components.results_panel import render_analytics_view
         render_analytics_view(filtered_all, filtered)
 
