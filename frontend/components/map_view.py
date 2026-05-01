@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import streamlit as st
@@ -37,6 +38,63 @@ _ZONE_COORDS: dict[str, tuple[float, float]] = {
 }
 
 
+def _geometry_centroid(geometry: dict) -> tuple[float, float] | None:
+    """Compute centroid from GeoJSON Polygon/MultiPolygon coordinates."""
+    geom_type = str(geometry.get("type", ""))
+    coords = geometry.get("coordinates")
+    if not coords:
+        return None
+
+    points: list[tuple[float, float]] = []
+    polygons = [coords] if geom_type == "Polygon" else coords if geom_type == "MultiPolygon" else []
+    for poly in polygons:
+        if not poly or not poly[0]:
+            continue
+        for point in poly[0]:
+            if not isinstance(point, (list, tuple)) or len(point) < 2:
+                continue
+            points.append((float(point[1]), float(point[0])))
+    if not points:
+        return None
+    lat = sum(p[0] for p in points) / len(points)
+    lon = sum(p[1] for p in points) / len(points)
+    return (lat, lon)
+
+
+@st.cache_data(show_spinner=False)
+def _build_recommended_zone_coords(zone_ids: tuple[str, ...]) -> dict[str, tuple[float, float]]:
+    """Build coords for only requested zone_ids via zone->NTA crosswalk."""
+    if not zone_ids or not _GEOJSON_PATH.exists():
+        return {}
+    try:
+        from src.features.zone_crosswalk import ZONE_TO_NTA
+
+        payload = json.loads(_GEOJSON_PATH.read_text(encoding="utf-8"))
+        nta_centroids: dict[str, tuple[float, float]] = {}
+        for feature in payload.get("features", []):
+            props = feature.get("properties", {}) if isinstance(feature, dict) else {}
+            nta = str(props.get("nta2020", "")).strip().upper()
+            if not nta:
+                continue
+            centroid = _geometry_centroid(feature.get("geometry", {}) or {})
+            if centroid is not None:
+                nta_centroids[nta] = centroid
+
+        zone_coords: dict[str, tuple[float, float]] = {}
+        for zone_id in zone_ids:
+            nta_list = ZONE_TO_NTA.get(zone_id, [])
+            pts = [nta_centroids[nta] for nta in nta_list if nta in nta_centroids]
+            if not pts:
+                continue
+            zone_coords[zone_id] = (
+                sum(p[0] for p in pts) / len(pts),
+                sum(p[1] for p in pts) / len(pts),
+            )
+        return zone_coords
+    except (ValueError, KeyError, TypeError, ImportError, OSError, json.JSONDecodeError):
+        return {}
+
+
 def render_map_view(recommendations: list[dict] | None = None) -> None:
     """Render micro-zone opportunity scores on a map.
 
@@ -52,10 +110,14 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
         try:
             import plotly.graph_objects as go
 
+            recommended_ids = tuple(
+                str(rec.get("zone_id", "")) for rec in recommendations if rec.get("zone_id")
+            )
+            dynamic_coords = _build_recommended_zone_coords(recommended_ids)
             lats, lons, texts, scores, zone_ids = [], [], [], [], []
             for rec in recommendations:
                 zid = rec.get("zone_id", "")
-                coords = _ZONE_COORDS.get(zid)
+                coords = _ZONE_COORDS.get(zid) or dynamic_coords.get(str(zid))
                 if coords is None:
                     continue
                 lats.append(coords[0])
@@ -77,11 +139,12 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
                         lon=lons,
                         mode="markers",
                         marker=go.scattermapbox.Marker(
-                            size=18,
+                            size=13,
                             color=scores,
-                            colorscale="RdYlGn",
+                            colorscale="Viridis",
                             cmin=0,
                             cmax=100,
+                            opacity=0.95,
                             colorbar=dict(title="Score %", thickness=12),
                         ),
                         text=texts,
@@ -96,23 +159,7 @@ def render_map_view(recommendations: list[dict] | None = None) -> None:
                 )
                 st.plotly_chart(fig, use_container_width=True)
                 return
-        except Exception:
+        except (ValueError, TypeError, ImportError):
             pass  # fall through to plain map
 
-    # Plain NTA centroid fallback
-    if _GEOJSON_PATH.exists():
-        try:
-            import geopandas as gpd
-
-            gdf = gpd.read_file(str(_GEOJSON_PATH))
-            centroids = gdf.copy()
-            centroids["geometry"] = centroids.geometry.centroid
-            centroids["lat"] = centroids.geometry.y
-            centroids["lon"] = centroids.geometry.x
-            points_df = centroids[["lat", "lon"]].dropna()
-            st.map(points_df, zoom=10)
-            return
-        except Exception:
-            pass
-
-    st.info("Map: micro-zone geometries render here once boundary data is loaded.")
+    st.info("No recommendation points to display for the current query.")

@@ -68,8 +68,36 @@ def _render_driver_chart(feature_contributions: dict, chart_key: str) -> None:
     st.plotly_chart(fig, use_container_width=True, key=chart_key)
 
 
-def render_recommendation_card(card: dict, cluster: str = "") -> None:
-    zone_id = str(card.get("zone_id", card.get("zone_name", "unknown-zone")))
+def _render_evidence_snapshot(
+    feature_contributions: dict, positive_drivers: list, risk_flags: list
+) -> None:
+    """Render a compact evidence line with minimal UI blocks."""
+    drivers_text = "Unavailable"
+    if feature_contributions:
+        ordered = sorted(
+            feature_contributions.items(),
+            key=lambda kv: abs(float(kv[1])),
+            reverse=True,
+        )
+        top = ordered[:2]
+        if top:
+            labels = [
+                FEATURE_DISPLAY_NAMES.get(k, k.replace("_", " ").title()) for k, _ in top
+            ]
+            drivers_text = ", ".join(labels)
+
+    positive_text = positive_drivers[0] if positive_drivers else "Not available"
+    risk_text = risk_flags[0] if risk_flags else "Not available"
+
+    st.markdown("**Evidence**")
+    st.caption(f"Model drivers: {drivers_text}")
+    st.caption(f"Positive signal: {positive_text}")
+    st.caption(f"Risk signal: {risk_text}")
+
+
+def render_recommendation_card(
+    card: dict, cluster: str = "", key_namespace: str = ""
+) -> None:
     zone_type = str(card.get("zone_type", ""))
     zone_label = str(card.get("zone_name", card.get("zone_label", "")))
     score_progress = float(
@@ -82,8 +110,10 @@ def render_recommendation_card(card: dict, cluster: str = "") -> None:
     feature_contributions = card.get("feature_contributions") or {}
     recommended_subtype = str(card.get("recommended_subtype", "") or "")
     similar_restaurants = card.get("similar_restaurants") or []
-    risk_flags = card.get("risk_flags") or []
-    positive_drivers = card.get("positive_drivers") or []
+    risk_flags = card.get("risk_flags") or card.get("risks") or []
+    positive_drivers = card.get("positive_drivers") or card.get("positives") or []
+    scoring_path = str(card.get("scoring_path", "unknown") or "unknown")
+    model_version = str(card.get("model_version", "unknown") or "unknown")
 
     with st.container(border=True):
         col_badge, col_cluster = st.columns([3, 2])
@@ -104,24 +134,16 @@ def render_recommendation_card(card: dict, cluster: str = "") -> None:
             "Confidence",
             _CONFIDENCE_BADGE.get(confidence_bucket, confidence_bucket or "—"),
         )
+        st.caption(f"Scoring path: {scoring_path} | Model: {model_version}")
 
         st.progress(max(0.0, min(1.0, score_progress)))
-        st.caption("Higher opportunity is better. Lower survival risk is safer.")
+        st.caption(
+            "Interpretation: higher opportunity suggests stronger fit; lower survival risk suggests safer execution."
+        )
 
         summary = healthy_gap_summary.strip() or _build_gap_summary(card, cluster)
-        st.write(summary)
-
-        # Positive drivers
-        if positive_drivers:
-            with st.expander("Positive signals", expanded=False):
-                for driver in positive_drivers[:4]:
-                    st.success(driver, icon="✅")
-
-        # Risk flags
-        if risk_flags:
-            with st.expander("Risk flags", expanded=False):
-                for flag in risk_flags[:4]:
-                    st.warning(flag, icon="⚠️")
+        st.markdown(f"**Model summary:** {summary}")
+        _render_evidence_snapshot(feature_contributions, positive_drivers, risk_flags)
 
         # Similar existing restaurants
         if similar_restaurants:
@@ -129,11 +151,5 @@ def render_recommendation_card(card: dict, cluster: str = "") -> None:
                 "Nearby comps: " + ", ".join(str(r) for r in similar_restaurants[:5])
             )
 
-        with st.expander("Score breakdown"):
-            st.caption("See which signals raised or lowered the score.")
-            _render_driver_chart(
-                feature_contributions, chart_key=f"score-breakdown-{zone_id}"
-            )
-
         if freshness_note:
-            st.caption(freshness_note)
+            st.caption(f"Data source: {freshness_note}")

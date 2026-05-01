@@ -69,13 +69,14 @@ def _fetch_recs(
     zone_type: str,
     limit: int,
 ) -> list[dict]:
+    safe_limit = max(1, min(20, int(limit)))
     req = RecommendationRequest(
         concept_subtype=concept_subtype,
         price_tier=price_tier,
         borough=borough,
         risk_tolerance=risk_tolerance,
         zone_type=zone_type or "",
-        limit=limit,
+        limit=safe_limit,
     )
     resp = predict_cmf_sync(req)
     return [
@@ -233,9 +234,7 @@ def main() -> None:
             zone_type = ""
         if borough == "Any":
             borough = None
-        limit = int(active_query.get("limit", 5))
-        compare_mode = bool(active_query.get("compare_mode", False))
-        compare_concept = active_query.get("compare_concept")
+        limit = max(1, min(20, int(active_query.get("limit", 5))))
         # Header metrics row
         hm1, hm2, hm3, hm4 = st.columns(4)
         hm1.metric("NYC zones analyzed", "137")
@@ -266,35 +265,13 @@ def main() -> None:
             _render_zone_overview(recs)
             render_map_view(recs)
             st.divider()
-
-            if compare_mode and compare_concept and compare_concept != concept:
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.subheader(f"A: {concept}")
-                    render_results_panel(
-                        active_query,
-                        recommendations=recs[:3],
-                        cluster_map=cluster_map,
-                        featured_zone_id=featured_zone_id,
-                    )
-                with col_b:
-                    st.subheader(f"B: {compare_concept}")
-                    recs_b = _fetch_recs(
-                        compare_concept, price, borough, risk, zone_type, limit
-                    )
-                    cluster_map_b = _fetch_clusters(compare_concept, risk, price)
-                    render_results_panel(
-                        {**active_query, "concept_subtype": compare_concept},
-                        recommendations=recs_b[:3],
-                        cluster_map=cluster_map_b,
-                    )
-            else:
-                render_results_panel(
-                    active_query,
-                    recommendations=recs,
-                    cluster_map=cluster_map,
-                    featured_zone_id=featured_zone_id,
-                )
+            render_results_panel(
+                active_query,
+                recommendations=recs,
+                cluster_map=cluster_map,
+                featured_zone_id=featured_zone_id,
+                key_namespace=f"single-{concept}",
+            )
 
     with tab_data:
         _render_data_sources_tab()

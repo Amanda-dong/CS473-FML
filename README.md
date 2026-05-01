@@ -8,6 +8,21 @@ Updated: April 30, 2026
 Course project · Spring 2026
 Repo: <https://github.com/Amanda-dong/CS473-FML>
 
+## Reliability Note (Current Main Branch)
+
+The canonical feature table (`data/processed/feature_matrix.parquet`) was built
+from multiple public sources with uneven historical coverage. During integration,
+many feature columns had missing values and were imputed through fallback rules
+(including median-based fills in the quality pipeline). As a result, parts of
+the legacy scoring flow can rely on fallback-heavy inputs, and those model
+outputs should be treated as directionally useful rather than fully reliable for
+high-stakes decisions.
+
+Because of this limitation, we introduced a new simplified method in `main` for
+more stable decision support. The processed dataset can still contain
+fallback-imputed values (including median fills), but when the learned model is
+available (we pushed it in data/models), the app displays the trained model output without heuristic fallback output.
+
 ## Teammates
 
 - Amanda Dong (`yd2825`) — [GitHub](https://github.com/Amanda-dong)

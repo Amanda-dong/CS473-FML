@@ -104,6 +104,7 @@ def render_results_panel(
     recommendations: list[dict] | None = None,
     cluster_map: dict[str, str] | None = None,
     featured_zone_id: str | None = None,
+    key_namespace: str = "",
 ) -> None:
     if recommendations is None:
         st.info("Configure your search in the sidebar to see recommendations.")
@@ -132,7 +133,11 @@ def render_results_panel(
     for rec in remaining if featured_zone_id else recommendations:
         zone_type = rec.get("zone_type", "")
         cluster = (cluster_map or {}).get(zone_type, "")
-        render_recommendation_card(rec, cluster=cluster)
+        render_recommendation_card(
+            rec,
+            cluster=cluster,
+            key_namespace=key_namespace,
+        )
 
     csv_bytes = _make_csv(recommendations)
     st.download_button(

@@ -68,6 +68,7 @@ def _resolve_scoring_version(model: object, path: str) -> str:
 
 
 _SCORING_MODEL_VERSION = _resolve_scoring_version(_SCORING_MODEL, _SCORING_MODEL_PATH)
+_STRICT_LEARNED_ONLY = True
 
 _GEMINI_ZONE_PATH = Path("data/raw/gemini_full_zone_features.csv")
 
@@ -411,6 +412,32 @@ def _confidence_bucket(score: float) -> str:
     return "low"
 
 
+def _estimate_survival_risk(
+    features: dict[str, float], baseline_survival_score: float
+) -> float:
+    """Estimate survival risk with risk-side signals (separate from opportunity)."""
+    base_risk = 1.0 - float(np.clip(baseline_survival_score, 0.0, 1.0))
+    rent_pressure = float(np.clip(_safe_float(features.get("rent_pressure"), 0.35), 0.0, 1.0))
+    competition = float(
+        np.clip(_safe_float(features.get("restaurant_count_static"), 0.0) / 60.0, 0.0, 1.0)
+    )
+    inspection_quality = float(
+        np.clip(_safe_float(features.get("inspection_grade_avg_static"), 0.75), 0.0, 1.0)
+    )
+    license_velocity = float(_safe_float(features.get("license_velocity"), 0.0))
+    velocity_risk = float(np.clip(0.5 - (1.0 / (1.0 + np.exp(-license_velocity))), 0.0, 1.0))
+
+    # Weighted to keep risk interpretable and less coupled to opportunity score.
+    risk = (
+        base_risk * 0.45
+        + rent_pressure * 0.25
+        + competition * 0.15
+        + (1.0 - inspection_quality) * 0.10
+        + velocity_risk * 0.05
+    )
+    return float(np.clip(risk, 0.0, 1.0))
+
+
 def _score_one(
     zone_id: str,
     zone_type: str,
@@ -430,7 +457,9 @@ def _score_one(
     feature_contributions = {
         k: round(float(v), 4) for k, v in dataclasses.asdict(components).items()
     }
-    survival_risk = round(1.0 - components.merchant_viability_score, 4)
+    survival_risk = round(
+        _estimate_survival_risk(feats, components.merchant_viability_score), 4
+    )
     gap_pct = int(feats["subtype_gap"] * 100)
     concept_display = concept_subtype.replace("_", " ")
     borough = _ZONE_META.get(zone_id, ("", "", "Any"))[2]
@@ -571,7 +600,7 @@ def _score_with_learned_model(
     survival_score = feats.get(
         "target", feats.get("merchant_viability", feats.get("survival_score", 0.5))
     )
-    survival_risk = round(1.0 - float(survival_score), 4)
+    survival_risk = round(_estimate_survival_risk(feats, float(survival_score)), 4)
     borough = _ZONE_META.get(zone_id, ("", "", "Any"))[2]
 
     return ZoneRecommendation(
@@ -583,13 +612,15 @@ def _score_with_learned_model(
         opportunity_score=float(np.clip(pred_score, 0.0, 1.0)),
         confidence_bucket=_confidence_bucket(pred_score),
         healthy_gap_summary=(
-            f"{concept_subtype.replace('_', ' ').title()} ML-scored opportunity zone."
+            f"Trained-model estimate for {concept_subtype.replace('_', ' ').title()}: "
+            "this zone shows relatively stronger opportunity than peers in the same query."
         ),
         positives=top_positive_drivers(feats),
         risks=top_risks(feats),
         freshness_note=(
             "Data sourced from NYC Open Data (permits, licenses, inspections, PLUTO). "
-            "Last refreshed: 2026-04."
+            "Last refreshed: 2026-04. "
+            "Scores shown here come from the trained model output."
         ),
         feature_contributions=feature_contributions,
         survival_risk=survival_risk,
@@ -643,40 +674,30 @@ def predict_cmf_sync(request: RecommendationRequest) -> RecommendationResponse:
             )
             if rec is not None:
                 scored.append(rec)
-        # Fall through to heuristic for any zones not in the feature matrix
-        scored_ids = {r.zone_id for r in scored}
-        fallback_count = 0
-        for zid, ztype, zlabel, _boro in candidates:
-            if zid not in scored_ids:
-                rec = _score_one(
-                    zid,
-                    ztype,
-                    zlabel,
-                    subtype,
-                    request.risk_tolerance,
-                    request.price_tier,
+        if _STRICT_LEARNED_ONLY:
+            learned_count = len(scored)
+            if learned_count < len(candidates):
+                logger.warning(
+                    "Strict learned mode: %d/%d zones dropped (missing learned features)",
+                    len(candidates) - learned_count,
+                    len(candidates),
                 )
-                rec.scoring_path = "heuristic_fallback"
-                scored.append(rec)
-                fallback_count += 1
-        if fallback_count:
-            logger.warning(
-                "%d/%d zones used heuristic fallback (not in feature matrix)",
-                fallback_count,
+    else:
+        if _STRICT_LEARNED_ONLY:
+            logger.error("Strict learned mode enabled but learned model is unavailable.")
+            scored = []
+        else:
+            # --- Heuristic fallback path (original) ---
+            logger.info(
+                "Using heuristic path for %d candidates (no learned model loaded)",
                 len(candidates),
             )
-    else:
-        # --- Heuristic fallback path (original) ---
-        logger.info(
-            "Using heuristic path for %d candidates (no learned model loaded)",
-            len(candidates),
-        )
-        scored = [
-            _score_one(
-                zid, ztype, zlabel, subtype, request.risk_tolerance, request.price_tier
-            )
-            for zid, ztype, zlabel, _boro in candidates
-        ]
+            scored = [
+                _score_one(
+                    zid, ztype, zlabel, subtype, request.risk_tolerance, request.price_tier
+                )
+                for zid, ztype, zlabel, _boro in candidates
+            ]
 
     ranked_dicts = rank_zones([r.model_dump() for r in scored], diversity_weight=0.5)
     top_n = [ZoneRecommendation(**d) for d in ranked_dicts[: request.max_results]]

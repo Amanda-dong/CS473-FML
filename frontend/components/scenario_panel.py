@@ -83,8 +83,8 @@ def _render_cuisine_picker(subtypes: list[str]) -> str:
     return selected
 
 
-def render_scenario_panel() -> dict[str, str | bool | None]:
-    """Render cuisine subtype, price, risk, and optional compare controls."""
+def render_scenario_panel() -> dict[str, str]:
+    """Render cuisine subtype, price tier, and risk tolerance controls."""
     subtypes = list(all_known_subtypes()) + ["__custom__"]
     concept_subtype = _render_cuisine_picker(subtypes)
 
@@ -101,32 +101,8 @@ def render_scenario_panel() -> dict[str, str | bool | None]:
         help="How adventurous the shortlist should be for a new opening.",
     )
 
-    compare_mode = st.checkbox(
-        "Compare two concepts",
-        value=False,
-        key=FORM_KEYS["compare_mode"],
-        help="Score a second concept side-by-side to contrast opportunity zones.",
-    )
-    compare_concept: str | None = None
-    if compare_mode:
-        compare_subtypes = list(all_known_subtypes())
-        compare_labels = [
-            _DISPLAY_NAMES.get(s, s.replace("_", " ").title()) for s in compare_subtypes
-        ]
-        default_idx = 1 if len(compare_subtypes) > 1 else 0
-        compare_idx = st.selectbox(
-            "Compare with",
-            options=range(len(compare_subtypes)),
-            format_func=lambda i: compare_labels[i],
-            index=default_idx,
-            key=FORM_KEYS["compare_concept"],
-        )
-        compare_concept = compare_subtypes[compare_idx]
-
     return {
         "concept_subtype": concept_subtype,
         "price_tier": price_tier,
         "risk_tolerance": risk_tolerance,
-        "compare_mode": compare_mode,
-        "compare_concept": compare_concept,
     }

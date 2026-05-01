@@ -10,8 +10,6 @@ FORM_KEYS: dict[str, str] = {
     "custom_concept": "custom_concept_input",
     "price_tier": "price_tier_select",
     "risk_tolerance": "risk_tolerance_select",
-    "compare_mode": "compare_mode_cb",
-    "compare_concept": "compare_concept_select",
 }
 
 FORM_DEFAULTS: dict[str, object] = {
@@ -22,6 +20,4 @@ FORM_DEFAULTS: dict[str, object] = {
     "custom_concept": "",
     "price_tier": "mid",
     "risk_tolerance": "balanced",
-    "compare_mode": False,
-    "compare_concept": 1,
 }

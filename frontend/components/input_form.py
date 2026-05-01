@@ -48,10 +48,10 @@ def render_input_form() -> dict[str, str | int]:
     limit = st.slider(
         "Shortlist size",
         min_value=1,
-        max_value=50,
+        max_value=20,
         value=5,
         key=FORM_KEYS["limit"],
-        help="Number of top-ranked micro-zones to display. Start with 5 for a focused shortlist.",
+        help="Number of top-ranked micro-zones to display (1-20). Start with 5 for a focused shortlist.",
     )
     return {
         "zone_type": "" if zone_type == "All" else zone_type,
