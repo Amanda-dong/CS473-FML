@@ -286,11 +286,12 @@ def _build_zone_catalog() -> list[tuple[str, str, str, str]]:
     for zone_id in zone_ids:
         if zone_id in seen:
             continue
+        # NTA fallback zones are intentionally excluded from the UI candidate set;
+        # only curated micro-zones / boroughs are shown to the user.
+        if zone_id.startswith("nta-"):
+            continue
         zone_type = _infer_zone_type(zone_id)
-        if zone_type == "nta_fallback":
-            zone_label = f"NTA Fallback ({zone_id[4:].upper()})"
-        else:
-            zone_label = zone_id.replace("-", " ").title()
+        zone_label = zone_id.replace("-", " ").title()
         borough = "Any"
         catalog.append((zone_id, zone_type, zone_label, borough))
         seen.add(zone_id)
