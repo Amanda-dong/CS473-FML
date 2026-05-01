@@ -271,6 +271,8 @@ def render_recommendation_card(
     halal_demand_forecast_norm = row.get("halal_demand_forecast_norm", None)
     similar_ntas_raw = str(row.get("similar_ntas", "") or "")
     similar_ntas = [s.strip() for s in similar_ntas_raw.split(",") if s.strip()]
+    latent_demand_score = row.get('latent_demand_score', None)
+    cluster_confidence = row.get('cluster_confidence', None)
 
     emoji = MARKET_TYPE_EMOJI.get(market_type, "📍")
 
@@ -330,10 +332,45 @@ def render_recommendation_card(
                 _signal_label(gap_score),
                 help="max(demand − supply, 0) — unmet demand proxy.",
             )
+            cl1, cl2 = st.columns([1, 2])
+            cl1.metric(
+                'Latent Demand',
+                _signal_label(latent_demand_score) if latent_demand_score is not None else '—',
+                help='Implicit halal interest + keyword signals + neighborhood activity. Captures demand in areas without established halal restaurants.',
+            )
+            if cluster_confidence is not None:
+                try:
+                    cc = float(cluster_confidence)
+                    if cc < 0.25:
+                        cl2.warning(f'⚠ Borderline cluster (confidence {cc:.2f}) — market type label may change with new data.')
+                except (TypeError, ValueError):
+                    pass
             st.progress(float(final_score) if final_score else 0.0)
             st.caption(
                 "Score = 0.4×demand + 0.4×gap + 0.2×viability. Radar shows 5 dimensions."
             )
+
+        with st.expander('Score breakdown', expanded=False):
+            try:
+                import plotly.graph_objects as go
+                contrib_fig = go.Figure(go.Bar(
+                    x=[0.4 * float(demand_score), 0.4 * float(gap_score), 0.2 * float(viability_score)],
+                    y=['Demand signal', 'Supply gap', 'Viability'],
+                    orientation='h',
+                    marker_color=['#e63946', '#2a9d8f', '#457b9d'],
+                    text=[f'{0.4*float(demand_score):.3f}', f'{0.4*float(gap_score):.3f}', f'{0.2*float(viability_score):.3f}'],
+                    textposition='outside',
+                ))
+                contrib_fig.update_layout(
+                    xaxis=dict(range=[0, 0.42], title='Contribution to score'),
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    height=150,
+                    showlegend=False,
+                )
+                st.plotly_chart(contrib_fig, use_container_width=True, config={'displayModeBar': False})
+                st.caption(f'Weights: Demand 40% · Supply gap 40% · Viability 20%. Sum = {float(demand_score)*0.4 + float(gap_score)*0.4 + float(viability_score)*0.2:.3f}')
+            except Exception:
+                pass
 
         # Yelp / Gemini labeled review evidence for this zone
         with st.expander(
@@ -433,7 +470,7 @@ def render_recommendation_card(
         # Risk section
         with st.expander("Risk", expanded=False):
             try:
-                risk_prob = float(high_risk_prob)
+                risk_prob = 1.0 - float(viability_score)
             except (TypeError, ValueError):
                 risk_prob = 0.5
 

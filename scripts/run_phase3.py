@@ -9,23 +9,17 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.config import CFG
 from src.halal_forecast import build_entry_forecast, build_forecast
 from src.halal_risk import build_gmm_risk
+from src.halal_spatial import build_lisa
+from src.utils import minmax as _minmax
 
 
 OUT_DIR = ROOT / "data" / "output"
 PHASE2 = OUT_DIR / "phase2_opportunity_scores.csv"
 RISK_OUT = OUT_DIR / "phase3_risk_scores.csv"
 FINAL_OUT = OUT_DIR / "final_recommendations.csv"
-
-
-def _minmax(series: pd.Series) -> pd.Series:
-    s = series.astype(float)
-    min_v = s.min()
-    max_v = s.max()
-    if pd.isna(min_v) or pd.isna(max_v) or max_v == min_v:
-        return pd.Series(0.5, index=s.index)
-    return (s - min_v) / (max_v - min_v)
 
 
 def main() -> None:
@@ -74,6 +68,15 @@ def main() -> None:
     print(entry_diag["bottom_actual"].to_string(index=False))
 
     phase2 = pd.read_csv(PHASE2).copy()
+    # --- LISA spatial opportunity detection ---
+    try:
+        lisa_df = build_lisa(phase2[["nta_id", "gap_score"]].copy())
+        lisa_available = True
+    except Exception as e:
+        print(f"LISA skipped: {e}")
+        lisa_df = None
+        lisa_available = False
+
     phase2 = phase2.drop(
         columns=[
             c
@@ -96,6 +99,17 @@ def main() -> None:
         .merge(forecast_df, on="nta_id", how="left")
         .merge(entry_df, on="nta_id", how="left")
     )
+    if lisa_available and lisa_df is not None:
+        final = final.merge(lisa_df, on="nta_id", how="left")
+        for col in ["lisa_q", "lisa_p", "lisa_sig", "lisa_opportunity"]:
+            if col in final.columns:
+                if col == "lisa_opportunity":
+                    final[col] = final[col].fillna(False)
+                elif col == "lisa_q":
+                    final[col] = final[col].fillna(0)
+                else:
+                    final[col] = final[col].fillna(1.0)
+
     final["high_risk_prob"] = final["high_risk_prob"].fillna(0.5)
     median_forecast = (
         float(forecast_df["halal_demand_forecast"].median())
@@ -116,9 +130,14 @@ def main() -> None:
     final["halal_demand_forecast_norm"] = _minmax(final["halal_demand_forecast"])
     final["final_score_adjusted"] = (
         final["final_score"]
-        * (1 - 0.15 * final["high_risk_prob"])
-        * (1 + 0.10 * final["halal_demand_forecast_norm"])
+        * (1 - CFG.risk_penalty * final["high_risk_prob"])
+        * (1 + CFG.forecast_boost * final["halal_demand_forecast_norm"])
     )
+    if lisa_available and "lisa_opportunity" in final.columns:
+        final["final_score_adjusted"] = final["final_score_adjusted"] * (
+            1 + 0.08 * final["lisa_opportunity"].fillna(False).astype(float)
+        )
+
     final = final.sort_values("final_score_adjusted", ascending=False).reset_index(
         drop=True
     )

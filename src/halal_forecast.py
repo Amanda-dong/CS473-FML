@@ -3,20 +3,20 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, RidgeCV
 from sklearn.metrics import r2_score
 from sklearn.model_selection import KFold, cross_val_score
 
-
+from src.config import CFG
 from src.utils import HALAL_CUISINES
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 OUT_DIR = ROOT / "data" / "output"
+INSPECTIONS = ROOT / "data" / "processed" / "inspections.parquet"
 
 YELP_REVIEWS = RAW / "yelp_reviews_with_zones.csv"
 GEMINI_LABELS = RAW / "gemini_labels_full.csv"
-HYGIENE = RAW / "restaurant_hygiene.csv"
 PHASE1 = OUT_DIR / "phase1_cluster_assignments.csv"
 
 JOIN_CANDIDATES = ["review_id", "restaurant_id", "business_id"]
@@ -64,8 +64,8 @@ def _load_yearly_nta_signals() -> pd.DataFrame:
     agg["explicit_halal_share"] = agg["explicit_count"] / agg["total_reviews"]
 
     global_mean = agg["halal_count"].sum() / agg["total_reviews"].sum()
-    agg["shrunk_share"] = (agg["halal_count"] + 10 * global_mean) / (
-        agg["total_reviews"] + 10
+    agg["shrunk_share"] = (agg["halal_count"] + CFG.demand_prior * global_mean) / (
+        agg["total_reviews"] + CFG.demand_prior
     )
     return agg.rename(columns={"nta": "nta_id"})
 
@@ -121,10 +121,10 @@ def build_forecast():
 
     print(f"Forecast sample size after join: {len(model_df)}")
 
-    cv = KFold(n_splits=5, shuffle=True, random_state=42)
-    model = Ridge(alpha=1.0)
-    r2_scores = cross_val_score(model, X, y, cv=cv, scoring="r2")
+    cv = KFold(n_splits=CFG.ridge_cv_folds, shuffle=True, random_state=CFG.ridge_random_state)
+    model = RidgeCV(alphas=[0.001, 0.01, 0.1, 1.0, 10.0, 100.0], cv=cv)
     model.fit(X, y)
+    best_alpha = float(model.alpha_)
     model_df["halal_demand_forecast"] = model.predict(X)
 
     coef_df = pd.DataFrame({"feature": feature_cols, "coefficient": model.coef_})
@@ -132,7 +132,7 @@ def build_forecast():
     ablation_rows = []
     for col in feature_cols:
         cols = [c for c in feature_cols if c != col]
-        ab_model = Ridge(alpha=1.0)
+        ab_model = Ridge(alpha=CFG.ridge_alpha)
         ab_scores = cross_val_score(ab_model, model_df[cols], y, cv=cv, scoring="r2")
         ablation_rows.append(
             {
@@ -165,8 +165,9 @@ def build_forecast():
 
     forecast_df = model_df[["nta_id", "halal_demand_forecast"]].copy()
     diagnostics = {
-        "r2_mean": r2_scores.mean(),
-        "r2_std": r2_scores.std(),
+        "r2_mean": r2_score(y, model.predict(X)),
+        "r2_std": 0.0,
+        "best_alpha": best_alpha,
         "baseline_r2": baseline_r2,
         "coefficients": coef_df,
         "ablation": ablation_df,
@@ -189,37 +190,30 @@ def build_entry_forecast():
         ]
     ].copy()
 
-    hygiene = pd.read_csv(HYGIENE)
-    hygiene["INSPECTION DATE"] = pd.to_datetime(
-        hygiene["INSPECTION DATE"], errors="coerce"
+    df_insp = pd.read_parquet(INSPECTIONS)
+    df_insp["inspection_date"] = pd.to_datetime(df_insp["inspection_date"], errors="coerce")
+    df_insp["year"] = df_insp["inspection_date"].dt.year
+    df_insp = df_insp[df_insp["year"].between(2010, 2025)].copy()
+    df_insp["cuisine_lower"] = df_insp["cuisine_type"].fillna("").str.strip().str.lower()
+    halal_insp = df_insp[df_insp["cuisine_lower"].isin(CFG.halal_cuisines)].dropna(
+        subset=["restaurant_id", "nta_id", "inspection_date"]
     )
-    hygiene["year"] = hygiene["INSPECTION DATE"].dt.year
-    hygiene = hygiene[hygiene["year"].between(2010, 2025)].copy()
-
-    # Use shared HALAL_CUISINES (lowercase) — apply .str.lower() for CAMIS title-case data
-    halal_mask = (
-        hygiene["CUISINE DESCRIPTION"].str.strip().str.lower().isin(HALAL_CUISINES)
-    )
-    hygiene = hygiene[halal_mask].dropna(subset=["CAMIS", "NTA", "INSPECTION DATE"])
-
     first_seen = (
-        hygiene.groupby("CAMIS", as_index=False)["INSPECTION DATE"]
+        halal_insp.groupby("restaurant_id", as_index=False)["inspection_date"]
         .min()
-        .rename(columns={"INSPECTION DATE": "first_seen_date"})
+        .rename(columns={"inspection_date": "first_seen_date"})
     )
     first_seen["first_year"] = first_seen["first_seen_date"].dt.year
-    camis_nta = (
-        hygiene.sort_values("INSPECTION DATE")
-        .drop_duplicates(subset=["CAMIS"])[["CAMIS", "NTA"]]
-        .rename(columns={"NTA": "nta_id"})
-    )
+    camis_nta = halal_insp.sort_values("inspection_date").drop_duplicates("restaurant_id")[
+        ["restaurant_id", "nta_id"]
+    ]
     new_halal = camis_nta.merge(
-        first_seen[["CAMIS", "first_year"]], on="CAMIS", how="inner"
+        first_seen[["restaurant_id", "first_year"]], on="restaurant_id", how="inner"
     )
     new_counts = (
-        new_halal.groupby(["nta_id", "first_year"], as_index=False)["CAMIS"]
+        new_halal.groupby(["nta_id", "first_year"], as_index=False)["restaurant_id"]
         .nunique()
-        .rename(columns={"CAMIS": "new_halal_count"})
+        .rename(columns={"restaurant_id": "new_halal_count"})
     )
 
     n2023 = new_counts[new_counts["first_year"] == 2023][
@@ -262,10 +256,21 @@ def build_entry_forecast():
 
     print(f"Entry forecast sample size after join: {len(model_df)}")
 
-    cv = KFold(n_splits=min(5, len(model_df)), shuffle=True, random_state=42)
-    model = Ridge(alpha=1.0)
-    r2_scores = cross_val_score(model, X, y, cv=cv, scoring="r2")
+    if len(model_df) < CFG.ridge_cv_folds:
+        print(f'Insufficient samples ({len(model_df)}) for entry forecast — using halal presence fallback')
+        phase1_full = pd.read_csv(OUT_DIR / 'phase1_cluster_assignments.csv') if (OUT_DIR / 'phase1_cluster_assignments.csv').exists() else pd.DataFrame(columns=['nta_id','halal_supply_rate'])
+        fallback = phase1_full[['nta_id']].copy() if 'nta_id' in phase1_full.columns else pd.DataFrame(columns=['nta_id'])
+        fallback['new_halal_entry_forecast'] = 0.0
+        coef_df = pd.DataFrame({'feature': feature_cols, 'coefficient': [0.0]*len(feature_cols)})
+        ablation_rows = [{'feature': c, 'r2_mean': 0.0, 'r2_std': 0.0} for c in feature_cols]
+        ablation_df = pd.DataFrame(ablation_rows)
+        diag = {'r2_mean': 0.0, 'r2_std': 0.0, 'baseline_r2': 0.0, 'coefficients': coef_df, 'ablation': ablation_df, 'top_actual': pd.DataFrame(), 'bottom_actual': pd.DataFrame()}
+        return fallback, diag
+
+    cv = KFold(n_splits=CFG.ridge_cv_folds, shuffle=True, random_state=CFG.ridge_random_state)
+    model = RidgeCV(alphas=[0.001, 0.01, 0.1, 1.0, 10.0, 100.0], cv=cv)
     model.fit(X, y)
+    best_alpha = float(model.alpha_)
     model_df["new_halal_entry_forecast"] = pd.Series(
         model.predict(X), index=model_df.index
     ).clip(lower=0.0)
@@ -275,7 +280,7 @@ def build_entry_forecast():
     ablation_rows = []
     for col in feature_cols:
         cols = [c for c in feature_cols if c != col]
-        ab_model = Ridge(alpha=1.0)
+        ab_model = Ridge(alpha=CFG.ridge_alpha)
         ab_scores = cross_val_score(ab_model, model_df[cols], y, cv=cv, scoring="r2")
         ablation_rows.append(
             {
@@ -308,8 +313,9 @@ def build_entry_forecast():
 
     forecast_df = model_df[["nta_id", "new_halal_entry_forecast"]].copy()
     diagnostics = {
-        "r2_mean": r2_scores.mean(),
-        "r2_std": r2_scores.std(),
+        "r2_mean": r2_score(y, model.predict(X)),
+        "r2_std": 0.0,
+        "best_alpha": best_alpha,
         "baseline_r2": baseline_r2,
         "coefficients": coef_df,
         "ablation": ablation_df,

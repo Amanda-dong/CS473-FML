@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.config import CFG
 from src.halal_demand import build_demand
 from src.halal_opportunity import build_gap, build_supply
 from src.halal_kmeans import HalalKMeans, run_kmeans
@@ -24,7 +25,7 @@ def main() -> None:
     supply = build_supply()
     merged = build_gap(demand, supply)
 
-    feature_cols = ["demand_score", "halal_supply_rate", "gap_score"]
+    feature_cols = ['demand_score', 'latent_demand_score', 'halal_supply_rate', 'halal_cuisine_diversity_norm']
 
     elbow_df = merged.dropna(subset=feature_cols).copy()
     means_all = elbow_df[feature_cols].mean()
@@ -76,8 +77,9 @@ def main() -> None:
         .rename(
             columns={
                 "demand_score": "demand_score_mean",
+                "latent_demand_score": "latent_demand_score_mean",
                 "halal_supply_rate": "halal_supply_rate_mean",
-                "gap_score": "gap_score_mean",
+                "halal_cuisine_diversity_norm": "halal_cuisine_diversity_norm_mean",
             }
         )
         .merge(size_df, on="market_type", how="left")
@@ -90,11 +92,11 @@ def main() -> None:
     print(centroid_df.to_string(index=False))
     print("Top 3 NTAs per cluster:")
     for market_type, group in clustered.groupby("market_type"):
-        top3 = group.nlargest(3, "gap_score")[
+        top3 = group.nlargest(3, "latent_demand_score")[
             [
                 "nta_id",
-                "gap_score",
                 "demand_score",
+                "latent_demand_score",
                 "halal_supply_rate",
                 "halal_cuisine_diversity",
             ]
@@ -103,17 +105,18 @@ def main() -> None:
         print(top3.to_string(index=False))
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    extra_demand_cols = [c for c in ['demand_per_capita', 'population', 'demand_ci_lo', 'demand_ci_hi'] if c in clustered.columns]
     assignments = clustered[
         [
-            "nta_id",
-            "cluster_id",
-            "market_type",
-            "demand_score",
-            "halal_supply_rate",
-            "gap_score",
-            "halal_cuisine_diversity",
-        ]
-    ].sort_values(["cluster_id", "nta_id"])
+            'nta_id',
+            'cluster_id',
+            'market_type',
+            'demand_score',
+            'halal_supply_rate',
+            'gap_score',
+            'halal_cuisine_diversity',
+        ] + extra_demand_cols
+    ].sort_values(['cluster_id', 'nta_id'])
     assignments.to_csv(OUT_DIR / "phase1_cluster_assignments.csv", index=False)
     centroid_df.to_csv(OUT_DIR / "phase1_cluster_centroids.csv", index=False)
     elbow_table.to_csv(OUT_DIR / "phase1_elbow_table.csv", index=False)

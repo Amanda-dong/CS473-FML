@@ -23,8 +23,14 @@ class HalalKMeans:
 
     def fit(self, X: np.ndarray):
         rng = np.random.default_rng(self.random_state)
-        init_idx = rng.choice(len(X), size=self.k, replace=False)
-        self.centroids_ = X[init_idx].copy()
+        first_idx = int(rng.integers(0, len(X)))
+        centroids = [X[first_idx].copy()]
+        for _ in range(1, self.k):
+            dists = np.array([min(np.sum((x - c) ** 2) for c in centroids) for x in X])
+            probs = dists / dists.sum()
+            next_idx = int(rng.choice(len(X), p=probs))
+            centroids.append(X[next_idx].copy())
+        self.centroids_ = np.array(centroids)
 
         for i in range(1, self.max_iter + 1):
             labels = self._assign(X)
@@ -48,7 +54,11 @@ class HalalKMeans:
         return self._assign(X)
 
 
-def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4):
+def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4, cfg=None):
+    if cfg is None:
+        from src.config import CFG
+        cfg = CFG
+
     work = df.dropna(subset=feature_cols).copy()
     means = work[feature_cols].mean()
     stds = work[feature_cols].std().replace(0, 1.0)
@@ -58,21 +68,29 @@ def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4):
     km.fit(X)
     work["cluster_id"] = km.labels_
 
+    all_dists = np.linalg.norm(X[:, None, :] - km.centroids_[None, :, :], axis=2)
+    sorted_dists = np.sort(all_dists, axis=1)
+    d1 = sorted_dists[:, 0]
+    d2 = sorted_dists[:, 1]
+    d2_safe = np.maximum(d2, cfg.kmeans_confidence_epsilon)
+    work["cluster_confidence"] = (d2_safe - d1) / d2_safe
+
     centroid_raw = work.groupby("cluster_id", as_index=False)[feature_cols].mean()
     centroid_raw["market_type"] = ""
 
     remaining = set(centroid_raw["cluster_id"].astype(int).tolist())
 
-    rank_col = "gap_score" if "gap_score" in centroid_raw.columns else "demand_score"
-    high_opp_candidates = centroid_raw[centroid_raw["demand_score"] > 0.5]
-    if high_opp_candidates.empty:
-        high_opp_row = centroid_raw.sort_values(
-            [rank_col, "demand_score"], ascending=False
-        ).iloc[0]
-    else:
-        high_opp_row = high_opp_candidates.sort_values(
-            [rank_col, "demand_score"], ascending=False
-        ).iloc[0]
+    median_supply = centroid_raw["halal_supply_rate"].median()
+    low_supply = centroid_raw[centroid_raw["halal_supply_rate"] <= median_supply]
+    if low_supply.empty:
+        low_supply = centroid_raw
+    rank_cols = (
+        ["latent_demand_score", "demand_score"]
+        if "latent_demand_score" in centroid_raw.columns
+        else ["demand_score"]
+    )
+    high_opp_row = low_supply.sort_values(rank_cols, ascending=False).iloc[0]
+
     high_opp_id = int(high_opp_row["cluster_id"])
     centroid_raw.loc[centroid_raw["cluster_id"] == high_opp_id, "market_type"] = (
         "High Opportunity"
@@ -113,6 +131,7 @@ def run_kmeans(df: pd.DataFrame, feature_cols: list[str], k: int = 4):
     counts = work["market_type"].value_counts()
     print(f"Inertia: {km.inertia_:.4f}")
     print(f"Iterations to convergence: {km.n_iter_}")
+    print(f"Mean Confidence: {work['cluster_confidence'].mean():.4f}")
     print("Cluster size counts:")
     print(counts.to_string())
 

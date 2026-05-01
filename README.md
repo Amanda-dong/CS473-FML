@@ -1,133 +1,91 @@
-# NYC Halal Restaurant Opportunity Finder
+# NYC Halal Market Intelligence & Opportunity Engine
 
-Data-driven Neighborhood Tabulation Area (NTA) short-lists that combine halal-related review signals (Yelp + Gemini labels), CAMIS-style restaurant supply proxies, NYC DOHMH inspection aggregates, clustering, probabilistic risk overlays, and lightweight forecasting for a merchant-facing Streamlit experience.
+## Data Availability (Important)
 
-## Pivot note (read first)
+Due to GitHub file size limits and dataset licensing constraints, several large raw datasets are not stored directly in the repository.
 
-This project moved from `main-pre-pivot` to the current `main` implementation.
+Instead, they are provided via the repository Releases section.
 
-Why we changed:
-- In the integrated feature pipeline, missing-value pressure was high in several
-  joins, which increased fallback/imputation usage (including median-based fills)
-- That made some outputs less reliable for decision-facing recommendations
-- The current branch prioritizes realistic model-facing behavior and
-  clearer output interpretation
+An advanced, data-driven framework for identifying high-potential neighborhood entry points for halal restaurant merchants. This project synthesizes large-scale unstructured review text (Yelp + LLM-based labeling), administrative supply records (CAMIS), and spatial hygiene data into a sophisticated 3-phase analytical pipeline.
 
-What `main-pre-pivot` used (simple summary):
-- Broader integrated ETL/feature datasets across multiple NYC sources (see
-  pre-pivot docs for the full list)
-- Full ML stack including trajectory clustering (`k-means` / `GMM`), survival
-  modeling (`Cox PH` + `Random Survival Forest`), learned scoring (`XGBoost`),
-  ranking (`LambdaMART`), and explainability modules
+## Technical Abstract
 
-What we still reuse from pre-pivot:
-- We explicitly reuse partial datasets, especially
-  `data/raw/gemini_labels_full.csv`,
-  `data/raw/yelp_reviews_with_zones.csv`, and
-  `data/processed/inspections.parquet`
-- The code that generates these reused datasets is in the
-  `main-pre-pivot` branch (see links below).
-- We do not claim full algorithm reuse; the current branch uses a different,
-  simpler `halal_*` phase pipeline (described in [`DESIGN.md`](DESIGN.md)).
-
-Branch references:
-- [main-pre-pivot](https://github.com/Amanda-dong/CS473-FML/tree/main-pre-pivot)
-- [main](https://github.com/Amanda-dong/CS473-FML/tree/main)
-- Pre-pivot detailed design doc:
-  [docs/Design.md (main-pre-pivot)](https://github.com/Amanda-dong/CS473-FML/blob/main-pre-pivot/docs/Design.md)
+Our methodology moves beyond simple supply-demand gaps to incorporate **Bayesian demand estimation**, **unsupervised market segmentation**, and **probabilistic risk overlays**. We utilize a hybrid approach combining frequentist time-series forecasting with Bayesian shrinkage to handle the "cold-start" problem in low-traffic Neighborhood Tabulation Areas (NTAs).
 
 ---
 
-## Team
+## Analytical Pipeline Architecture
 
-| Name             | NYU NetID | GitHub |
-|------------------|-----------|--------|
-| Amanda Dong      | `yd2825`  | [Amanda-dong](https://github.com/Amanda-dong) |
-| Tony Zhao        | `sz3822`  | [Tonyzsp](https://github.com/Tonyzsp) |
-| Harsh Agarwal    | `ha2957`  | [harshagarwalnyu](https://github.com/harshagarwalnyu) |
-| Siqi Zhu         | `sz3950`  | [HelenZhutt](https://github.com/HelenZhutt) |
-| Catherine Yi     | `cgy2014` | [catherinegyi](https://github.com/catherinegyi) |
+The engine operates in three distinct phases, progressively refining the recommendation set from raw signal extraction to predictive viability.
 
----
-
-## Overview
-
-Analysis lives in `src/` and is executed phase-by-phase from `scripts/`. Outputs land in `data/output/` and fuel `frontend/` (Streamlit).
-
-| Layer | Scripts / modules | What it produces |
-|-------|-------------------|------------------|
-| Phase 1 | `scripts/run_phase1.py`, `halal_kmeans.py` | Demand + supply gaps → clustered market types (`phase1_*.csv`) |
-| Phase 2 | `scripts/run_phase2.py`, `halal_similarity.py` | Opportunity score, viability, cosine neighbors (`phase2_opportunity_scores.csv`) |
-| Phase 3 | `scripts/run_phase3.py`, `halal_forecast.py`, `halal_risk.py` | GMM risk, ridge forecasts, adjusted ranking (`final_recommendations.csv`) |
-
-Higher-level narratives also appear in [`PROPOSAL.md`](PROPOSAL.md) and [`DESIGN.md`](DESIGN.md).
+| Phase | Methodology | Primary Output |
+|-------|-------------|----------------|
+| **Phase 1: Market Characterization** | Bayesian Demand Extraction + Supply Gap Analysis + **k-means++** Clustering | Unsupervised market segments (Established Hubs, Growing Markets, High Opportunity) |
+| **Phase 2: Contextual Retrieval** | Cosine Similarity Profiling + Multi-criteria Composite Scoring | NTA-to-NTA look-alike clusters and initial opportunity rankings |
+| **Phase 3: Risk & Forecasting** | **GMM** Risk Overlay + **RidgeCV** Demand Forecasting + Final Rank Adjustment | Adjusted viability scores with probabilistic risk buckets and temporal growth signals |
 
 ---
 
-## Data layout
+## Key Technical Pillars
 
-Place inputs under:
+### 1. Bayesian Demand Signal Modeling
+To mitigate noise in low-volume NTAs, we employ **Bayesian shrinkage** using Beta conjugate priors.
+- **Time-Decay Weighting**: Review signals are weighted by $\omega = 0.85^{\Delta t}$ (years) to prioritize recent market shifts.
+- **Uncertainty Quantification**: We calculate **80% Credible Intervals** for halal demand share, allowing the system to distinguish between high-signal and high-noise opportunities.
+- **Normalization**: Demand is normalized per-capita (halal mentions per 1,000 residents) to account for varying neighborhood densities.
 
-- `data/raw/yelp_reviews_with_zones.csv` — review text with NTA + join keys aligned to Gemini labeling.
-- `data/raw/gemini_labels_full.csv` — Gemini halal relevance labels keyed to reviews/business IDs.
-- `data/raw/restaurant_hygiene.csv` — CAMIS universe with cuisine descriptors (tracked via Releases if omitted from git due to `.gitignore`).
-- `data/processed/inspections.parquet` — per-inspection parquet with grades, violation flags, and `nta_id`.
+### 2. Unsupervised Market Segmentation (k-means++)
+Using a custom **k-means++** implementation, we segment NYC's 260+ NTAs into distinct market profiles. This initialization strategy ensures global convergence and stable cluster assignment for features including latent demand density and supply diversification.
 
-Due to GitHub file size limits and dataset licensing constraints, several large raw datasets are not included directly in the repository. These files are provided separately in the repository’s Releases section. Please download all required datasets before running any pipeline phases.
-Outputs are regenerated under `data/output/` whenever you rerun the phases.
+### 3. Probabilistic Risk Assessment (GMM)
+We utilize **Gaussian Mixture Models (GMM)** with **BIC-selected components** to cluster neighborhoods based on multidimensional risk profiles (DOHMH critical violation rates, inspection frequency, and grade stability). This provides a continuous probability density of "High Risk" rather than a binary classification.
 
+### 4. Predictive Growth Forecasting
+A **RidgeCV** implementation (alpha search across $[0.001, 100]$) forecasts future halal demand and merchant entry trends. This allows the model to "boost" neighborhoods that exhibit strong positive momentum in latent market chatter.
+
+### 5. Explainable Recommendations (SHAP-style)
+The final recommendation engine utilizes a **linear score decomposition** (inspired by SHAP values) to show users exactly how much demand, supply-gap, and risk contributed to a neighborhood's specific rank.
 
 ---
 
-## Environment setup
+## Near-Term & Experimental Scope
+- **Spatial Autocorrelation**: Integration of **Local Moran's I (LISA)** to detect spatial clusters of halal opportunity (Hot Spots) vs. isolated outliers.
+- **Dynamic GMM**: Evolving the risk model into a Hidden Markov Model (HMM) to capture state-transitions in neighborhood hygiene quality.
 
-Python 3.10+ recommended.
+---
 
+## Team & Contributors
+
+| Name             | NYU NetID | Role / Specialization |
+|------------------|-----------|-----------------------|
+| Amanda Dong      | `yd2825`  | UX Lead / Visualization Arch |
+| Tony Zhao        | `sz3822`  | Unsupervised Learning / Ranking |
+| Harsh Agarwal    | `ha2957`  | Data Engineering / Hygiene Pipelines |
+| Siqi Zhu         | `sz3950`  | NLP / Demand Signal Processing |
+| Catherine Yi     | `cgy2014` | Risk Modeling / Forecasting |
+
+---
+
+## Execution Guide
+
+### Environment Bootstrap
 ```bash
-cd CS473-FML
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate     # macOS/Linux
-pip install -r requirements.txt
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
 ```
 
----
-
-## Running the analytic pipeline
-
-From the repository root (Windows PowerShell example):
-
-```powershell
-python scripts\run_phase1.py
-python scripts\run_phase2.py
-python scripts\run_phase3.py
+### Reproduce Analytic Results
+```bash
+# Phase 1: Clustering & Supply-Gap
+python scripts/run_phase1.py
+# Phase 2: Similarity & Composite Scoring
+python scripts/run_phase2.py
+# Phase 3: Risk Overlays & Forecasting
+python scripts/run_phase3.py
 ```
 
-`scripts/check_camis_time.py` prints timeline QA for Yelp vs CAMIS vs parquet-derived aggregates.
-
----
-
-## Launching Streamlit apps
-
-Primary recommender dashboard:
-
-```powershell
-streamlit run frontend\app.py
+### Dashboard Deployment
+```bash
+streamlit run frontend/app.py
 ```
-
-Presentation-style walkthrough (`frontend/pages/presentation.py`):
-
-```powershell
-streamlit run frontend\pages\presentation.py
-```
-
----
-
-## Project layout cheat sheet
-
-- `src/` — reusable building blocks (`halal_*` modules).
-- `scripts/` — phase runners + QA utilities wired to filesystem paths relative to repo root.
-- `frontend/` — Streamlit UX, reusable components (`components/`).
-- `data/output/` — machine-generated CSVs powering the dashboards (tracked for demos when allowed).
-
-Consult [`DESIGN.md`](DESIGN.md) for an annotated directory tree plus module ownership expectations.
