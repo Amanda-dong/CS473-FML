@@ -309,7 +309,7 @@ the label cache is present.
 
 ### §5.1 Neighborhood Phase Discovery (Trajectory Clustering)
 
-Zone trajectory is estimated by running K-Means (k=4) over a time-windowed feature vector composed of year-over-year deltas in license velocity, review-volume growth, and permit velocity. The four cluster labels — **emerging**, **gentrifying**, **stable**, **declining** — are assigned post-hoc by inspecting the cluster centroids and cross-referencing against NYU Furman Center neighborhood narratives [FurmanCenter2023].
+Zone trajectory is estimated by running K-Means (k=4) over a time-windowed feature vector composed of year-over-year deltas in license velocity, review-volume growth, and permit velocity. The API maps hard cluster ids to four user-facing labels — **emerging**, **fast-growing**, **stable**, **declining** — in `src/api/routers/recommendations.py` (see `POST /predict/trajectory` in `docs/api_contract.md`). Narrative write-ups may still describe a “gentrifying regime,” but the shipped endpoint string is `fast-growing`, not `gentrifying`.
 
 K-Means was preferred over Gaussian Mixture Models because the cluster count is informed by domain knowledge (the four-regime taxonomy is interpretable and matches the Furman Center's typology), and the resulting hard assignments are easier to communicate on recommendation cards than probabilistic memberships. Cluster labels are displayed as trajectory badges in the Streamlit UI.
 
