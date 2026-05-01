@@ -1,4 +1,3 @@
-
 import sys
 import os
 
@@ -8,24 +7,22 @@ sys.path.append(os.getcwd())
 from src.api.routers.recommendations import predict_cmf_sync
 from src.schemas.requests import RecommendationRequest
 
+
 def print_recs(title, recs):
     print(f"\n--- {title} ---")
     for i, r in enumerate(recs[:5]):
-        print(f"{i+1}. {r.zone_name} ({r.borough}) - Score: {r.opportunity_score:.4f}")
+        print(
+            f"{i + 1}. {r.zone_name} ({r.borough}) - Score: {r.opportunity_score:.4f}"
+        )
+
 
 # 1. Healthy Indian (should favor campus/lunch areas with high bias)
-req_indian = RecommendationRequest(
-    concept_subtype="healthy_indian",
-    max_results=10
-)
+req_indian = RecommendationRequest(concept_subtype="healthy_indian", max_results=10)
 recs_indian = predict_cmf_sync(req_indian).recommendations
 print_recs("Healthy Indian Recommendations", recs_indian)
 
 # 2. Pizza (should favor business districts or have different ordering)
-req_pizza = RecommendationRequest(
-    concept_subtype="pizza",
-    max_results=10
-)
+req_pizza = RecommendationRequest(concept_subtype="pizza", max_results=10)
 recs_pizza = predict_cmf_sync(req_pizza).recommendations
 print_recs("Pizza Recommendations", recs_pizza)
 
