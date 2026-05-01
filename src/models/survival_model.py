@@ -37,6 +37,7 @@ def build_synthetic_restaurant_history(n: int = 200, seed: int = 42) -> pd.DataF
 
 from src.config.constants import FM_COLS
 
+
 @dataclass
 class SurvivalModelBundle:
     """Scaffold for restaurant survival work."""
@@ -45,7 +46,14 @@ class SurvivalModelBundle:
     duration_col: str = "duration_days"
     event_col: str = "event_observed"
     fitted_: bool = field(default=False, init=False)
-    feature_columns_: list[str] = field(default_factory=lambda: [c for c in FM_COLS if c not in ("target", "time_key", "zone_id", "dominant_subtype")], init=False)
+    feature_columns_: list[str] = field(
+        default_factory=lambda: [
+            c
+            for c in FM_COLS
+            if c not in ("target", "time_key", "zone_id", "dominant_subtype")
+        ],
+        init=False,
+    )
     cox_model_: Any = field(default=None, init=False)
     rsf_model_: object | None = field(default=None, init=False)
     uses_heuristic_: bool = field(default=False, init=False)
@@ -164,13 +172,19 @@ class SurvivalModelBundle:
                 )
             )
             _comp_col = next(
-                (c for c in ("restaurant_count_static", "competition_score") if c in candidate_frame),
+                (
+                    c
+                    for c in ("restaurant_count_static", "competition_score")
+                    if c in candidate_frame
+                ),
                 None,
             )
             competition = (
                 candidate_frame[_comp_col].clip(upper=1.0)
                 if _comp_col is not None
-                else pd.Series([0.0] * len(candidate_frame), index=candidate_frame.index)
+                else pd.Series(
+                    [0.0] * len(candidate_frame), index=candidate_frame.index
+                )
             )
             risk = (rent_pressure.astype(float) + competition.astype(float)) / 2.0
             return risk.clip(lower=0.0, upper=1.0).rename("closure_risk")

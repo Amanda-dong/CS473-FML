@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from src.config.constants import FM_COLS, MODEL_DIR, PROCESSED_DIR
+from src.config.constants import FM_COLS
+
 
 def load_data() -> tuple[pd.DataFrame, pd.Series]:
     """Load feature matrix and ground truth from data/processed/.
@@ -18,12 +18,12 @@ def load_data() -> tuple[pd.DataFrame, pd.Series]:
     if not path.exists():
         raise FileNotFoundError(f"Real data required at {path}.")
     df = pd.read_parquet(path)
-    
+
     # Ensure all FM_COLS are present
     missing = [c for c in FM_COLS if c not in df.columns]
     if missing:
         raise ValueError(f"Feature matrix missing columns: {missing}")
-        
+
     df, _report = prepare_training_frame(df, target_col="target")
     target_col = "target"
     y = df[target_col]
