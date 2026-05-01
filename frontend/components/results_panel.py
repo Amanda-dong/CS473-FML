@@ -52,7 +52,6 @@ def render_analytics_view(df_all: pd.DataFrame, df_filtered: pd.DataFrame) -> No
             showlegend=False,
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font={'color': "#fafafa"}
         )
         st.plotly_chart(fig_box, use_container_width=True, key="analytics_box_market")
 
@@ -71,7 +70,6 @@ def render_analytics_view(df_all: pd.DataFrame, df_filtered: pd.DataFrame) -> No
         fig_scatter.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font={'color': "#fafafa"}
         )
         st.plotly_chart(fig_scatter, use_container_width=True, key="analytics_scatter_gap")
 

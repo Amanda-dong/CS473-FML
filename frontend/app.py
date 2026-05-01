@@ -16,7 +16,7 @@ from frontend.components.comparison import render_comparison_view
 from frontend.components.input_form import render_input_form
 from frontend.components.map_view import render_map_view
 from frontend.components.recommendation_card import _display_name, render_recommendation_card
-from frontend.components.results_panel import _render_ranking_chart
+from frontend.components.results_panel import render_analytics_view
 from frontend.components.theme import inject_custom_theme
 from frontend.review_evidence import load_labeled_reviews
 
@@ -119,12 +119,6 @@ def main() -> None:
             c2.metric("Best score", f"{float(top_row.get('final_score', 0.0)):.3f}")
             c3.metric("Top risk level", str(top_row.get("risk_bucket", "—")))
 
-            if df_all is not None and not df_all.empty:
-                with st.expander("📊 Where your shortlist ranks city-wide", expanded=True):
-                    _render_ranking_chart(df_all, filtered)
-                    st.caption(
-                        "Colored bars = your shortlist (by market type). Grey = all other neighborhoods."
-                    )
 
             st.subheader("Your Shortlist")
             col_left, col_right = st.columns(2)
@@ -160,19 +154,7 @@ def main() -> None:
             render_comparison_view(filtered)
 
     with tab3:
-        st.subheader("All Scored Neighborhoods")
-        st.caption("Full city-wide data — sort any column to explore.")
-        show_cols = [
-            "nta_id", "market_type", "final_score", "demand_score", "gap_score",
-            "viability_score", "risk_bucket", "high_risk_prob", "halal_cuisine_diversity",
-        ]
-        show_cols = [c for c in show_cols if c in df_all.columns]
-        st.dataframe(
-            df_all[show_cols].sort_values("final_score", ascending=False),
-            use_container_width=True,
-            hide_index=True,
-        )
-
+        render_analytics_view(df_all, filtered)
         st.divider()
         st.subheader("Methodology")
         from frontend.pages.methodology import render_methodology_page  # noqa: PLC0415
