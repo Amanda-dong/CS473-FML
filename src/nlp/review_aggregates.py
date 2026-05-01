@@ -85,7 +85,8 @@ def aggregate_review_labels(
         # subtype_gap: per-subtype normalized counts
         subtype_counts = grp["concept_subtype"].value_counts()
         subtype_norm = subtype_counts / max(total, 1)
-        # scalar summary: std of normalized subtype proportions (gap = variance in coverage)
+        # scalar summary: std of normalized subtype proportions
+        # (gap = variance in coverage)
         subtype_gap = float(subtype_norm.std()) if len(subtype_norm) > 1 else 0.0
 
         dominant = subtype_counts.idxmax() if len(subtype_counts) > 0 else None
@@ -125,23 +126,27 @@ def aggregate_nlp_features(
     cluster_labels: np.ndarray,
     gemini_labels: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Returns zone-level NLP features: topic shares, sentiment dist, embedding diversity.
+    """Returns zone-level NLP features: topics, sentiment, and diversity.
 
     Parameters
     ----------
     reviews_df:
-        Must have zone_id, text columns. Index-aligned with embeddings/cluster_labels.
+        Must have zone_id, text columns. Index-aligned with
+        embeddings/cluster_labels.
     embeddings:
         (N, D) embedding array.
     cluster_labels:
         (N,) cluster assignment array.
     gemini_labels:
-        DataFrame with review_id, sentiment, concept_subtype, confidence, zone_id, time_key.
+        DataFrame with review_id, sentiment, concept_subtype,
+        confidence, zone_id, time_key.
 
     Returns
     -------
     DataFrame with zone-level NLP features.
     """
+    if reviews_df.empty:
+        return pd.DataFrame()
     from src.nlp.topic_model import topic_distribution_per_zone
     from src.nlp.embeddings import compute_zone_embedding_features
 
@@ -162,7 +167,8 @@ def aggregate_nlp_features(
 
     # Merge embedding features
     if not emb_features.empty and "zone_id" in emb_features.columns:
-        # Only keep diversity score from embedding features (topic shares already in topic_dist)
+        # Only keep diversity score from embedding features
+        # (topic shares already in topic_dist)
         emb_cols = ["zone_id", "embedding_diversity"]
         emb_subset = emb_features[[c for c in emb_cols if c in emb_features.columns]]
         if not emb_subset.empty:

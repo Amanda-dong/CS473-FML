@@ -146,9 +146,11 @@ def train_and_evaluate() -> None:
     print(f"{'Metric':<15} {'Learned':>10} {'Ranker':>10} {'Heuristic':>10}")
     print(f"{'RMSE':<15} {rmse:>10.4f} {'N/A':>10} {heuristic_rmse:>10.4f}")
     print(f"{'NDCG@5':<15} {ndcg5:>10.4f} {rank_ndcg5:>10.4f} {heuristic_ndcg5:>10.4f}")
-    print(
-        f"{'NDCG@10':<15} {ndcg10:>10.4f} {rank_ndcg10:>10.4f} {heuristic_ndcg10:>10.4f}"
+    ndcg10_str = (
+        f"{'NDCG@10':<15} {ndcg10:>10.4f} {rank_ndcg10:>10.4f} "
+        f"{heuristic_ndcg10:>10.4f}"
     )
+    print(ndcg10_str)
 
 
 if __name__ == "__main__":

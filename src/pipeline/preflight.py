@@ -79,7 +79,10 @@ def assess_embedding_readiness(
         message=(
             "Embedding corpus ready."
             if passed
-            else f"Need at least {min_rows} cleaned review rows before generating embeddings."
+            else (
+                f"Need at least {min_rows} cleaned review rows before "
+                "generating embeddings."
+            )
         ),
         details={
             "input_rows": report.input_rows,
@@ -117,7 +120,10 @@ def assess_scoring_training_readiness(
         message=(
             "Scoring feature matrix ready."
             if passed
-            else f"Need at least {min_rows} rows across {min_zones} zones for stable scoring-model training."
+            else (
+                f"Need at least {min_rows} rows across {min_zones} zones for "
+                "stable scoring-model training."
+            )
         ),
         details={
             "input_rows": report.input_rows,
@@ -157,7 +163,10 @@ def assess_survival_training_readiness(
         message=(
             "Survival history ready."
             if passed
-            else f"Need at least {min_rows} restaurant histories and {min_events} observed closures."
+            else (
+                f"Need at least {min_rows} restaurant histories and "
+                f"{min_events} observed closures."
+            )
         ),
         details={
             "input_rows": report.input_rows,

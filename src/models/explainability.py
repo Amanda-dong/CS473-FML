@@ -20,7 +20,8 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
     subtype_gap = zone_features.get("subtype_gap", 0.0)
     if subtype_gap > 0.5:
         drivers.append(
-            f"Strong cuisine gap ({subtype_gap:.0%}) — this concept is under-supplied here"
+            f"Strong cuisine gap ({subtype_gap:.0%}) — "
+            "this concept is under-supplied here"
         )
 
     survival_score = zone_features.get("target", 0.0)
@@ -43,7 +44,8 @@ def top_positive_drivers(zone_features: Mapping[str, float]) -> list[str]:
     trip_norm = min(trip_raw / 200_000.0, 1.0)
     if trip_norm > 0.75:
         drivers.append(
-            f"Excellent transit accessibility ({trip_norm:.0%}) — maximises foot-traffic"
+            f"Excellent transit accessibility ({trip_norm:.0%}) — "
+            "maximises foot-traffic"
         )
 
     income_raw = float(zone_features.get("median_income_static", 0.0))
@@ -65,14 +67,16 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
     rent_pressure = zone_features.get("rent_pressure", 0.0)
     if rent_pressure > 0.5:
         risks.append(
-            f"High rent pressure ({rent_pressure:.0%}) — may compress margins significantly"
+            f"High rent pressure ({rent_pressure:.0%}) — "
+            "may compress margins significantly"
         )
 
     comp_score = zone_features.get("restaurant_count_static", 0.0)
     comp_norm = min(float(comp_score) / 50.0, 1.0)
     if comp_norm > 0.5:
         risks.append(
-            f"Saturated market ({comp_norm:.0%} competitor density) — differentiation required"
+            f"Saturated market ({comp_norm:.0%} competitor density) — "
+            "differentiation required"
         )
 
     survival_score = zone_features.get("target", 0.0)
@@ -87,7 +91,8 @@ def top_risks(zone_features: Mapping[str, float]) -> list[str]:
     )
     if income_alignment < 0.35:
         risks.append(
-            "Income/price-tier mismatch — local spending power may not support this concept"
+            "Income/price-tier mismatch — local spending power may not "
+            "support this concept"
         )
 
     trip_count = zone_features.get("trip_count", 0.0)

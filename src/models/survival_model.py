@@ -9,6 +9,8 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
+from src.config.constants import FM_COLS
+
 try:
     from lifelines import CoxPHFitter
 
@@ -28,14 +30,14 @@ except ImportError:
 
 
 def build_synthetic_restaurant_history(n: int = 200, seed: int = 42) -> pd.DataFrame:
-    """DEPRECATED — exists only for test compatibility. Use build_real_restaurant_history()."""
+    """DEPRECATED — exists only for test compatibility.
+
+    Use build_real_restaurant_history().
+    """
     raise RuntimeError(
         "Synthetic data generation removed. Use build_real_restaurant_history() "
         "with real ETL data from inspections and licenses."
     )
-
-
-from src.config.constants import FM_COLS
 
 
 @dataclass
@@ -117,7 +119,8 @@ class SurvivalModelBundle:
         good_cols = std[std > 1e-6].index.tolist()
         if not good_cols:
             logger.warning(
-                "All feature columns have near-zero variance — falling back to heuristic"
+                "All feature columns have near-zero variance — "
+                "falling back to heuristic"
             )
             self.uses_heuristic_ = True
             return

@@ -46,12 +46,14 @@ def build_label_prompt(review_text: str, subtype_candidates: tuple[str, ...]) ->
         "not_related.\n"
         "The review text may include business context such as business name "
         "and categories. Use that context when judging healthy food relevance.\n"
-        "Note: halal is one of many healthy food categories. concept_subtype captures the specific food category.\n"
+        "Note: halal is one of many healthy food categories. concept_subtype "
+        "captures the specific food category.\n"
         "Use explicit_halal when the review text, business name, or business "
         "categories clearly mention halal.\n"
-        "Use implicit_halal only when the review implies demand for halal options without explicit mention.\n"
-        "Use not_related when halal-specific demand is not clear. Be conservative and "
-        "do not guess.\n"
+        "Use implicit_halal only when the review implies demand for halal "
+        "options without explicit mention.\n"
+        "Use not_related when halal-specific demand is not clear. Be "
+        "conservative and do not guess.\n"
         f"Allowed subtypes: {subtype_list}.\n"
         "Do not create new concept_subtype labels. If none fit, use other.\n"
         f"Review: {review_text}"
@@ -75,7 +77,8 @@ def _build_batch_prompt(
         "halal_relevance must be one of: explicit_halal, implicit_halal, not_related."
     )
     lines.append(
-        "Definitions (Note: Halal is one of many healthy food subtypes. concept_subtype will identify the category):"
+        "Definitions (Note: Halal is one of many healthy food subtypes. "
+        "concept_subtype will identify the category):"
     )
     lines.append(
         "- explicit_halal: the review text, business name, or business "
@@ -334,9 +337,8 @@ def label_reviews_with_gemini(
                 labels[abs_idx] = label
                 cache[review_id] = label
         except (json.JSONDecodeError, KeyError, TypeError) as exc:
-            raise RuntimeError(
-                f"Gemini labeling failed for batch starting at index {batch_start}: {exc}"
-            ) from exc
+            msg = f"Gemini labeling failed for batch starting at {batch_start}: {exc}"
+            raise RuntimeError(msg) from exc
 
     # Save all to cache
     _save_cache(list(cache.values()))

@@ -177,7 +177,7 @@ def compute_zone_embedding_features(
     embeddings: np.ndarray,
     cluster_labels: np.ndarray,
 ) -> pd.DataFrame:
-    """Per-zone: topic distribution, mean embedding (PCA-compressed), diversity score."""
+    """Per-zone: topic distribution and mean embedding (PCA-compressed)."""
     if reviews_df.empty or "zone_id" not in reviews_df.columns:
         return pd.DataFrame()
 
