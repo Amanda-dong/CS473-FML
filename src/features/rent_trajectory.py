@@ -13,11 +13,13 @@ def build_rent_trajectory_features(rent_frame: pd.DataFrame) -> pd.DataFrame:
     Parameters
     ----------
     rent_frame:
-        PLUTO-derived DataFrame with columns (year, nta_id, assessed_value, commercial_sqft).
+        PLUTO-derived DataFrame with columns:
+        (year, nta_id, assessed_value, commercial_sqft).
 
     Returns
     -------
-    DataFrame with columns (zone_id, rent_pressure, mean_assessed_value).
+    DataFrame with columns:
+        (zone_id, rent_pressure, mean_assessed_value).
     No time_key — PLUTO is cross-sectional. Caller broadcasts across years.
     """
     if rent_frame.empty:

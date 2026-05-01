@@ -161,7 +161,8 @@ for _zone, _ntas in ZONE_TO_NTA.items():
     for _nta in _ntas:
         NTA_TO_ZONES.setdefault(_nta, []).append(_zone)
 
-# When one NTA maps to multiple micro-zones, pick a single primary for point-level assignment.
+# When one NTA maps to multiple micro-zones, pick a single primary for
+# point-level assignment.
 # (Aggregations that split one NTA across zones still use aggregate_nta_to_zone.)
 NTA_PRIMARY_ZONE: dict[str, str] = {
     "BK0202": "bk-downtownbk",  # shared by bk-tandon, bk-downtownbk, bk-navy-yard
