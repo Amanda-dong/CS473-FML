@@ -127,27 +127,27 @@ def render_recommendation_card(row: dict, rank: int) -> None:
         # Risk section
         with st.expander("Risk & Environment", expanded=False):
             try:
-                risk_prob = float(high_risk_prob)
+                float(high_risk_prob)
             except (TypeError, ValueError):
-                risk_prob = 0.5
+                pass
 
             risk_icon = RISK_ICONS.get(risk_bucket, "❓")
+            risk_description = {
+                "Low": "This neighborhood has a relatively clean inspection record. Lower regulatory risk for new restaurant operators.",
+                "Medium": "This neighborhood has moderate inspection risk. Some history of violations — worth reviewing before committing.",
+                "High": "This neighborhood has a high rate of critical inspection violations. Factor this into your operational planning.",
+                "Unknown": "Insufficient inspection data available for this neighborhood.",
+            }.get(risk_bucket, "")
 
-            st.metric(
-                "Risk Score",
-                f"{risk_icon} {risk_bucket}",
-                help="Probability of belonging to a high-risk restaurant environment",
-            )
-            st.progress(risk_prob)
-            st.caption(
-                f"Risk probability: {risk_prob:.0%} — based on GMM clustering of inspection patterns across this neighborhood."
-            )
+            st.markdown(f"### {risk_icon} {risk_bucket} Risk")
+            st.write(risk_description)
 
             if risk_confidence == "Low confidence":
-                st.warning(
-                    "Fewer than 10 inspection records — treat with caution.",
-                    icon="⚠️",
+                st.caption(
+                    "⚠️ Based on fewer than 10 inspection records — treat with caution."
                 )
+            else:
+                st.caption("Based on NYC DOHMH restaurant inspection records.")
 
         # Phase 3 insight
         with st.expander("Next-Year Demand Outlook", expanded=False):
